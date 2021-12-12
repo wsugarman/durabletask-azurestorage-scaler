@@ -1,0 +1,60 @@
+<Project>
+
+  <!-- Common Properties -->
+  <PropertyGroup>
+    <SrcDirectory>$(MSBuildThisFileDirectory)</SrcDirectory>
+    <SharedDirectory>$(SrcDirectory)Shared\</SharedDirectory>
+  </PropertyGroup>
+  
+  <!-- Assembly -->
+  <PropertyGroup>
+    <Copyright>Copyright © 2021 William Sugarman.</Copyright>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <Product>DurableTask KEDA External Scaler</Product>
+  </PropertyGroup>
+
+  <!-- Build -->
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+
+  <!-- Code Analyzers -->
+  <PropertyGroup>
+    <AnalysisLevel>latest-All</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <SkipDefaultEditorConfigAsAdditionalFile>true</SkipDefaultEditorConfigAsAdditionalFile>
+  </PropertyGroup>
+
+  <!-- Common Files -->
+  <ItemGroup>
+    <Compile Include="$(SharedDirectory)AssemblyInfo.cs">
+      <Link>Properties\AssemblyInfo.cs</Link>
+    </Compile>
+  </ItemGroup>
+
+  <!-- Below are items and properties that vary between projects -->
+  <!-- Common framework and tooling PackageReference elements are also kept in sync here -->
+  <Choose>
+    <When Condition="$(MSBuildProjectName.EndsWith('Test'))">
+
+      <!-- Unit Test Properties -->
+      <PropertyGroup>
+        <IsPackable>false</IsPackable>
+      </PropertyGroup>
+
+      <!-- Test Framework Packages -->
+      <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="3.1.0" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" PrivateAssets="All" />
+        <PackageReference Include="MSTest.TestAdapter" Version="2.2.5" PrivateAssets="All" />
+        <PackageReference Include="MSTest.TestFramework" Version="2.2.5" />
+      </ItemGroup>
+
+    </When>
+  </Choose>
+
+</Project>

@@ -1,0 +1,9 @@
+# Set default behavior to automatically normalize line endings.
+* text=auto
+
+# Unix-specific
+*.sh text eol=lf
+
+# Windows-specific
+*.cmd text eol=crlf
+*.bat text eol=crlf

@@ -1,2 +1,2 @@
-# durabletask-azurestorage-external-scaler
-A KEDA external scaler for the DurableTask Azure Storage backend.
+# KEDA External Scaler for DurableTask's Azure Storage Backend
+TBD
