@@ -193,22 +193,8 @@ dotnet_code_quality.exclude_indirect_base_types  = false
 # required_modifiers
 dotnet_code_quality.CA1802 = static
 
-# Unused
-# dotnet_code_quality.output_kind
-# dotnet_code_quality.null_check_validation_methods
-# dotnet_code_quality.additional_string_formatting_methods
-# dotnet_code_quality.excluded_symbol_names
-# dotnet_code_quality.excluded_type_names_with_derived_types
-# dotnet_code_quality.unsafe_DllImportSearchPath_bits
-# dotnet_code_quality.exclude_aspnet_core_mvc_controllerbase
-# dotnet_code_quality.disallowed_symbol_names
-# dotnet_code_quality.interprocedural_analysis_kind
-# dotnet_code_quality.max_interprocedural_method_call_chain
-# dotnet_code_quality.max_interprocedural_lambda_or_local_function_call_chain
-# dotnet_code_quality.dispose_ownership_transfer_at_constructor
-# dotnet_code_quality.dispose_ownership_transfer_at_method_call
-# dotnet_code_quality.copy_analysis
-# dotnet_code_quality.additional_required_suffixes
+# Analyzer Rules
+dotnet_diagnostic.CA1848.severity = none
 
 # Xml project files
 [*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
