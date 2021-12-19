@@ -9,7 +9,7 @@ using Microsoft.WindowsAzure.Storage.Auth;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
 {
-    internal sealed class TokenCredentialFactory
+    internal sealed class TokenCredentialFactory : ITokenCredentialFactory
     {
         private const string StorageAccountResource = "https://storage.azure.com/";
 

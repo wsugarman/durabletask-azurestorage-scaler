@@ -1,6 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Keda.Scaler.DurableTask.AzureStorage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,8 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services
+    .AddKubernetesClient()
+    .AddScaler()
     .AddGrpc();
 
 WebApplication app = builder.Build();
