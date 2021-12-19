@@ -10,16 +10,23 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Extensions
 {
     internal static class ValidationExtensions
     {
-        public static void EnsureValidated(this IValidatableObject obj)
+        public static T EnsureValidated<T>(this T obj, IServiceProvider? serviceProvider = null)
+            where T : IValidatableObject
         {
             if (obj is null)
                 throw new ArgumentNullException(nameof(obj));
 
-            List<ArgumentException> errors = obj.Validate(new ValidationContext(obj)).Select(x => new ArgumentException(x.ErrorMessage)).ToList();
+            List<ArgumentException> errors = obj
+                .Validate(new ValidationContext(obj, serviceProvider, null))
+                .Select(x => new ArgumentException(x.ErrorMessage))
+                .ToList();
+
             if (errors.Count == 1)
                 throw errors[0];
             else if (errors.Count > 0)
                 throw new AggregateException(errors);
+            else
+                return obj;
         }
     }
 }

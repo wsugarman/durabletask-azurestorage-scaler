@@ -2,100 +2,131 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.Storage.Blobs;
-using Azure.Storage.Queues;
+using DurableTask.AzureStorage;
+using DurableTask.AzureStorage.Monitoring;
+using k8s;
+using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Provider;
+using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Services
 {
-    internal class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageScaler
+    internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageScaler
     {
-        private readonly AzureClientFactory _azureClientFactory;
-        private readonly ITaskHubBrowser _taskHubBrowser;
-        private readonly IPerformanceMonitor _performanceMonitor;
+        private readonly IKubernetes _kubernetes;
+        private readonly ITokenCredentialFactory _credentialFactory;
+        private readonly IEnvironment _environment;
+        private readonly ILoggerFactory _loggerFactory;
         private readonly ILogger<DurableTaskAzureStorageScaler> _logger;
 
+        private const long MetricSpecValue = 100;
+
+        public string MetricName => "WorkerDemand";
+
         public DurableTaskAzureStorageScaler(
-            AzureClientFactory azureClientFactory,
-            ITaskHubBrowser taskHubBrowser,
-            IPerformanceMonitor performanceMonitor,
-            ILogger<DurableTaskAzureStorageScaler> logger)
+            IKubernetes kubernetes,
+            ITokenCredentialFactory credentialFactory,
+            IEnvironment environment,
+            ILoggerFactory loggerFactory)
         {
-            _azureClientFactory = azureClientFactory ?? throw new ArgumentNullException(nameof(azureClientFactory));
-            _taskHubBrowser = taskHubBrowser ?? throw new ArgumentNullException(nameof(taskHubBrowser));
-            _performanceMonitor = performanceMonitor ?? throw new ArgumentNullException(nameof(performanceMonitor));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _kubernetes = kubernetes ?? throw new ArgumentNullException(nameof(kubernetes));
+            _credentialFactory = credentialFactory ?? throw new ArgumentNullException(nameof(credentialFactory));
+            _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+            _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+            _logger = loggerFactory.CreateLogger<DurableTaskAzureStorageScaler>();
         }
 
-        public async ValueTask<ScalerMetrics> GetMetricsAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
+        public ValueTask<long> GetScaleMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
         {
+            if (metadata is null)
+                throw new ArgumentNullException(nameof(metadata));
+
+            return ValueTask.FromResult(MetricSpecValue);
+        }
+
+        public async ValueTask<long> GetScaleMetricValueAsync(DeploymentReference deployment, ScalerMetadata metadata, CancellationToken cancellationToken = default)
+        {
+            if (metadata is null)
+                throw new ArgumentNullException(nameof(metadata));
+
             if (string.IsNullOrEmpty(metadata.TaskHubName))
                 throw new ArgumentException($"{nameof(ScalerMetadata.TaskHubName)} must be specified.", nameof(metadata));
 
-            TaskHubInfo taskHubInfo = await _taskHubBrowser.GetAsync(GetBlobServiceClient(metadata), metadata.TaskHubName, cancellationToken).ConfigureAwait(false);
-            if (taskHubInfo == default)
-                throw new InvalidOperationException("Cannot resolve task hub");
+            V1Scale scale = await _kubernetes.ReadNamespacedDeploymentScaleAsync(deployment.Name, deployment.Namespace, cancellationToken: cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation(
+                "Found current scale for deployment '{Name}' in namespace '{Namespace}' to be {Replicas} replicas.",
+                deployment.Name,
+                deployment.Namespace,
+                scale.Status.Replicas);
 
-            QueueServiceClient queueServiceClient = GetQueueServiceClient(metadata);
-            ValueTask<QueueMetrics> workItemMetricsTask = _performanceMonitor.GetWorkItemMetricsAsync(queueServiceClient, taskHubInfo, cancellationToken);
-            IAsyncEnumerable<QueueMetrics> controlMetrics = _performanceMonitor.GetControlMetricsAsync(queueServiceClient, taskHubInfo, cancellationToken);
+            PerformanceHeartbeat heartbeat = await GetPerformanceHeartbeatAsync(metadata, scale.Status.Replicas, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation(
+                "Recommendation is to {Recommendation} with reason: {Reason}",
+                heartbeat.ScaleRecommendation.Action,
+                heartbeat.ScaleRecommendation.Reason);
 
-            (int Count, int MaxLength, long MaxLatencyMs) controlQueues = await AggregateMetricsAsync(controlMetrics).ConfigureAwait(false);
-            return new ScalerMetrics
+            double scaleFactor = heartbeat.ScaleRecommendation.Action switch
             {
-                ControlQueueDemand = taskHubInfo.PartitionCount * taskHubInfo.PartitionCount,
-                ControlQueueLatencyMs = metadata.TargetMessageLatencyMs,
-                WorkItemQueueLatencyMs = metadata.TargetMessageLatencyMs,
+                ScaleAction.None => 1d,
+                ScaleAction.AddWorker => metadata.ScaleIncrement,
+                ScaleAction.RemoveWorker => 1 / metadata.ScaleIncrement,
+                _ => throw new InvalidOperationException($"Unknown scale action '{heartbeat.ScaleRecommendation.Action}'."),
             };
+
+            // Note: Currently only average metric value are supported by external scalers, so we
+            //       need to multiply the result by the number of replicas.
+            return (long)(MetricSpecValue * scaleFactor * scale.Status.Replicas);
         }
 
-        public async ValueTask<ScalerMetrics> GetMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
+        public async ValueTask<bool> IsActiveAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
         {
+            if (metadata is null)
+                throw new ArgumentNullException(nameof(metadata));
+
             if (string.IsNullOrEmpty(metadata.TaskHubName))
                 throw new ArgumentException($"{nameof(ScalerMetadata.TaskHubName)} must be specified.", nameof(metadata));
 
-            TaskHubInfo taskHubInfo = await _taskHubBrowser.GetAsync(GetBlobServiceClient(metadata), metadata.TaskHubName, cancellationToken).ConfigureAwait(false);
-            if (taskHubInfo == default)
-                throw new InvalidOperationException("Cannot resolve task hub");
-
-            return new ScalerMetrics
-            {
-                ControlQueueDemand = taskHubInfo.PartitionCount,
-                ControlQueueLatencyMs = metadata.TargetMessageLatencyMs,
-                WorkItemQueueLatencyMs = metadata.TargetMessageLatencyMs,
-            };
+            PerformanceHeartbeat heartbeat = await GetPerformanceHeartbeatAsync(metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+            return heartbeat is not null && !heartbeat.IsIdle();
         }
 
-        public ValueTask<bool> IsActiveAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
-
-        private BlobServiceClient GetBlobServiceClient(ScalerMetadata metadata)
-            => metadata.AccountName is null
-            ? _azureClientFactory.GetBlobServiceClient(metadata.ConnectionString!)
-            : _azureClientFactory.GetBlobServiceClient(metadata.AccountName, CloudEndpoints.ForEnvironment(metadata.Cloud));
-
-        private QueueServiceClient GetQueueServiceClient(ScalerMetadata metadata)
-            => metadata.AccountName is null
-            ? _azureClientFactory.GetQueueServiceClient(metadata.ConnectionString!)
-            : _azureClientFactory.GetQueueServiceClient(metadata.AccountName, CloudEndpoints.ForEnvironment(metadata.Cloud));
-
-        private static async ValueTask<(int Count, int MaxLength, long MaxLatencyMs)> AggregateMetricsAsync(IAsyncEnumerable<QueueMetrics> metrics)
+        private async ValueTask<PerformanceHeartbeat> GetPerformanceHeartbeatAsync(ScalerMetadata metadata, int? workerCount = null, CancellationToken cancellationToken = default)
         {
-            (int Count, int MaxLength, long MaxLatencyMs) aggregate = (0, 0, 0);
-            await foreach (QueueMetrics metric in metrics)
+            AzureStorageOrchestrationServiceSettings settings = new AzureStorageOrchestrationServiceSettings
             {
-                aggregate.Count++;
-                aggregate.MaxLength = Math.Max(aggregate.MaxLength, metric.Length);
-                aggregate.MaxLatencyMs = Math.Max(aggregate.MaxLatencyMs, (long)metric.DequeueLatency.TotalMilliseconds);
+                LoggerFactory = _loggerFactory,
+                MaxQueuePollingInterval = TimeSpan.FromMilliseconds(metadata.MaxMessageLatencyMilliseconds),
+                TaskHubName = metadata.TaskHubName,
+            };
+
+            if (metadata.AccountName is null)
+            {
+                DisconnectedPerformanceMonitor performanceMonitor = new DisconnectedPerformanceMonitor(
+                    CloudStorageAccount.Parse(metadata.ResolveConnectionString(_environment)),
+                    settings);
+
+                return await performanceMonitor.PulseAsync(workerCount).ConfigureAwait(false);
             }
+            else
+            {
+                CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(metadata.Cloud);
+                using TokenCredential tokenCredential = await _credentialFactory.CreateAsync(endpoints.AuthorityHost, cancellationToken).ConfigureAwait(false);
+                DisconnectedPerformanceMonitor performanceMonitor = new DisconnectedPerformanceMonitor(
+                    new CloudStorageAccount(
+                        new StorageCredentials(tokenCredential),
+                        metadata.AccountName,
+                        endpoints.StorageSuffix,
+                        useHttps: true),
+                    settings);
 
-            return aggregate;
+                return await performanceMonitor.PulseAsync(workerCount).ConfigureAwait(false);
+            }
         }
     }
 }

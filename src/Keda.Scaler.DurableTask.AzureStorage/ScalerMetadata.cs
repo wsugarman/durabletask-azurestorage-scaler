@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
+using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Keda.Scaler.DurableTask.AzureStorage
 {
@@ -61,32 +63,21 @@ namespace Keda.Scaler.DurableTask.AzureStorage
         public string? ConnectionFromEnv { get; init; }
 
         /// <summary>
-        /// Gets the resolved connection string based on the <see cref="Connection"/> and <see cref="ConnectionFromEnv"/>.
+        /// Gets the ratio by which the replicas are increased or decreased.
         /// </summary>
-        /// <value>
-        /// <see cref="Connection"/>, if specified; otherwise, the value of an environment variable specified by
-        /// <see cref="ConnectionFromEnv"/> or <c>AzureWebJobsStorage</c> by default.
-        /// </value>
-        public string? ConnectionString
-        {
-            get
-            {
-                if (_resolvedConnectionString is null)
-                {
-                    _resolvedConnectionString = Connection is null
-                        ? Environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable)
-                        : Connection;
-                }
-
-                return _resolvedConnectionString;
-            }
-        }
+        /// <remarks>
+        /// For example, if the value is <c>2</c>, then the replica count is doubled when scaling up
+        /// and halved when scaling down.
+        /// </remarks>
+        /// <value>The ratio by which the replica count is multiplied when scaling up and down.</value>
+        public double ScaleIncrement { get; init; } = 1.5;
 
         /// <summary>
         /// Gets the desired length of time in milliseconds orchestrations, activities, and actors take to receive messages.
         /// </summary>
+        /// <remarks>Durable Task framework does not support a value larger than 1000 milliseconds or 1 second.</remarks>
         /// <value>The desired length of time messages sit in their respective queues before being processed.</value>
-        public long TargetMessageLatencyMs { get; set; } = 1000;
+        public int MaxMessageLatencyMilliseconds { get; set; } = 1000;
 
         /// <summary>
         /// Gets the name of the configured task hub present in Azure Storage.
@@ -113,6 +104,25 @@ namespace Keda.Scaler.DurableTask.AzureStorage
         public bool UseAAdPodIdentity { get; init; }
 
         /// <summary>
+        /// Gets the resolved connection string based on the <see cref="Connection"/> and <see cref="ConnectionFromEnv"/>.
+        /// </summary>
+        /// <param name="environment">The <see cref="IEnvironment"/> containing any variables.</param>
+        /// <returns>
+        /// <see cref="Connection"/>, if specified; otherwise, the value of an environment variable specified by
+        /// <see cref="ConnectionFromEnv"/> or <c>AzureWebJobsStorage</c> by default.
+        /// </returns>
+        /// <exception cref="ArgumentNullException"><paramref name="environment"/> is <see langword="null"/>.</exception>
+        public string? ResolveConnectionString(IEnvironment environment)
+        {
+            if (environment is null)
+                throw new ArgumentNullException(nameof(environment));
+            
+            return _resolvedConnectionString = Connection is null
+                ? environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable, EnvironmentVariableTarget.Process)
+                : Connection;
+        }
+
+        /// <summary>
         /// Enumerates all of the errors associated with the state of the <see cref="ScalerMetadata"/>, if any.
         /// </summary>
         /// <param name="validationContext">The context for the validation.</param>
@@ -135,8 +145,14 @@ namespace Keda.Scaler.DurableTask.AzureStorage
             if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))
                 yield return new ValidationResult($"If specified, {nameof(ConnectionFromEnv)} cannot be empty or consist entirely of white space characters.");
 
-            if (0 < TargetMessageLatencyMs)
-                yield return new ValidationResult($"{nameof(TargetMessageLatencyMs)} cannot be less than zero.");
+            if (0 < MaxMessageLatencyMilliseconds)
+                yield return new ValidationResult($"{nameof(MaxMessageLatencyMilliseconds)} cannot be less than zero.");
+
+            if (MaxMessageLatencyMilliseconds > 1000)
+                yield return new ValidationResult($"{nameof(MaxMessageLatencyMilliseconds)} cannot be larger than 1 second.");
+
+            if (ScaleIncrement <= 1)
+                yield return new ValidationResult($"{nameof(ScaleIncrement)} must be greater than 1.");
 
             if (string.IsNullOrWhiteSpace(TaskHubName))
                 yield return new ValidationResult($"{nameof(TaskHubName)} is required and cannot be empty or consist entirely of white space characters.");
@@ -155,9 +171,10 @@ namespace Keda.Scaler.DurableTask.AzureStorage
             else
             {
                 if (AccountName is not null)
-                    yield return new ValidationResult($"{nameof(AccountName)} should not be specified if using AAD pod identity.");
+                    yield return new ValidationResult($"{nameof(AccountName)} should only be specified if using AAD pod identity.");
 
-                if (string.IsNullOrWhiteSpace(ConnectionString))
+                IEnvironment environment = validationContext.GetRequiredService<IEnvironment>();
+                if (string.IsNullOrWhiteSpace(ResolveConnectionString(environment)))
                     yield return new ValidationResult($"Unable to resolve the connection string from environment variable '{ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable}'.");
             }
         }
