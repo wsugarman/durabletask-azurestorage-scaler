@@ -18,7 +18,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
 
     internal sealed class PerformanceMonitorFactory : IPerformanceMonitorFactory
     {
-        private const string StorageAccountResource = "https://storage.azure.com/";
+        internal const string StorageAccountResource = "https://storage.azure.com/";
 
         private readonly CreateMonitor _monitorFactory;
         private readonly ITokenCredentialFactory _credentialFactory;

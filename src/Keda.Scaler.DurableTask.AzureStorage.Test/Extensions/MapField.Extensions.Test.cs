@@ -10,7 +10,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Keda.Scaler.DurableTask.AzureStorage.Extensions.Test
 {
     [TestClass]
-    internal class MapFieldExtensionsTest
+    public class MapFieldExtensionsTest
     {
         [TestMethod]
         public void ToConfiguration()

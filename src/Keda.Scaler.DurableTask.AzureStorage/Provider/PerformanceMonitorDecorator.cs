@@ -10,6 +10,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
 {
     internal sealed class PerformanceMonitorDecorator : IPerformanceMonitor
     {
+        internal bool HasTokenCredential => _credential is not null;
+
         private readonly TokenCredential? _credential;
         private readonly DisconnectedPerformanceMonitor _monitor;
 
@@ -20,9 +22,12 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
         }
 
         public void Dispose()
-            => _credential?.Dispose();
+            => _credential?.Dispose(); // In truth, disposal isn't necessary because we don't renew it via the timer
 
         public Task<PerformanceHeartbeat> GetHeartbeatAsync(int? workerCount = null)
             => workerCount.HasValue ? _monitor.PulseAsync(workerCount.GetValueOrDefault()) : _monitor.PulseAsync();
+
+        internal DisconnectedPerformanceMonitor ToDisconnectedPerformanceMonitor()
+            => _monitor;
     }
 }
