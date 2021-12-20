@@ -1,0 +1,21 @@
+name: Check Code Coverage
+description: Validates code coverage and uploads the results.
+inputs:
+  reportPath:
+    description: The path to the cobertura coverage file.
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Generate Code Coverage Report
+      uses: danielpalme/ReportGenerator-GitHub-Action@4.8.12
+      with:
+        reports: ${{ inputs.reportPath }}
+        reporttypes: HTMLInline;Cobertura;Badges
+        targetdir: ${{ runner.temp }}/codecoverage
+
+    - name: Upload Code Coverage Report
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: CodeCoverage
+        path: ${{ runner.temp }}/codecoverage

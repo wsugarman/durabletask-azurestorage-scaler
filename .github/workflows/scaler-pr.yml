@@ -1,0 +1,42 @@
+name: Scaler Pull Request
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+    - README.md
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Test
+        uses: ./.github/actions/dotnet-validate
+        with:
+          solution: Keda.Scaler.DurableTask.AzureStorage
+          resultsDirectory: ${{ runner.temp }}/TestResults
+
+      - name: Ensure Code Coverage
+        uses: ./.github/actions/check-code-coverage
+        with:
+          reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Package
+        uses: ./.github/actions/dotnet-package
+        with:
+          project: Keda.Scaler.DurableTask.AzureStorage
+          buildConfiguration: Release
+          buildId: ${{ github.run_attempt }}
