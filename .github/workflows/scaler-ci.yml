@@ -18,7 +18,7 @@ jobs:
       - name: Test
         uses: ./.github/actions/dotnet-validate
         with:
-          solution: Keda.Scaler.DurableTask.AzureStorage
+          solution: Scaler
           resultsDirectory: ${{ runner.temp }}/TestResults
 
       - name: Ensure Code Coverage

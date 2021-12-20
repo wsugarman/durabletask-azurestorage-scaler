@@ -29,7 +29,7 @@ runs:
       id: version
       shell: pwsh
       run: |
-        ./.github/actions/dotnet-package/ParseVersion.ps1 `
+        ./.github/actions/dotnet-package/scripts/ParseVersion.ps1 `
           -VersionFilePath '${{ inputs.versionFile }}' `
           -BuildId '${{ inputs.buildId }}'
 

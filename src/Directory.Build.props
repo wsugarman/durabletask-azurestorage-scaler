@@ -5,7 +5,7 @@
     <SrcDirectory>$(MSBuildThisFileDirectory)</SrcDirectory>
     <SharedDirectory>$(SrcDirectory)Shared\</SharedDirectory>
   </PropertyGroup>
-  
+
   <!-- Assembly -->
   <PropertyGroup>
     <Copyright>Copyright © 2021 William Sugarman.</Copyright>
@@ -18,6 +18,7 @@
     <Deterministic>true</Deterministic>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
+    <RunSettingsFilePath>$(SrcDirectory)CodeCoverage.runsettings</RunSettingsFilePath>
     <TargetFramework>net6.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
@@ -35,6 +36,11 @@
     <Compile Include="$(SharedDirectory)AssemblyInfo.cs">
       <Link>Properties\AssemblyInfo.cs</Link>
     </Compile>
+  </ItemGroup>
+
+  <!-- Tools -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
   </ItemGroup>
 
   <Choose>
