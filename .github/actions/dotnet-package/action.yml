@@ -9,7 +9,7 @@ inputs:
     description: The dotnet build configuration
     required: false
   versionFile:
-    default: './src/Version.json'
+    default: './Version.json'
     description: The product version
     required: false
   buildId:

@@ -21,8 +21,8 @@ jobs:
           solution: Scaler
           resultsDirectory: ${{ runner.temp }}/TestResults
 
-      - name: Ensure Code Coverage
-        uses: ./.github/actions/check-code-coverage
+      - name: Upload Code Coverage
+        uses: ./.github/actions/code-coverage
         with:
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
 
