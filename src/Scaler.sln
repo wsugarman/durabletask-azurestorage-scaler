@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{9944A2
 		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Keda.Scaler.DurableTask.AzureStorage.Test", "Keda.Scaler.DurableTask.AzureStorage.Test\Keda.Scaler.DurableTask.AzureStorage.Test.csproj", "{926704CC-0E9B-445A-A1F6-D7816BA59599}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{1536D38D-D145-4BA4-BEB8-39E1A11DECBE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1536D38D-D145-4BA4-BEB8-39E1A11DECBE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1536D38D-D145-4BA4-BEB8-39E1A11DECBE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{926704CC-0E9B-445A-A1F6-D7816BA59599}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{926704CC-0E9B-445A-A1F6-D7816BA59599}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{926704CC-0E9B-445A-A1F6-D7816BA59599}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{926704CC-0E9B-445A-A1F6-D7816BA59599}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
