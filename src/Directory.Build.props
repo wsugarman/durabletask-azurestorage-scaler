@@ -16,6 +16,7 @@
   <!-- Build -->
   <PropertyGroup>
     <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <RunSettingsFilePath>$(SrcDirectory)CodeCoverage.runsettings</RunSettingsFilePath>

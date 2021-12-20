@@ -8,6 +8,7 @@
           <Exclude>[Keda.Scaler.DurableTask.AzureStorage*.Test]*</Exclude>
           <Include>[Keda.Scaler.DurableTask.AzureStorage*]*</Include>
           <ExcludeByAttribute>ExcludeFromCodeCoverage</ExcludeByAttribute>
+          <ExcludeByFile>**/Program.cs,**/obj/**/Protos/**/*.cs,</ExcludeByFile>
           <SingleHit>false</SingleHit>
           <UseSourceLink>true</UseSourceLink>
           <IncludeTestAssembly>false</IncludeTestAssembly>
