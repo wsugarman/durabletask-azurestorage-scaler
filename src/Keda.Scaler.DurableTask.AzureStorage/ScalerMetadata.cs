@@ -18,8 +18,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage
     {
         public const string DefaultConnectionEnvironmentVariable = "AzureWebJobsStorage";
 
-        private string? _resolvedConnectionString;
-
         // TODO: Add support for Private clouds with AAD Pod Identity
 
         /// <summary>
@@ -116,8 +114,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage
         {
             if (environment is null)
                 throw new ArgumentNullException(nameof(environment));
-            
-            return _resolvedConnectionString = Connection is null
+
+            return Connection is null
                 ? environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable, EnvironmentVariableTarget.Process)
                 : Connection;
         }

@@ -8,7 +8,7 @@ using System.Linq;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Extensions
 {
-    internal static class ValidationExtensions
+    internal static class IValidatableObjectExtensions
     {
         public static T EnsureValidated<T>(this T obj, IServiceProvider? serviceProvider = null)
             where T : IValidatableObject
@@ -21,12 +21,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Extensions
                 .Select(x => new ArgumentException(x.ErrorMessage))
                 .ToList();
 
-            if (errors.Count == 1)
-                throw errors[0];
-            else if (errors.Count > 0)
+
+            if (errors.Count > 0)
                 throw new AggregateException(errors);
-            else
-                return obj;
+
+            return obj;
         }
     }
 }

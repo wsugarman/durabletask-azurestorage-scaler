@@ -11,8 +11,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
 {
     internal sealed class TokenCredentialFactory : ITokenCredentialFactory
     {
-        private const string StorageAccountResource = "https://storage.azure.com/";
-
         private readonly Func<string, Uri, AzureServiceTokenProvider> _tokenProviderFactory;
 
         public TokenCredentialFactory()
@@ -22,14 +20,17 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
         internal TokenCredentialFactory(Func<string, Uri, AzureServiceTokenProvider> tokenProviderFactory)
             => _tokenProviderFactory = tokenProviderFactory ?? throw new ArgumentNullException(nameof(tokenProviderFactory));
 
-        public async ValueTask<TokenCredential> CreateAsync(Uri authorityHost, CancellationToken cancellationToken = default)
+        public async ValueTask<TokenCredential> CreateAsync(string resource, Uri authorityHost, CancellationToken cancellationToken = default)
         {
+            if (string.IsNullOrEmpty(resource))
+                throw new ArgumentNullException(nameof(resource));
+
             if (authorityHost is null)
                 throw new ArgumentNullException(nameof(authorityHost));
 
             // TODO: Implement token renewal if necessary, but lifetime should be valid for duration of request
             AzureServiceTokenProvider tokenProvider = _tokenProviderFactory("RunAs=App", authorityHost);
-            return new TokenCredential(await tokenProvider.GetAccessTokenAsync(StorageAccountResource, cancellationToken: cancellationToken).ConfigureAwait(false));
+            return new TokenCredential(await tokenProvider.GetAccessTokenAsync(resource, cancellationToken: cancellationToken).ConfigureAwait(false));
         }
     }
 }

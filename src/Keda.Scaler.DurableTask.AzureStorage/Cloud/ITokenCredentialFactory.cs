@@ -10,6 +10,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
 {
     internal interface ITokenCredentialFactory
     {
-        ValueTask<TokenCredential> CreateAsync(Uri authorityHost, CancellationToken cancellationToken = default);
+        ValueTask<TokenCredential> CreateAsync(string resource, Uri authorityHost, CancellationToken cancellationToken = default);
     }
 }

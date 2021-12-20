@@ -2,14 +2,17 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using k8s;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Services;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Extensions
+namespace Microsoft.Extensions.DependencyInjection
 {
     internal static class IServiceCollectionExtensions
     {
@@ -25,12 +28,30 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Extensions
             return services;
         }
 
-        public static IServiceCollection AddKubernetesClient(this IServiceCollection services)
+        [ExcludeFromCodeCoverage]
+        public static IServiceCollection AddKubernetesClient(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
         {
             if (services is null)
                 throw new ArgumentNullException(nameof(services));
 
-            services.TryAddSingleton<IKubernetes>(p => new Kubernetes(KubernetesClientConfiguration.InClusterConfig()));
+            if (configuration is null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            if (environment is null)
+                throw new ArgumentNullException(nameof(environment));
+
+            if (environment.IsDevelopment())
+            {
+                services
+                    .AddOptions<KubernetesClientConfiguration>()
+                    .Bind(configuration.GetSection("Kubernetes"));
+
+                services.TryAddSingleton<IKubernetes>(p => new Kubernetes(p.GetRequiredService<IOptions<KubernetesClientConfiguration>>().Value));
+            }
+            else
+            {
+                services.TryAddSingleton<IKubernetes>(p => new Kubernetes(KubernetesClientConfiguration.InClusterConfig()));
+            }
 
             return services;
         }

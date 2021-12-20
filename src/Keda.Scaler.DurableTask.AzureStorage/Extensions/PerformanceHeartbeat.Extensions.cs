@@ -15,7 +15,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Extensions
                 throw new ArgumentNullException(nameof(heartbeat));
 
             return heartbeat.WorkItemQueueLatency == TimeSpan.Zero
-                && heartbeat.ControlQueueLatencies.All(x => x == TimeSpan.Zero);
+                && (heartbeat.ControlQueueLatencies is null || heartbeat.ControlQueueLatencies.All(x => x == TimeSpan.Zero));
         }
     }
 }

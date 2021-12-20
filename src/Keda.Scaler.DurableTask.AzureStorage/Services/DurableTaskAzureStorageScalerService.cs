@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Keda.Scaler.DurableTask.AzureStorage.Services
 {
     /// <summary>
-    /// Implements the KEDA external scaler gRPC service for DurableTask with an Azure Storage backend.
+    /// Implements the KEDA external scaler gRPC service for the Durable Task framework with an Azure Storage backend provider.
     /// </summary>
     public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScalerBase
     {

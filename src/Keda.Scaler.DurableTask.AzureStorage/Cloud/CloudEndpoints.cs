@@ -41,7 +41,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
         /// Gets the Azure service endpoints for the German Azure cloud.
         /// </summary>
         /// <value>An instance of <see cref="CloudEndpoints"/> for the German Azure cloud.</value>
-        public static CloudEndpoints German { get; } = new CloudEndpoints
+        public static CloudEndpoints Germany { get; } = new CloudEndpoints
         {
             AuthorityHost = AzureAuthorityHosts.AzureGermany,
             StorageSuffix = "core.cloudapi.de",
@@ -75,7 +75,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
                 CloudEnvironment.AzurePublicCloud => Public,
                 CloudEnvironment.AzureUSGovernmentCloud => USGovernment,
                 CloudEnvironment.AzureChinaCloud => China,
-                CloudEnvironment.AzureGermanCloud => German,
+                CloudEnvironment.AzureGermanCloud => Germany,
                 _ => throw new ArgumentOutOfRangeException(nameof(cloud)),
             };
     }

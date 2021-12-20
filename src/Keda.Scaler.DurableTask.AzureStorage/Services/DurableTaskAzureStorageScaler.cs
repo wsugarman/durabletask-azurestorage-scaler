@@ -4,42 +4,35 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using DurableTask.AzureStorage;
 using DurableTask.AzureStorage.Monitoring;
 using k8s;
 using k8s.Models;
-using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
+using Keda.Scaler.DurableTask.AzureStorage.Provider;
 using Microsoft.Extensions.Logging;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Services
 {
     internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageScaler
     {
-        private readonly IKubernetes _kubernetes;
-        private readonly ITokenCredentialFactory _credentialFactory;
-        private readonly IEnvironment _environment;
-        private readonly ILoggerFactory _loggerFactory;
-        private readonly ILogger<DurableTaskAzureStorageScaler> _logger;
+        internal const long MetricSpecValue = 100;
 
-        private const long MetricSpecValue = 100;
+        private const string LoggerCategory = "DurableTask.AzureStorage.Keda"; // Reuse prefix from the Durable Task framework
+
+        private readonly IKubernetes _kubernetes;
+        private readonly IPerformanceMonitorFactory _monitorFactory;
+        private readonly ILogger _logger;
 
         public string MetricName => "WorkerDemand";
 
         public DurableTaskAzureStorageScaler(
             IKubernetes kubernetes,
-            ITokenCredentialFactory credentialFactory,
-            IEnvironment environment,
+            IPerformanceMonitorFactory monitorFactory,
             ILoggerFactory loggerFactory)
         {
             _kubernetes = kubernetes ?? throw new ArgumentNullException(nameof(kubernetes));
-            _credentialFactory = credentialFactory ?? throw new ArgumentNullException(nameof(credentialFactory));
-            _environment = environment ?? throw new ArgumentNullException(nameof(environment));
-            _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-            _logger = loggerFactory.CreateLogger<DurableTaskAzureStorageScaler>();
+            _monitorFactory = monitorFactory ?? throw new ArgumentNullException(nameof(monitorFactory));
+            _logger = loggerFactory?.CreateLogger(LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
         }
 
         public ValueTask<long> GetScaleMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
@@ -65,7 +58,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
                 deployment.Namespace,
                 scale.Status.Replicas);
 
-            PerformanceHeartbeat heartbeat = await GetPerformanceHeartbeatAsync(metadata, scale.Status.Replicas, cancellationToken).ConfigureAwait(false);
+            using IPerformanceMonitor monitor = await _monitorFactory.CreateAsync(metadata, cancellationToken).ConfigureAwait(false);
+            PerformanceHeartbeat heartbeat = await monitor.GetHeartbeatAsync(scale.Status.Replicas).ConfigureAwait(false);
             _logger.LogInformation(
                 "Recommendation is to {Recommendation} with reason: {Reason}",
                 heartbeat.ScaleRecommendation.Action,
@@ -79,8 +73,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
                 _ => throw new InvalidOperationException($"Unknown scale action '{heartbeat.ScaleRecommendation.Action}'."),
             };
 
-            // Note: Currently only average metric value are supported by external scalers, so we
-            //       need to multiply the result by the number of replicas.
+            // Note: Currently only average metric value are supported by external scalers,
+            //       so we need to multiply the result by the number of replicas.
             return (long)(MetricSpecValue * scaleFactor * scale.Status.Replicas);
         }
 
@@ -92,41 +86,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
             if (string.IsNullOrEmpty(metadata.TaskHubName))
                 throw new ArgumentException($"{nameof(ScalerMetadata.TaskHubName)} must be specified.", nameof(metadata));
 
-            PerformanceHeartbeat heartbeat = await GetPerformanceHeartbeatAsync(metadata, cancellationToken: cancellationToken).ConfigureAwait(false);
+            using IPerformanceMonitor monitor = await _monitorFactory.CreateAsync(metadata, cancellationToken).ConfigureAwait(false);
+            PerformanceHeartbeat heartbeat = await monitor.GetHeartbeatAsync().ConfigureAwait(false);
             return heartbeat is not null && !heartbeat.IsIdle();
-        }
-
-        private async ValueTask<PerformanceHeartbeat> GetPerformanceHeartbeatAsync(ScalerMetadata metadata, int? workerCount = null, CancellationToken cancellationToken = default)
-        {
-            AzureStorageOrchestrationServiceSettings settings = new AzureStorageOrchestrationServiceSettings
-            {
-                LoggerFactory = _loggerFactory,
-                MaxQueuePollingInterval = TimeSpan.FromMilliseconds(metadata.MaxMessageLatencyMilliseconds),
-                TaskHubName = metadata.TaskHubName,
-            };
-
-            if (metadata.AccountName is null)
-            {
-                DisconnectedPerformanceMonitor performanceMonitor = new DisconnectedPerformanceMonitor(
-                    CloudStorageAccount.Parse(metadata.ResolveConnectionString(_environment)),
-                    settings);
-
-                return await performanceMonitor.PulseAsync(workerCount).ConfigureAwait(false);
-            }
-            else
-            {
-                CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(metadata.Cloud);
-                using TokenCredential tokenCredential = await _credentialFactory.CreateAsync(endpoints.AuthorityHost, cancellationToken).ConfigureAwait(false);
-                DisconnectedPerformanceMonitor performanceMonitor = new DisconnectedPerformanceMonitor(
-                    new CloudStorageAccount(
-                        new StorageCredentials(tokenCredential),
-                        metadata.AccountName,
-                        endpoints.StorageSuffix,
-                        useHttps: true),
-                    settings);
-
-                return await performanceMonitor.PulseAsync(workerCount).ConfigureAwait(false);
-            }
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Keda.Scaler.DurableTask.AzureStorage.Services
 {
     /// <summary>
-    /// Represents a scaler for Azure Functions that leverage Azure Storage for their backend provider.
+    /// Represents a scaler for the Durable Task Framework that leverages Azure Storage for its backend provider.
     /// </summary>
     public interface IDurableTaskAzureStorageScaler
     {
