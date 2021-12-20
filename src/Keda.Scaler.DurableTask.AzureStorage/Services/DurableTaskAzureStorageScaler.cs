@@ -48,9 +48,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
             if (metadata is null)
                 throw new ArgumentNullException(nameof(metadata));
 
-            if (string.IsNullOrEmpty(metadata.TaskHubName))
-                throw new ArgumentException($"{nameof(ScalerMetadata.TaskHubName)} must be specified.", nameof(metadata));
-
             V1Scale scale = await _kubernetes.ReadNamespacedDeploymentScaleAsync(deployment.Name, deployment.Namespace, cancellationToken: cancellationToken).ConfigureAwait(false);
             _logger.LogInformation(
                 "Found current scale for deployment '{Name}' in namespace '{Namespace}' to be {Replicas} replicas.",
@@ -59,18 +56,25 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
                 scale.Status.Replicas);
 
             using IPerformanceMonitor monitor = await _monitorFactory.CreateAsync(metadata, cancellationToken).ConfigureAwait(false);
-            PerformanceHeartbeat heartbeat = await monitor.GetHeartbeatAsync(scale.Status.Replicas).ConfigureAwait(false);
-            _logger.LogInformation(
-                "Recommendation is to {Recommendation} with reason: {Reason}",
-                heartbeat.ScaleRecommendation.Action,
-                heartbeat.ScaleRecommendation.Reason);
+            PerformanceHeartbeat? heartbeat = await monitor.GetHeartbeatAsync(scale.Status.Replicas).ConfigureAwait(false);
+            if (heartbeat is null)
+            {
+                _logger.LogWarning("Failed to measure Durable Task performance");
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Recommendation is to {Recommendation} due to reason: '{Reason}'",
+                    heartbeat.ScaleRecommendation.Action,
+                    heartbeat.ScaleRecommendation.Reason);
+            }
 
-            double scaleFactor = heartbeat.ScaleRecommendation.Action switch
+            double scaleFactor = (heartbeat?.ScaleRecommendation.Action ?? ScaleAction.None) switch
             {
                 ScaleAction.None => 1d,
                 ScaleAction.AddWorker => metadata.ScaleIncrement,
                 ScaleAction.RemoveWorker => 1 / metadata.ScaleIncrement,
-                _ => throw new InvalidOperationException($"Unknown scale action '{heartbeat.ScaleRecommendation.Action}'."),
+                _ => throw new InvalidOperationException($"Unknown scale action '{heartbeat!.ScaleRecommendation.Action}'."),
             };
 
             // Note: Currently only average metric value are supported by external scalers,
@@ -83,11 +87,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
             if (metadata is null)
                 throw new ArgumentNullException(nameof(metadata));
 
-            if (string.IsNullOrEmpty(metadata.TaskHubName))
-                throw new ArgumentException($"{nameof(ScalerMetadata.TaskHubName)} must be specified.", nameof(metadata));
-
             using IPerformanceMonitor monitor = await _monitorFactory.CreateAsync(metadata, cancellationToken).ConfigureAwait(false);
-            PerformanceHeartbeat heartbeat = await monitor.GetHeartbeatAsync().ConfigureAwait(false);
+            PerformanceHeartbeat? heartbeat = await monitor.GetHeartbeatAsync().ConfigureAwait(false);
             return heartbeat is not null && !heartbeat.IsIdle();
         }
     }

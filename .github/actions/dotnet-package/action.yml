@@ -48,4 +48,5 @@ runs:
       uses: actions/upload-artifact@v2.2.3
       with:
         name: Service
-        path: ${{ runner.temp }}/service"
+        path: ${{ runner.temp }}/service/"
+        if-no-files-found: error

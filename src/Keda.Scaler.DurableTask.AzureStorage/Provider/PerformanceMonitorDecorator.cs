@@ -32,7 +32,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
             // _credential?.Dispose();
         }
 
-        public Task<PerformanceHeartbeat> GetHeartbeatAsync(int? workerCount = null)
+        public Task<PerformanceHeartbeat?> GetHeartbeatAsync(int? workerCount = null)
             => workerCount.HasValue ? _monitor.PulseAsync(workerCount.GetValueOrDefault()) : _monitor.PulseAsync();
 
         internal DisconnectedPerformanceMonitor ToDisconnectedPerformanceMonitor()

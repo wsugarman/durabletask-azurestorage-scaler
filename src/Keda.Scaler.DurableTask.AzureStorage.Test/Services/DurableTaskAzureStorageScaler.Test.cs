@@ -22,6 +22,17 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
     public class DurableTaskAzureStorageScalerTest
     {
         [TestMethod]
+        public void MetricNameProperty()
+        {
+            DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(
+                Mock.Of<IKubernetes>(),
+                Mock.Of<IPerformanceMonitorFactory>(),
+                NullLoggerFactory.Instance);
+
+            Assert.AreEqual("WorkerDemand", scaler.MetricName);
+        }
+
+        [TestMethod]
         public void CtorExceptions()
         {
             IKubernetes kubernetes = Mock.Of<IKubernetes>();
@@ -57,7 +68,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
         [DataRow(ScaleAction.AddWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 2 * 5)]
         [DataRow(ScaleAction.RemoveWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue / 2 * 5)]
         [DataRow(ScaleAction.None, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5)]
-        public async Task GetMetricValueAsync(ScaleAction action, double ratio, int replicas, long expectedMetric)
+        [DataRow(null, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5)]
+        [DataRow((ScaleAction)123, 2, 5, 0)]
+        public async Task GetMetricValueAsync(ScaleAction? action, double ratio, int replicas, long expectedMetric)
         {
             // Create input
             DeploymentReference deployment = new DeploymentReference("unit-test-func", "durable-task");
@@ -74,7 +87,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
 
             // Create mock services
             V1Scale scale = new V1Scale { Status = new V1ScaleStatus { Replicas = replicas } };
-            PerformanceHeartbeat heartbeat = CreateHeartbeat(action);
+            PerformanceHeartbeat? heartbeat = action is null ? null : CreateHeartbeat(action.GetValueOrDefault());
 
 #pragma warning disable CA2000 // ReadNamespacedDeploymentScaleAsync will dipose
             Mock<IKubernetes> k8sMock = new Mock<IKubernetes>(MockBehavior.Strict);
@@ -104,13 +117,18 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
             await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.GetMetricValueAsync(default, null!).AsTask()).ConfigureAwait(false);
 
             // Non-null metadata
-            Assert.AreEqual(expectedMetric, await scaler.GetMetricValueAsync(deployment, metadata, tokenSource.Token).ConfigureAwait(false));
+            Task<long> metricTask = scaler.GetMetricValueAsync(deployment, metadata, tokenSource.Token).AsTask();
+            if (Enum.IsDefined(action.GetValueOrDefault()))
+                Assert.AreEqual(expectedMetric, await metricTask.ConfigureAwait(false));
+            else
+                await Assert.ThrowsExceptionAsync<InvalidOperationException>(() => metricTask).ConfigureAwait(false);
         }
 
         [DataTestMethod]
-        [DataRow(false)]
-        [DataRow(true)]
-        public async Task IsActiveAsync(bool isActive)
+        [DataRow(ScalerActivity.Null)]
+        [DataRow(ScalerActivity.None)]
+        [DataRow(ScalerActivity.Some)]
+        public async Task IsActiveAsync(ScalerActivity activity)
         {
             // Create input
             ScalerMetadata metadata = new ScalerMetadata
@@ -124,17 +142,21 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
             using CancellationTokenSource tokenSource = new CancellationTokenSource();
 
             // Create mock services
-            PerformanceHeartbeat heartbeat = isActive
-                ? new PerformanceHeartbeat
-                {
-                    ControlQueueLatencies = new TimeSpan[] { TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(1) },
-                    WorkItemQueueLatency = TimeSpan.FromMilliseconds(300),
-                }
-                : new PerformanceHeartbeat
+            PerformanceHeartbeat? heartbeat = activity switch
+            {
+                ScalerActivity.Null => null,
+                ScalerActivity.None => new PerformanceHeartbeat
                 {
                     ControlQueueLatencies = new TimeSpan[] { TimeSpan.Zero, TimeSpan.Zero, TimeSpan.Zero },
                     WorkItemQueueLatency = TimeSpan.Zero,
-                };
+                },
+                ScalerActivity.Some => new PerformanceHeartbeat
+                {
+                    ControlQueueLatencies = new TimeSpan[] { TimeSpan.Zero, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(1) },
+                    WorkItemQueueLatency = TimeSpan.FromMilliseconds(300),
+                },
+                _ => throw new InvalidOperationException("Unknown scaler activity"),
+            };
 
             Mock<IPerformanceMonitor> monitorMock = new Mock<IPerformanceMonitor>(MockBehavior.Strict);
             monitorMock
@@ -157,7 +179,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
             await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.IsActiveAsync(null!, tokenSource.Token).AsTask()).ConfigureAwait(false);
 
             // Non-null metadata
-            Assert.AreEqual(isActive, await scaler.IsActiveAsync(metadata, tokenSource.Token).ConfigureAwait(false));
+            Assert.AreEqual(activity == ScalerActivity.Some, await scaler.IsActiveAsync(metadata, tokenSource.Token).ConfigureAwait(false));
         }
 
         private static PerformanceHeartbeat CreateHeartbeat(ScaleAction action, string? reason = null)
@@ -172,6 +194,13 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
             PerformanceHeartbeat heartbeat = new PerformanceHeartbeat();
             method.Invoke(heartbeat, new object[] { ctor.Invoke(new object?[] { action, false, reason }) });
             return heartbeat;
+        }
+
+        public enum ScalerActivity
+        {
+            Null,
+            None,
+            Some
         }
     }
 }

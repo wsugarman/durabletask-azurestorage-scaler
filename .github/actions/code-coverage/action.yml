@@ -18,4 +18,5 @@ runs:
       uses: actions/upload-artifact@v2.2.3
       with:
         name: CodeCoverage
-        path: ${{ runner.temp }}/codecoverage
+        path: ${{ runner.temp }}/codecoverage/
+        if-no-files-found: error

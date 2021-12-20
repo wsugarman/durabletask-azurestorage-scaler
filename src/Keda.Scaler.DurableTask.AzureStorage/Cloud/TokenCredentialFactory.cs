@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Services.AppAuthentication;
@@ -13,6 +14,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
     {
         private readonly Func<string, Uri, AzureServiceTokenProvider> _tokenProviderFactory;
 
+        [ExcludeFromCodeCoverage]
         public TokenCredentialFactory()
             : this((s, a) => new AzureServiceTokenProvider(s, a.AbsoluteUri))
         { }
