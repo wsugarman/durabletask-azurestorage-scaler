@@ -26,7 +26,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud.Test
             const string accessToken = "AAAA";
 
             using CancellationTokenSource tokenSource = new CancellationTokenSource();
-            Mock<AzureServiceTokenProvider> mock = new Mock<AzureServiceTokenProvider>(MockBehavior.Strict);
+            Mock<AzureServiceTokenProvider> mock = new Mock<AzureServiceTokenProvider>(MockBehavior.Strict, "RunAs=App", authority.AbsoluteUri);
             mock.Setup(p => p.GetAccessTokenAsync(resource, null, tokenSource.Token)).ReturnsAsync(accessToken);
 
             TokenCredentialFactory factory = new TokenCredentialFactory(
@@ -40,7 +40,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud.Test
             await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => factory.CreateAsync(null!, authority, tokenSource.Token).AsTask()).ConfigureAwait(false);
             await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => factory.CreateAsync(resource, null!, tokenSource.Token).AsTask()).ConfigureAwait(false);
 
-            using TokenCredential actual = await factory.CreateAsync(resource, authority, tokenSource.Token).ConfigureAwait(false);
+            TokenCredential actual = await factory.CreateAsync(resource, authority, tokenSource.Token).ConfigureAwait(false);
             Assert.AreEqual(accessToken, actual.Token);
         }
     }

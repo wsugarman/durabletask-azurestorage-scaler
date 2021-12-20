@@ -12,6 +12,7 @@ using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Provider;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Rest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -33,26 +34,30 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
         }
 
         [TestMethod]
-        public async Task GetScaleMetricSpecAsync()
+        public async Task GetMetricSpecAsync()
         {
             IKubernetes kubernetes = Mock.Of<IKubernetes>();
             IPerformanceMonitorFactory monitorFactory = Mock.Of<IPerformanceMonitorFactory>();
             ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
+            using CancellationTokenSource tokenSource = new CancellationTokenSource();
+
             DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(kubernetes, monitorFactory, loggerFactory);
 
             // Null metadata
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.GetScaleMetricSpecAsync(null!).AsTask()).ConfigureAwait(false);
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.GetMetricSpecAsync(null!, tokenSource.Token).AsTask()).ConfigureAwait(false);
 
             // Non-null metadata
-            Assert.AreEqual(DurableTaskAzureStorageScaler.MetricSpecValue, await scaler.GetScaleMetricSpecAsync(new ScalerMetadata()).ConfigureAwait(false));
+            Assert.AreEqual(
+                DurableTaskAzureStorageScaler.MetricSpecValue,
+                await scaler.GetMetricSpecAsync(new ScalerMetadata(), tokenSource.Token).ConfigureAwait(false));
         }
 
         [DataTestMethod]
         [DataRow(ScaleAction.AddWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 2 * 5)]
         [DataRow(ScaleAction.RemoveWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue / 2 * 5)]
         [DataRow(ScaleAction.None, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5)]
-        public async Task GetIncreasingScaleMetricValueAsync(ScaleAction action, int ratio, int replicas, int expectedMetric)
+        public async Task GetMetricValueAsync(ScaleAction action, double ratio, int replicas, long expectedMetric)
         {
             // Create input
             DeploymentReference deployment = new DeploymentReference("unit-test-func", "durable-task");
@@ -71,31 +76,35 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
             V1Scale scale = new V1Scale { Status = new V1ScaleStatus { Replicas = replicas } };
             PerformanceHeartbeat heartbeat = CreateHeartbeat(action);
 
+#pragma warning disable CA2000 // ReadNamespacedDeploymentScaleAsync will dipose
             Mock<IKubernetes> k8sMock = new Mock<IKubernetes>(MockBehavior.Strict);
             k8sMock
-                .Setup(k => k.ReadNamespacedDeploymentScaleAsync(deployment.Name, deployment.Namespace, false, tokenSource.Token))
-                .ReturnsAsync(scale);
+                .Setup(k => k.ReadNamespacedDeploymentScaleWithHttpMessagesAsync(deployment.Name, deployment.Namespace, null, null, tokenSource.Token))
+                .ReturnsAsync(new HttpOperationResponse<V1Scale> { Body = scale });
+#pragma warning restore CA2000
 
             Mock<IPerformanceMonitor> monitorMock = new Mock<IPerformanceMonitor>(MockBehavior.Strict);
             monitorMock
                 .Setup(m => m.GetHeartbeatAsync(replicas))
                 .ReturnsAsync(heartbeat);
+            monitorMock
+                .Setup(m => m.Dispose());
 
             Mock<IPerformanceMonitorFactory> factoryMock = new Mock<IPerformanceMonitorFactory>(MockBehavior.Strict);
             factoryMock
                 .Setup(f => f.CreateAsync(metadata, tokenSource.Token))
                 .ReturnsAsync(monitorMock.Object);
 
-            IEnvironment environment = CurrentEnvironment.Instance;
+            IProcessEnvironment environment = CurrentEnvironment.Instance;
             ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
             DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(k8sMock.Object, factoryMock.Object, loggerFactory);
 
             // Null metadata
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.GetScaleMetricValueAsync(default, null!).AsTask()).ConfigureAwait(false);
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.GetMetricValueAsync(default, null!).AsTask()).ConfigureAwait(false);
 
             // Non-null metadata
-            Assert.AreEqual(expectedMetric, await scaler.GetScaleMetricValueAsync(deployment, metadata).ConfigureAwait(false));
+            Assert.AreEqual(expectedMetric, await scaler.GetMetricValueAsync(deployment, metadata, tokenSource.Token).ConfigureAwait(false));
         }
 
         [DataTestMethod]
@@ -131,22 +140,24 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
             monitorMock
                 .Setup(m => m.GetHeartbeatAsync(null))
                 .ReturnsAsync(heartbeat);
+            monitorMock
+                .Setup(m => m.Dispose());
 
             Mock<IPerformanceMonitorFactory> factoryMock = new Mock<IPerformanceMonitorFactory>(MockBehavior.Strict);
             factoryMock
                 .Setup(f => f.CreateAsync(metadata, tokenSource.Token))
                 .ReturnsAsync(monitorMock.Object);
 
-            IEnvironment environment = CurrentEnvironment.Instance;
+            IProcessEnvironment environment = CurrentEnvironment.Instance;
             ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
             DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(Mock.Of<IKubernetes>(), factoryMock.Object, loggerFactory);
 
             // Null metadata
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.IsActiveAsync(null!).AsTask()).ConfigureAwait(false);
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.IsActiveAsync(null!, tokenSource.Token).AsTask()).ConfigureAwait(false);
 
             // Non-null metadata
-            Assert.AreEqual(isActive, await scaler.IsActiveAsync(metadata).ConfigureAwait(false));
+            Assert.AreEqual(isActive, await scaler.IsActiveAsync(metadata, tokenSource.Token).ConfigureAwait(false));
         }
 
         private static PerformanceHeartbeat CreateHeartbeat(ScaleAction action, string? reason = null)
@@ -159,7 +170,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
                 .GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, new Type[] { typeof(ScaleAction), typeof(bool), typeof(string) })!;
 
             PerformanceHeartbeat heartbeat = new PerformanceHeartbeat();
-            return (PerformanceHeartbeat)method.Invoke(heartbeat, new object[] { ctor.Invoke(new object?[] { action, false, reason }) })!;
+            method.Invoke(heartbeat, new object[] { ctor.Invoke(new object?[] { action, false, reason }) });
+            return heartbeat;
         }
     }
 }

@@ -22,12 +22,12 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
 
         private readonly CreateMonitor _monitorFactory;
         private readonly ITokenCredentialFactory _credentialFactory;
-        private readonly IEnvironment _environment;
+        private readonly IProcessEnvironment _environment;
         private readonly ILoggerFactory _loggerFactory;
 
         internal PerformanceMonitorFactory(
             ITokenCredentialFactory credentialFactory,
-            IEnvironment environment,
+            IProcessEnvironment environment,
             ILoggerFactory loggerFactory)
             : this((c, s) => new DisconnectedPerformanceMonitor(c, s), credentialFactory, environment, loggerFactory)
         { }
@@ -35,7 +35,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
         internal PerformanceMonitorFactory(
             CreateMonitor monitorFactory,
             ITokenCredentialFactory credentialFactory,
-            IEnvironment environment,
+            IProcessEnvironment environment,
             ILoggerFactory loggerFactory)
         {
             _monitorFactory = monitorFactory ?? throw new ArgumentNullException(nameof(monitorFactory));
@@ -65,7 +65,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
             }
             else
             {
-                CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(metadata.Cloud);
+                CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(metadata.CloudEnvironment);
                 TokenCredential tokenCredential = await _credentialFactory.CreateAsync(
                     StorageAccountResource,
                     endpoints.AuthorityHost,

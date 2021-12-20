@@ -31,10 +31,26 @@ namespace Keda.Scaler.DurableTask.AzureStorage
         public string? AccountName { get; init; }
 
         /// <summary>
+        /// Gets the cloud environment that contains the Azure Storage account used by the Durable Task framework.
+        /// </summary>
+        /// <value>
+        /// The Azure cloud environment containing the storage account, if a known value;
+        /// otherwise, <see cref="CloudEnvironment.Unknown"/>.
+        /// </value>
+        public CloudEnvironment CloudEnvironment => Cloud switch
+        {
+            nameof(CloudEnvironment.AzurePublicCloud) or null => CloudEnvironment.AzurePublicCloud,
+            nameof(CloudEnvironment.AzureUSGovernmentCloud) => CloudEnvironment.AzureUSGovernmentCloud,
+            nameof(CloudEnvironment.AzureChinaCloud) => CloudEnvironment.AzureChinaCloud,
+            nameof(CloudEnvironment.AzureGermanCloud) => CloudEnvironment.AzureGermanCloud,
+            _ => CloudEnvironment.Unknown,
+        };
+
+        /// <summary>
         /// Gets the name of the cloud environment that contains the Azure Storage account used by the Durable Task framework.
         /// </summary>
-        /// <value>The Azure cloud environment containing the storage account.</value>
-        public CloudEnvironment Cloud { get; init; }
+        /// <value>The name of the Azure cloud environment containing the storage account.</value>
+        public string? Cloud { get; init; }
 
         /// <summary>
         /// Gets the optional connection string for the Azure Storage account used by the Durable Task framework.
@@ -75,7 +91,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage
         /// </summary>
         /// <remarks>Durable Task framework does not support a value larger than 1000 milliseconds or 1 second.</remarks>
         /// <value>The desired length of time messages sit in their respective queues before being processed.</value>
-        public int MaxMessageLatencyMilliseconds { get; set; } = 1000;
+        public int MaxMessageLatencyMilliseconds { get; init; } = 1000;
 
         /// <summary>
         /// Gets the name of the configured task hub present in Azure Storage.
@@ -104,19 +120,19 @@ namespace Keda.Scaler.DurableTask.AzureStorage
         /// <summary>
         /// Gets the resolved connection string based on the <see cref="Connection"/> and <see cref="ConnectionFromEnv"/>.
         /// </summary>
-        /// <param name="environment">The <see cref="IEnvironment"/> containing any variables.</param>
+        /// <param name="environment">The <see cref="IProcessEnvironment"/> containing any variables.</param>
         /// <returns>
         /// <see cref="Connection"/>, if specified; otherwise, the value of an environment variable specified by
         /// <see cref="ConnectionFromEnv"/> or <c>AzureWebJobsStorage</c> by default.
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="environment"/> is <see langword="null"/>.</exception>
-        public string? ResolveConnectionString(IEnvironment environment)
+        public string? ResolveConnectionString(IProcessEnvironment environment)
         {
             if (environment is null)
                 throw new ArgumentNullException(nameof(environment));
 
             return Connection is null
-                ? environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable, EnvironmentVariableTarget.Process)
+                ? environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable)
                 : Connection;
         }
 
@@ -131,19 +147,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage
             if (validationContext is null)
                 throw new ArgumentNullException(nameof(validationContext));
 
-            if (AccountName is not null && string.IsNullOrWhiteSpace(AccountName))
-                yield return new ValidationResult($"If specified, {nameof(AccountName)} cannot be empty or consist entirely of white space characters.");
-
-            if (!Enum.IsDefined(Cloud))
-                yield return new ValidationResult($"Unknown value '{Cloud}' for {nameof(Cloud)}.");
-
-            if (Connection is not null && string.IsNullOrWhiteSpace(Connection))
-                yield return new ValidationResult($"If specified, {nameof(Connection)} cannot be empty or consist entirely of white space characters.");
-
-            if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))
-                yield return new ValidationResult($"If specified, {nameof(ConnectionFromEnv)} cannot be empty or consist entirely of white space characters.");
-
-            if (0 < MaxMessageLatencyMilliseconds)
+            if (MaxMessageLatencyMilliseconds < 0)
                 yield return new ValidationResult($"{nameof(MaxMessageLatencyMilliseconds)} cannot be less than zero.");
 
             if (MaxMessageLatencyMilliseconds > 1000)
@@ -160,6 +164,12 @@ namespace Keda.Scaler.DurableTask.AzureStorage
                 if (AccountName is null)
                     yield return new ValidationResult($"{nameof(AccountName)} must be specified if using AAD pod identity.");
 
+                if (AccountName is not null && string.IsNullOrWhiteSpace(AccountName))
+                    yield return new ValidationResult($"If specified, {nameof(AccountName)} cannot be empty or consist entirely of white space characters.");
+
+                if (CloudEnvironment == CloudEnvironment.Unknown)
+                    yield return new ValidationResult($"Unknown value '{Cloud}' for {nameof(Cloud)}.");
+
                 if (Connection is not null)
                     yield return new ValidationResult($"{nameof(Connection)} should not be specified if using AAD pod identity.");
 
@@ -171,8 +181,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage
                 if (AccountName is not null)
                     yield return new ValidationResult($"{nameof(AccountName)} should only be specified if using AAD pod identity.");
 
-                IEnvironment environment = validationContext.GetRequiredService<IEnvironment>();
-                if (string.IsNullOrWhiteSpace(ResolveConnectionString(environment)))
+                if (Cloud is not null)
+                    yield return new ValidationResult($"{nameof(Cloud)} should only be specified if using AAD pod identity.");
+
+                IProcessEnvironment environment = validationContext.GetRequiredService<IProcessEnvironment>();
+                if (Connection is not null && string.IsNullOrWhiteSpace(Connection))
+                    yield return new ValidationResult($"If specified, {nameof(Connection)} cannot be empty or consist entirely of white space characters.");
+                else if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))
+                    yield return new ValidationResult($"If specified, {nameof(ConnectionFromEnv)} cannot be empty or consist entirely of white space characters.");
+                else if (string.IsNullOrWhiteSpace(ResolveConnectionString(environment)))
                     yield return new ValidationResult($"Unable to resolve the connection string from environment variable '{ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable}'.");
             }
         }

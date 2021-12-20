@@ -33,7 +33,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Extensions.Test
 
             ScalerMetadata actual = raw.ToConfiguration().Get<ScalerMetadata>();
             Assert.AreEqual("unittest", actual.AccountName);
-            Assert.AreEqual(CloudEnvironment.AzureUSGovernmentCloud, actual.Cloud);
+            Assert.AreEqual(nameof(CloudEnvironment.AzureUSGovernmentCloud), actual.Cloud);
             Assert.AreEqual("foo=bar;hello=world", actual.Connection);
             Assert.AreEqual("MY_CONNECTION_STRING", actual.ConnectionFromEnv);
             Assert.AreEqual(500, actual.MaxMessageLatencyMilliseconds);

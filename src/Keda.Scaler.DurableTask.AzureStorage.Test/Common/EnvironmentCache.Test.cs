@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using Keda.Scaler.DurableTask.AzureStorage.Test;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Common.Test
@@ -16,31 +17,14 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Common.Test
         [TestMethod]
         public void GetEnvironmentVariable()
         {
-            IEnvironment environment = new EnvironmentCache(CurrentEnvironment.Instance);
+            MockEnvironment env = new MockEnvironment();
+            IProcessEnvironment cache = new EnvironmentCache(env);
 
-            // Setup environment
-            string variable = Guid.NewGuid().ToString();
-            string value = Guid.NewGuid().ToString();
-            string? previous = Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.Process);
-            Environment.SetEnvironmentVariable(variable, value, EnvironmentVariableTarget.Process);
+            env.SetEnvironmentVariable("2", "two");
+            Assert.AreEqual("two", cache.GetEnvironmentVariable("2"));
 
-            try
-            {
-                // Populate cache
-                Assert.AreEqual(value, environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.Process));
-
-                // Change value in environment
-                string newValue = Guid.NewGuid().ToString();
-                Environment.SetEnvironmentVariable(variable, newValue, EnvironmentVariableTarget.Process);
-                Assert.AreEqual(newValue, Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.Process));
-
-                // Ensure previous value was cached
-                Assert.AreEqual(value, environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.Process));
-            }
-            finally
-            {
-                Environment.SetEnvironmentVariable(variable, previous, EnvironmentVariableTarget.Process);
-            }
+            env.SetEnvironmentVariable("2", "deux");
+            Assert.AreEqual("two", cache.GetEnvironmentVariable("2"));
         }
     }
 }

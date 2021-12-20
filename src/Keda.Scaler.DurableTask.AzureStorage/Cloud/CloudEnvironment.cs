@@ -11,6 +11,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
         // TODO: Add 'Private' as well
 
         /// <summary>
+        /// Specifies an unknown Azure cloud.
+        /// </summary>
+        Unknown,
+
+        /// <summary>
         /// Specifies the public Azure cloud.
         /// </summary>
         AzurePublicCloud,

@@ -31,7 +31,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="metadata"/> is <see langword="null"/>.</exception>
         /// <exception cref="OperationCanceledException">The <paramref name="cancellationToken"/> is canceled.</exception>
-        ValueTask<long> GetScaleMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default);
+        ValueTask<long> GetMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Asynchronously retrieves the metric value based on the <paramref name="metadata"/>.
@@ -47,7 +47,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
         /// </returns>
         /// <exception cref="ArgumentNullException"><paramref name="metadata"/> is <see langword="null"/>.</exception>
         /// <exception cref="OperationCanceledException">The <paramref name="cancellationToken"/> is canceled.</exception>
-        ValueTask<long> GetScaleMetricValueAsync(DeploymentReference deployment, ScalerMetadata metadata, CancellationToken cancellationToken = default);
+        ValueTask<long> GetMetricValueAsync(DeploymentReference deployment, ScalerMetadata metadata, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Asynchronously indicates whether the scaler is active due to durable functions or actors.

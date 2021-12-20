@@ -35,7 +35,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
             _logger = loggerFactory?.CreateLogger(LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
         }
 
-        public ValueTask<long> GetScaleMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
+        public ValueTask<long> GetMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
         {
             if (metadata is null)
                 throw new ArgumentNullException(nameof(metadata));
@@ -43,7 +43,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
             return ValueTask.FromResult(MetricSpecValue);
         }
 
-        public async ValueTask<long> GetScaleMetricValueAsync(DeploymentReference deployment, ScalerMetadata metadata, CancellationToken cancellationToken = default)
+        public async ValueTask<long> GetMetricValueAsync(DeploymentReference deployment, ScalerMetadata metadata, CancellationToken cancellationToken = default)
         {
             if (metadata is null)
                 throw new ArgumentNullException(nameof(metadata));

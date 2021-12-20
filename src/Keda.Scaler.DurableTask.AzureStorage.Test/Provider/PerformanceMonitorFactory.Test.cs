@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Identity;
@@ -25,7 +26,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider.Test
         {
             CreateMonitor createMonitor = (c, s) => null!;
             ITokenCredentialFactory credentialFactory = Mock.Of<ITokenCredentialFactory>();
-            IEnvironment environment = CurrentEnvironment.Instance;
+            IProcessEnvironment environment = CurrentEnvironment.Instance;
             ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
             Assert.ThrowsException<ArgumentNullException>(() => new PerformanceMonitorFactory(null!, credentialFactory, environment, loggerFactory));
@@ -35,16 +36,20 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider.Test
         }
 
         [TestMethod]
+        [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "TokenCredential has a bug.")]
         public async Task CreateAsync()
         {
             ScalerMetadata metadata;
             CreateMonitor createFactory;
             PerformanceMonitorFactory factory;
             PerformanceMonitorDecorator actual;
-            DisconnectedPerformanceMonitor monitor = Mock.Of<DisconnectedPerformanceMonitor>();
+            DisconnectedPerformanceMonitor monitor = new Mock<DisconnectedPerformanceMonitor>(
+                MockBehavior.Strict,
+                "UseDevelopmentStorage=true",
+                "UnitTestTaskHub").Object;
 
             using CancellationTokenSource tokenSource = new CancellationTokenSource();
-            using TokenCredential credential = new TokenCredential("ABC");
+            TokenCredential credential = new TokenCredential("ABC");
 
             Mock<ITokenCredentialFactory> mockCredentialFactory = new Mock<ITokenCredentialFactory>(MockBehavior.Strict);
             mockCredentialFactory
@@ -66,8 +71,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider.Test
             createFactory = (c, s) =>
             {
                 // Assert dev account
-                Assert.AreEqual("http://127.0.0.1:10000/devstoreaccount1;", c.BlobEndpoint.AbsoluteUri);
-                Assert.IsNull(c.Credentials);
+                Assert.AreEqual("http://127.0.0.1:10000/devstoreaccount1", c.BlobEndpoint.AbsoluteUri);
+                Assert.IsFalse(c.Credentials.IsToken);
                 AssertSettings(NullLoggerFactory.Instance, TimeSpan.FromMilliseconds(500), "UnitTestTaskHub", s);
 
                 return monitor;
@@ -89,7 +94,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider.Test
 
             createFactory = (c, s) =>
             {
-                Assert.AreEqual("https://unitteststorage.blob.core.windows.net", c.BlobEndpoint.AbsoluteUri);
+                Assert.AreEqual("https://unitteststorage.blob.core.windows.net/", c.BlobEndpoint.AbsoluteUri);
                 Assert.IsTrue(c.Credentials.IsToken);
                 AssertSettings(NullLoggerFactory.Instance, TimeSpan.FromMilliseconds(500), "UnitTestTaskHub", s);
 

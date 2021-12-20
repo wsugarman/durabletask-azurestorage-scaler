@@ -12,7 +12,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Common.Test
         [TestMethod]
         public void GetEnvironmentVariable()
         {
-            IEnvironment environment = CurrentEnvironment.Instance;
+            IProcessEnvironment environment = CurrentEnvironment.Instance;
 
             // Setup environment
             string variable = Guid.NewGuid().ToString();
@@ -23,7 +23,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Common.Test
             try
             {
                 // Fetch variable
-                Assert.AreEqual(value, environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.Process));
+                Assert.AreEqual(value, environment.GetEnvironmentVariable(variable));
             }
             finally
             {

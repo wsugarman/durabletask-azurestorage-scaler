@@ -23,7 +23,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Extensions.Test
             IServiceCollection services = new ServiceCollection().AddScaler();
             Assert.IsTrue(services.Any(x => x.ServiceType == typeof(IDurableTaskAzureStorageScaler)));
             Assert.IsTrue(services.Any(x => x.ServiceType == typeof(ITokenCredentialFactory)));
-            Assert.IsTrue(services.Any(x => x.ServiceType == typeof(IEnvironment)));
+            Assert.IsTrue(services.Any(x => x.ServiceType == typeof(IProcessEnvironment)));
         }
     }
 }

@@ -21,7 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
             if (services is null)
                 throw new ArgumentNullException(nameof(services));
 
-            services.TryAddScoped<IEnvironment>(p => new EnvironmentCache(CurrentEnvironment.Instance));
+            services.TryAddScoped<IProcessEnvironment>(p => new EnvironmentCache(CurrentEnvironment.Instance));
             services.TryAddSingleton<ITokenCredentialFactory, TokenCredentialFactory>();
             services.TryAddScoped<IDurableTaskAzureStorageScaler, DurableTaskAzureStorageScaler>();
 

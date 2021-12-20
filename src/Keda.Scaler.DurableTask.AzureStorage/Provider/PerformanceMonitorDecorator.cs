@@ -22,7 +22,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
         }
 
         public void Dispose()
-            => _credential?.Dispose(); // In truth, disposal isn't necessary because we don't renew it via the timer
+        {
+            // We cannot dispose the TokenCredential object because of a bug in the library that
+            // attempts to dispose of the underlying timer and token source, even if they weren't created.
+            // Given that this library is deprecated, we'll skip disposal as we don't leverage automatic renewal and
+            // instead wait for a new version of the Durable Task library that leverages the newer
+            // Azure.Identity library for authentication.
+
+            // _credential?.Dispose();
+        }
 
         public Task<PerformanceHeartbeat> GetHeartbeatAsync(int? workerCount = null)
             => workerCount.HasValue ? _monitor.PulseAsync(workerCount.GetValueOrDefault()) : _monitor.PulseAsync();

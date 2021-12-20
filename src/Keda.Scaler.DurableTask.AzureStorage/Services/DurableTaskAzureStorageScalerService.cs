@@ -83,7 +83,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
                 new MetricSpec
                 {
                     MetricName = _scaler.MetricName,
-                    TargetSize = await _scaler.GetScaleMetricSpecAsync(metadata, context.CancellationToken).ConfigureAwait(false),
+                    TargetSize = await _scaler.GetMetricSpecAsync(metadata, context.CancellationToken).ConfigureAwait(false),
                 });
             return response;
         }
@@ -116,7 +116,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services
                 new MetricValue
                 {
                     MetricName = request.MetricName,
-                    MetricValue_ = await _scaler.GetScaleMetricValueAsync(deployment, metadata, context.CancellationToken).ConfigureAwait(false),
+                    MetricValue_ = await _scaler.GetMetricValueAsync(deployment, metadata, context.CancellationToken).ConfigureAwait(false),
                 });
 
             return response;
