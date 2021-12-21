@@ -13,7 +13,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test
         public string? GetEnvironmentVariable(string variable)
             => _env.TryGetValue(variable, out string? value) ? value : null;
 
-        public void SetEnvironmentVariable(string variable, string value)
+        public void SetEnvironmentVariable(string variable, string? value)
         {
             if (value is null)
                 _env.Remove(variable);

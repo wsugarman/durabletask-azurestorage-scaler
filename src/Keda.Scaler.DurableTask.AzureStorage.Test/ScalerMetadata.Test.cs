@@ -99,6 +99,10 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test
 
             // No AAD + Cannot resolve connection string
             AssertValidation(new ScalerMetadata { ConnectionFromEnv = "MY_CONNECTION", UseAAdPodIdentity = false }, provider, 1);
+
+            // No AAD + Cannot resolve default connection string
+            env.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, null);
+            AssertValidation(new ScalerMetadata(), provider, 1);
         }
 
         private static void AssertValidation(ScalerMetadata metadata, IServiceProvider provider, int expectedErrors)
