@@ -105,6 +105,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Protobuf.Test
                     { "three", "3" },
                 });
 
+            // Invalid key
+            Assert.ThrowsException<ArgumentNullException>(() => config.GetSection(null!));
+
             // Missing
             IConfigurationSection missing = config.GetSection("four");
             Assert.AreEqual("four", missing.Key);
@@ -112,6 +115,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Protobuf.Test
             Assert.AreEqual(null, missing.Value);
             Assert.AreEqual(0, missing.GetChildren().Count());
             Assert.IsNotNull(missing.GetReloadToken());
+            Assert.IsNull(missing["any key"]);
 
             // Found
             IConfigurationSection section = config.GetSection("two");
@@ -120,6 +124,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Protobuf.Test
             Assert.AreEqual("2", section.Value);
             Assert.AreEqual(0, section.GetChildren().Count());
             Assert.IsNotNull(section.GetReloadToken());
+            Assert.IsNull(section["any key"]);
 
             // Nested
             IConfigurationSection nested = section.GetSection("two");
@@ -128,6 +133,10 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Protobuf.Test
             Assert.AreEqual(null, nested.Value);
             Assert.AreEqual(0, nested.GetChildren().Count());
             Assert.IsNotNull(nested.GetReloadToken());
+            Assert.IsNull(nested["any key"]);
+
+            // Invalid nested
+            Assert.ThrowsException<ArgumentNullException>(() => nested.GetSection(null!));
 
             // Modify the sections
             missing.Value = "quatre";
@@ -141,6 +150,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Protobuf.Test
             Assert.ThrowsException<NotSupportedException>(() => missing["foo"] = "foo");
             Assert.ThrowsException<NotSupportedException>(() => section["bar"] = "bar");
             Assert.ThrowsException<NotSupportedException>(() => nested["baz"] = "baz");
+
+            // Nested-Nested
+            IConfigurationSection subNested = nested.GetSection("two");
+            Assert.AreEqual("two", subNested.Key);
+            Assert.AreEqual("two:two:two", subNested.Path);
+            Assert.AreEqual(null, subNested.Value);
+            Assert.AreEqual(0, subNested.GetChildren().Count());
+            Assert.IsNotNull(subNested.GetReloadToken());
+            Assert.IsNull(subNested["any key"]);
         }
     }
 }

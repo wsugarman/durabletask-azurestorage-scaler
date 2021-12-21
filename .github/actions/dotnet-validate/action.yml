@@ -1,0 +1,42 @@
+name: dotnet test
+description: Ensures quality by running cross-platform tests and code coverage
+inputs:
+  solution:
+    description: The name of the solution file
+    required: true
+  buildConfiguration:
+    default: Debug
+    description: The dotnet build configuration
+    required: false
+  resultsDirectory:
+    description: The directory where the test results are going to be placed
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup
+      uses: actions/setup-dotnet@v1.8.2
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Build
+      shell: bash
+      run: |
+        dotnet build "./src/${{ inputs.solution }}.sln" \
+          -c "${{ inputs.buildConfiguration }}" \
+          -p:ContinuousIntegrationBuild=true \
+          -warnaserror
+
+    - name: Test
+      shell: bash
+      run: |
+        dotnet test "./src/${{ inputs.solution }}.sln" \
+          -c "${{ inputs.buildConfiguration }}" \
+          -p:ContinuousIntegrationBuild=true \
+          -warnaserror \
+          --no-build \
+          -r "${{ inputs.resultsDirectory }}" \
+          --collect "XPlat Code Coverage" \
+          -s "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \
+          -v normal

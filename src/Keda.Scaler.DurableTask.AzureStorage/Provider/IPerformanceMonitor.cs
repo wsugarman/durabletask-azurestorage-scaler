@@ -9,6 +9,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Provider
 {
     internal interface IPerformanceMonitor : IDisposable
     {
-        Task<PerformanceHeartbeat> GetHeartbeatAsync(int? workerCount = null);
+        Task<PerformanceHeartbeat?> GetHeartbeatAsync(int? workerCount = null);
     }
 }

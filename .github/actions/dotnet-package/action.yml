@@ -1,0 +1,52 @@
+name: dotnet publish
+description: Publishes a .NET project and uploads the result as an artifact
+inputs:
+  project:
+    description: The name of the csproj file
+    required: true
+  buildConfiguration:
+    default: Debug
+    description: The dotnet build configuration
+    required: false
+  versionFile:
+    default: './Version.json'
+    description: The product version
+    required: false
+  buildId:
+    default: ''
+    description: A unique build if for packages that are not yet finalized
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup
+      uses: actions/setup-dotnet@v1.8.2
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Determine Version
+      id: version
+      shell: pwsh
+      run: |
+        ./.github/actions/dotnet-package/scripts/ParseVersion.ps1 `
+          -VersionFilePath '${{ inputs.versionFile }}' `
+          -BuildId '${{ inputs.buildId }}'
+
+    - name: Build
+      shell: bash
+      run: |
+        dotnet publish "./src/${{ inputs.project }}/${{ inputs.project }}.csproj" \
+          -c "${{ inputs.buildConfiguration }}" \
+          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ steps.version.outputs.assembly }};FileVersion=${{ steps.version.outputs.file }};InformationalVersion=${{ steps.version.outputs.file }}" \
+          -warnaserror \
+          -o "${{ runner.temp }}/service"
+
+    # TODO: Docker Build
+
+    - name: Upload Scaler Service
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: Service
+        path: ${{ runner.temp }}/service/
+        if-no-files-found: error

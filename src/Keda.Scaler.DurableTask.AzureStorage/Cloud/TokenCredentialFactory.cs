@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Services.AppAuthentication;
@@ -13,8 +14,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
     {
         private readonly Func<string, Uri, AzureServiceTokenProvider> _tokenProviderFactory;
 
+        [ExcludeFromCodeCoverage]
         public TokenCredentialFactory()
-            : this((s, a) => new AzureServiceTokenProvider(s, a.AbsoluteUri))
+            : this(CreateAzureServiceTokenProvider)
         { }
 
         internal TokenCredentialFactory(Func<string, Uri, AzureServiceTokenProvider> tokenProviderFactory)
@@ -32,5 +34,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
             AzureServiceTokenProvider tokenProvider = _tokenProviderFactory("RunAs=App", authorityHost);
             return new TokenCredential(await tokenProvider.GetAccessTokenAsync(resource, cancellationToken: cancellationToken).ConfigureAwait(false));
         }
+
+        [ExcludeFromCodeCoverage]
+        private static AzureServiceTokenProvider CreateAzureServiceTokenProvider(string connectionString, Uri authorityHost)
+            => new AzureServiceTokenProvider(connectionString, authorityHost.AbsoluteUri);
     }
 }
