@@ -54,13 +54,16 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
 
             using CancellationTokenSource tokenSource = new CancellationTokenSource();
 
+            ScaledObjectRef scaledObj = CreateScaledObjectRef(metadata);
             ServerCallContext context = new MockServerCallContext(tokenSource.Token);
             _mockScaler
                 .Setup(s => s.IsActiveAsync(It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
                 .ReturnsAsync(true);
 
             DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
-            IsActiveResponse actual = await service.IsActive(CreateScaledObjectRef(metadata), context).ConfigureAwait(false);
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.IsActive(null!, context)).ConfigureAwait(false);
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.IsActive(scaledObj, null!)).ConfigureAwait(false);
+            IsActiveResponse actual = await service.IsActive(scaledObj, context).ConfigureAwait(false);
             Assert.IsTrue(actual.Result);
         }
 
@@ -81,13 +84,17 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
 
             using CancellationTokenSource tokenSource = new CancellationTokenSource();
 
+            ScaledObjectRef scaledObj = CreateScaledObjectRef(metadata);
             ServerCallContext context = new MockServerCallContext(tokenSource.Token);
             _mockScaler
                 .Setup(s => s.GetMetricSpecAsync(It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
                 .ReturnsAsync(targetValue);
 
             DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
-            GetMetricSpecResponse response = await service.GetMetricSpec(CreateScaledObjectRef(metadata), context).ConfigureAwait(false);
+
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(null!, context)).ConfigureAwait(false);
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(scaledObj, null!)).ConfigureAwait(false);
+            GetMetricSpecResponse response = await service.GetMetricSpec(scaledObj, context).ConfigureAwait(false);
 
             MetricSpec actual = response.MetricSpecs.Single();
             Assert.AreEqual(MetricName, actual.MetricName);
@@ -112,13 +119,17 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
 
             using CancellationTokenSource tokenSource = new CancellationTokenSource();
 
+            GetMetricsRequest request = CreateGetMetricsRequest(deployment, metadata);
             ServerCallContext context = new MockServerCallContext(tokenSource.Token);
             _mockScaler
                 .Setup(s => s.GetMetricValueAsync(deployment, It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
                 .ReturnsAsync(metricValue);
 
             DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
-            GetMetricsResponse response = await service.GetMetrics(CreateGetMetricsRequest(deployment, metadata), context).ConfigureAwait(false);
+
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetrics(null!, context)).ConfigureAwait(false);
+            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetrics(request, null!)).ConfigureAwait(false);
+            GetMetricsResponse response = await service.GetMetrics(request, context).ConfigureAwait(false);
 
             MetricValue actual = response.MetricValues.Single();
             Assert.AreEqual(MetricName, actual.MetricName);

@@ -16,7 +16,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
 
         [ExcludeFromCodeCoverage]
         public TokenCredentialFactory()
-            : this((s, a) => new AzureServiceTokenProvider(s, a.AbsoluteUri))
+            : this(CreateAzureServiceTokenProvider)
         { }
 
         internal TokenCredentialFactory(Func<string, Uri, AzureServiceTokenProvider> tokenProviderFactory)
@@ -34,5 +34,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
             AzureServiceTokenProvider tokenProvider = _tokenProviderFactory("RunAs=App", authorityHost);
             return new TokenCredential(await tokenProvider.GetAccessTokenAsync(resource, cancellationToken: cancellationToken).ConfigureAwait(false));
         }
+
+        [ExcludeFromCodeCoverage]
+        private static AzureServiceTokenProvider CreateAzureServiceTokenProvider(string connectionString, Uri authorityHost)
+            => new AzureServiceTokenProvider(connectionString, authorityHost.AbsoluteUri);
     }
 }
