@@ -15,7 +15,7 @@
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.41.0" />
     <PackageReference Include="Grpc.Core.Api" Version="2.42.0" />
     <PackageReference Include="Grpc.Tools" Version="2.42.0" PrivateAssets="All" />
-    <PackageReference Include="KubernetesClient" Version="7.0.1" />
+    <PackageReference Include="KubernetesClient" Version="7.0.4" />
     <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" Version="1.10.0" />
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" PrivateAssets="All" />
