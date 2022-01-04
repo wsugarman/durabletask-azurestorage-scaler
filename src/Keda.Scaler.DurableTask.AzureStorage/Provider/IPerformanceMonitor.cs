@@ -5,10 +5,9 @@ using System;
 using System.Threading.Tasks;
 using DurableTask.AzureStorage.Monitoring;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Provider
+namespace Keda.Scaler.DurableTask.AzureStorage.Provider;
+
+internal interface IPerformanceMonitor : IDisposable
 {
-    internal interface IPerformanceMonitor : IDisposable
-    {
-        Task<PerformanceHeartbeat?> GetHeartbeatAsync(int? workerCount = null);
-    }
+    Task<PerformanceHeartbeat?> GetHeartbeatAsync(int? workerCount = null);
 }

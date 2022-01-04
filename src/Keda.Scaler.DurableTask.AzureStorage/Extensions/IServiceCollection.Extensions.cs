@@ -12,48 +12,47 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+internal static class IServiceCollectionExtensions
 {
-    internal static class IServiceCollectionExtensions
+    public static IServiceCollection AddScaler(this IServiceCollection services)
     {
-        public static IServiceCollection AddScaler(this IServiceCollection services)
+        if (services is null)
+            throw new ArgumentNullException(nameof(services));
+
+        services.TryAddScoped<IProcessEnvironment>(p => new EnvironmentCache(CurrentEnvironment.Instance));
+        services.TryAddSingleton<ITokenCredentialFactory, TokenCredentialFactory>();
+        services.TryAddScoped<IDurableTaskAzureStorageScaler, DurableTaskAzureStorageScaler>();
+
+        return services;
+    }
+
+    [ExcludeFromCodeCoverage]
+    public static IServiceCollection AddKubernetesClient(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+    {
+        if (services is null)
+            throw new ArgumentNullException(nameof(services));
+
+        if (configuration is null)
+            throw new ArgumentNullException(nameof(configuration));
+
+        if (environment is null)
+            throw new ArgumentNullException(nameof(environment));
+
+        if (environment.IsDevelopment())
         {
-            if (services is null)
-                throw new ArgumentNullException(nameof(services));
+            services
+                .AddOptions<KubernetesClientConfiguration>()
+                .Bind(configuration.GetSection("Kubernetes"));
 
-            services.TryAddScoped<IProcessEnvironment>(p => new EnvironmentCache(CurrentEnvironment.Instance));
-            services.TryAddSingleton<ITokenCredentialFactory, TokenCredentialFactory>();
-            services.TryAddScoped<IDurableTaskAzureStorageScaler, DurableTaskAzureStorageScaler>();
-
-            return services;
+            services.TryAddSingleton<IKubernetes>(p => new Kubernetes(p.GetRequiredService<IOptions<KubernetesClientConfiguration>>().Value));
+        }
+        else
+        {
+            services.TryAddSingleton<IKubernetes>(p => new Kubernetes(KubernetesClientConfiguration.InClusterConfig()));
         }
 
-        [ExcludeFromCodeCoverage]
-        public static IServiceCollection AddKubernetesClient(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
-        {
-            if (services is null)
-                throw new ArgumentNullException(nameof(services));
-
-            if (configuration is null)
-                throw new ArgumentNullException(nameof(configuration));
-
-            if (environment is null)
-                throw new ArgumentNullException(nameof(environment));
-
-            if (environment.IsDevelopment())
-            {
-                services
-                    .AddOptions<KubernetesClientConfiguration>()
-                    .Bind(configuration.GetSection("Kubernetes"));
-
-                services.TryAddSingleton<IKubernetes>(p => new Kubernetes(p.GetRequiredService<IOptions<KubernetesClientConfiguration>>().Value));
-            }
-            else
-            {
-                services.TryAddSingleton<IKubernetes>(p => new Kubernetes(KubernetesClientConfiguration.InClusterConfig()));
-            }
-
-            return services;
-        }
+        return services;
     }
 }

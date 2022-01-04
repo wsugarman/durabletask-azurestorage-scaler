@@ -8,7 +8,7 @@
 
   <!-- Assembly -->
   <PropertyGroup>
-    <Copyright>Copyright © 2021 William Sugarman.</Copyright>
+    <Copyright>Copyright © 2022 William Sugarman.</Copyright>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <Product>DurableTask KEDA External Scaler</Product>
   </PropertyGroup>
