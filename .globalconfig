@@ -1,22 +1,7 @@
-# editorconfig.org
-
-# Top-most EditorConfig file
-root = true
-
-# Default settings:
-# A newline ending every file
-# Use 4 spaces as indentation
-[*]
-insert_final_newline = true
-indent_style         = space
-indent_size          = 4
-
-# C# Files
-# See https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
-[*.cs]
-
-# Copyright File Header
-file_header_template = Copyright © William Sugarman.\nLicensed under the MIT License.
+# Global AnalyzerConfig file
+# For details: https://docs.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-files
+# For rules: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
+is_global = true
 
 # Language code styles
 # Most use "options_name = false|true : none|silent|suggestion|warning|error"
@@ -93,6 +78,9 @@ csharp_style_conditional_delegate_call = true:suggestion
 
 # Code block preferences
 csharp_prefer_braces = false:suggestion
+
+# Namespaces
+csharp_style_namespace_declarations = file_scoped:error
 
 # Formatting conventions
 # Most use "rule_name = false|true"
@@ -195,25 +183,3 @@ dotnet_code_quality.CA1802 = static
 
 # Analyzer Rules
 dotnet_diagnostic.CA1848.severity = none
-
-# Xml project files
-[*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
-indent_size = 2
-
-# Xml build files
-[*.builds]
-indent_size = 2
-
-# Xml files
-[*.{xml,stylecop,resx,ruleset}]
-indent_size = 2
-
-# Xml config files
-[*.{props,targets,config,nuspec}]
-indent_size = 2
-
-# Shell scripts
-[*.sh]
-end_of_line = lf
-[*.{cmd, bat}]
-end_of_line = crlf

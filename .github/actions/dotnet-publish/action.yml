@@ -12,26 +12,24 @@ inputs:
     default: './Version.json'
     description: The product version
     required: false
-  buildId:
+  pullRequestNumber:
     default: ''
-    description: A unique build if for packages that are not yet finalized
+    description: An optional pull request number
     required: false
 
 runs:
   using: composite
   steps:
     - name: Setup
-      uses: actions/setup-dotnet@v1.8.2
-      with:
-        dotnet-version: '6.0.x'
+      uses: actions/setup-dotnet@v1.9.0
 
     - name: Determine Version
       id: version
       shell: pwsh
       run: |
-        ./.github/actions/dotnet-package/scripts/ParseVersion.ps1 `
+        ./.github/actions/dotnet-publish/scripts/ParseVersion.ps1 `
           -VersionFilePath '${{ inputs.versionFile }}' `
-          -BuildId '${{ inputs.buildId }}'
+          -PullRequestNumber '${{ inputs.pullRequestNumber }}'
 
     - name: Build
       shell: bash
