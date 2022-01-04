@@ -199,7 +199,7 @@ public class DurableTaskAzureStorageScalerServiceTest
 
         protected override AuthContext AuthContextCore => throw new NotImplementedException();
 
-        protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions options) => throw new NotImplementedException();
+        protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions? options) => throw new NotImplementedException();
 
         protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders) => throw new NotImplementedException();
 

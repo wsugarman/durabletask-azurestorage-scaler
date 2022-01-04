@@ -1,4 +1,4 @@
-name: Scaler Continuous Integration
+name: Scaler
 
 on:
   push:
