@@ -4,10 +4,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Provider
+namespace Keda.Scaler.DurableTask.AzureStorage.Provider;
+
+internal interface IPerformanceMonitorFactory
 {
-    internal interface IPerformanceMonitorFactory
-    {
-        ValueTask<IPerformanceMonitor> CreateAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default);
-    }
+    ValueTask<IPerformanceMonitor> CreateAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default);
 }

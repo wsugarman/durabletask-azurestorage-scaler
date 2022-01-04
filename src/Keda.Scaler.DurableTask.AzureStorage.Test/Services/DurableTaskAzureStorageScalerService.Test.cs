@@ -8,202 +8,201 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Test;
+using Keda.Scaler.DurableTask.AzureStorage.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Services.Test
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.Services;
+
+[TestClass]
+public class DurableTaskAzureStorageScalerServiceTest
 {
-    [TestClass]
-    public class DurableTaskAzureStorageScalerServiceTest
+    private const string MetricName = "TestMetric";
+
+    private readonly Mock<IDurableTaskAzureStorageScaler> _mockScaler = new Mock<IDurableTaskAzureStorageScaler>();
+    private readonly IServiceProvider _serviceProvider;
+
+    public DurableTaskAzureStorageScalerServiceTest()
     {
-        private const string MetricName = "TestMetric";
+        _mockScaler.Setup(s => s.MetricName).Returns(MetricName);
 
-        private readonly Mock<IDurableTaskAzureStorageScaler> _mockScaler = new Mock<IDurableTaskAzureStorageScaler>();
-        private readonly IServiceProvider _serviceProvider;
+        ServiceCollection services = new ServiceCollection();
+        services.AddSingleton(_mockScaler.Object);
+        _serviceProvider = services.BuildServiceProvider();
+    }
 
-        public DurableTaskAzureStorageScalerServiceTest()
+    [TestMethod]
+    public void CtorExceptions()
+    {
+        Assert.ThrowsException<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
+        Assert.ThrowsException<InvalidOperationException>(() => new DurableTaskAzureStorageScalerService(new ServiceCollection().BuildServiceProvider()));
+    }
+
+    [TestMethod]
+    public async Task IsActive()
+    {
+        ScalerMetadata metadata = new ScalerMetadata
         {
-            _mockScaler.Setup(s => s.MetricName).Returns(MetricName);
+            AccountName = "unitteststorage",
+            Cloud = nameof(CloudEnvironment.AzurePublicCloud),
+            MaxMessageLatencyMilliseconds = 500,
+            ScaleIncrement = 2,
+            TaskHubName = "UnitTestTaskHub",
+            UseAAdPodIdentity = true,
+        };
 
-            ServiceCollection services = new ServiceCollection();
-            services.AddSingleton(_mockScaler.Object);
-            _serviceProvider = services.BuildServiceProvider();
-        }
+        using CancellationTokenSource tokenSource = new CancellationTokenSource();
 
-        [TestMethod]
-        public void CtorExceptions()
+        ScaledObjectRef scaledObj = CreateScaledObjectRef(metadata);
+        ServerCallContext context = new MockServerCallContext(tokenSource.Token);
+        _mockScaler
+            .Setup(s => s.IsActiveAsync(It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
+            .ReturnsAsync(true);
+
+        DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.IsActive(null!, context)).ConfigureAwait(false);
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.IsActive(scaledObj, null!)).ConfigureAwait(false);
+        IsActiveResponse actual = await service.IsActive(scaledObj, context).ConfigureAwait(false);
+        Assert.IsTrue(actual.Result);
+    }
+
+    [TestMethod]
+    public async Task GetMetricSpec()
+    {
+        const long targetValue = 42;
+
+        ScalerMetadata metadata = new ScalerMetadata
         {
-            Assert.ThrowsException<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
-            Assert.ThrowsException<InvalidOperationException>(() => new DurableTaskAzureStorageScalerService(new ServiceCollection().BuildServiceProvider()));
-        }
+            AccountName = "unitteststorage",
+            Cloud = nameof(CloudEnvironment.AzurePublicCloud),
+            MaxMessageLatencyMilliseconds = 500,
+            ScaleIncrement = 2,
+            TaskHubName = "UnitTestTaskHub",
+            UseAAdPodIdentity = true,
+        };
 
-        [TestMethod]
-        public async Task IsActive()
+        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+        ScaledObjectRef scaledObj = CreateScaledObjectRef(metadata);
+        ServerCallContext context = new MockServerCallContext(tokenSource.Token);
+        _mockScaler
+            .Setup(s => s.GetMetricSpecAsync(It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
+            .ReturnsAsync(targetValue);
+
+        DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
+
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(null!, context)).ConfigureAwait(false);
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(scaledObj, null!)).ConfigureAwait(false);
+        GetMetricSpecResponse response = await service.GetMetricSpec(scaledObj, context).ConfigureAwait(false);
+
+        MetricSpec actual = response.MetricSpecs.Single();
+        Assert.AreEqual(MetricName, actual.MetricName);
+        Assert.AreEqual(targetValue, actual.TargetSize);
+    }
+
+    [TestMethod]
+    public async Task GetMetrics()
+    {
+        const long metricValue = 17;
+
+        DeploymentReference deployment = new DeploymentReference("unit-test-func", "durable-task");
+        ScalerMetadata metadata = new ScalerMetadata
         {
-            ScalerMetadata metadata = new ScalerMetadata
+            AccountName = "unitteststorage",
+            Cloud = nameof(CloudEnvironment.AzurePublicCloud),
+            MaxMessageLatencyMilliseconds = 500,
+            ScaleIncrement = 2,
+            TaskHubName = "UnitTestTaskHub",
+            UseAAdPodIdentity = true,
+        };
+
+        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+
+        GetMetricsRequest request = CreateGetMetricsRequest(deployment, metadata);
+        ServerCallContext context = new MockServerCallContext(tokenSource.Token);
+        _mockScaler
+            .Setup(s => s.GetMetricValueAsync(deployment, It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
+            .ReturnsAsync(metricValue);
+
+        DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
+
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetrics(null!, context)).ConfigureAwait(false);
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetrics(request, null!)).ConfigureAwait(false);
+        GetMetricsResponse response = await service.GetMetrics(request, context).ConfigureAwait(false);
+
+        MetricValue actual = response.MetricValues.Single();
+        Assert.AreEqual(MetricName, actual.MetricName);
+        Assert.AreEqual(metricValue, actual.MetricValue_);
+    }
+
+    private static ScaledObjectRef CreateScaledObjectRef(ScalerMetadata metadata)
+        => CreateScaledObjectRef(default, metadata);
+
+    private static GetMetricsRequest CreateGetMetricsRequest(DeploymentReference deployment, ScalerMetadata metadata)
+        => new GetMetricsRequest { MetricName = MetricName, ScaledObjectRef = CreateScaledObjectRef(deployment, metadata) };
+
+    private static ScaledObjectRef CreateScaledObjectRef(DeploymentReference deployment, ScalerMetadata metadata)
+    {
+        ScaledObjectRef result = deployment == default
+            ? new ScaledObjectRef()
+            : new ScaledObjectRef
             {
-                AccountName = "unitteststorage",
-                Cloud = nameof(CloudEnvironment.AzurePublicCloud),
-                MaxMessageLatencyMilliseconds = 500,
-                ScaleIncrement = 2,
-                TaskHubName = "UnitTestTaskHub",
-                UseAAdPodIdentity = true,
+                Name = deployment.Name,
+                Namespace = deployment.Namespace,
             };
 
-            using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        if (metadata.AccountName is not null)
+            result.ScalerMetadata[nameof(ScalerMetadata.AccountName)] = metadata.AccountName;
 
-            ScaledObjectRef scaledObj = CreateScaledObjectRef(metadata);
-            ServerCallContext context = new MockServerCallContext(tokenSource.Token);
-            _mockScaler
-                .Setup(s => s.IsActiveAsync(It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
-                .ReturnsAsync(true);
+        if (metadata.Connection is not null)
+            result.ScalerMetadata[nameof(ScalerMetadata.Connection)] = metadata.Connection;
 
-            DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.IsActive(null!, context)).ConfigureAwait(false);
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.IsActive(scaledObj, null!)).ConfigureAwait(false);
-            IsActiveResponse actual = await service.IsActive(scaledObj, context).ConfigureAwait(false);
-            Assert.IsTrue(actual.Result);
-        }
+        if (metadata.ConnectionFromEnv is not null)
+            result.ScalerMetadata[nameof(ScalerMetadata.ConnectionFromEnv)] = metadata.ConnectionFromEnv;
 
-        [TestMethod]
-        public async Task GetMetricSpec()
-        {
-            const long targetValue = 42;
+        if (metadata.TaskHubName is not null)
+            result.ScalerMetadata[nameof(ScalerMetadata.TaskHubName)] = metadata.TaskHubName;
 
-            ScalerMetadata metadata = new ScalerMetadata
-            {
-                AccountName = "unitteststorage",
-                Cloud = nameof(CloudEnvironment.AzurePublicCloud),
-                MaxMessageLatencyMilliseconds = 500,
-                ScaleIncrement = 2,
-                TaskHubName = "UnitTestTaskHub",
-                UseAAdPodIdentity = true,
-            };
+        result.ScalerMetadata[nameof(ScalerMetadata.Cloud)] = metadata.Cloud;
+        result.ScalerMetadata[nameof(ScalerMetadata.MaxMessageLatencyMilliseconds)] = metadata.MaxMessageLatencyMilliseconds.ToString(CultureInfo.InvariantCulture);
+        result.ScalerMetadata[nameof(ScalerMetadata.ScaleIncrement)] = metadata.ScaleIncrement.ToString(CultureInfo.InvariantCulture);
+        result.ScalerMetadata[nameof(ScalerMetadata.UseAAdPodIdentity)] = metadata.UseAAdPodIdentity.ToString(CultureInfo.InvariantCulture);
 
-            using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        return result;
+    }
 
-            ScaledObjectRef scaledObj = CreateScaledObjectRef(metadata);
-            ServerCallContext context = new MockServerCallContext(tokenSource.Token);
-            _mockScaler
-                .Setup(s => s.GetMetricSpecAsync(It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
-                .ReturnsAsync(targetValue);
+    private sealed class MockServerCallContext : ServerCallContext
+    {
+        protected override CancellationToken CancellationTokenCore { get; }
 
-            DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
+        public MockServerCallContext(CancellationToken cancellationToken)
+            => CancellationTokenCore = cancellationToken;
 
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(null!, context)).ConfigureAwait(false);
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(scaledObj, null!)).ConfigureAwait(false);
-            GetMetricSpecResponse response = await service.GetMetricSpec(scaledObj, context).ConfigureAwait(false);
+        #region Not Implmented
 
-            MetricSpec actual = response.MetricSpecs.Single();
-            Assert.AreEqual(MetricName, actual.MetricName);
-            Assert.AreEqual(targetValue, actual.TargetSize);
-        }
+        protected override string MethodCore => throw new NotImplementedException();
 
-        [TestMethod]
-        public async Task GetMetrics()
-        {
-            const long metricValue = 17;
+        protected override string HostCore => throw new NotImplementedException();
 
-            DeploymentReference deployment = new DeploymentReference("unit-test-func", "durable-task");
-            ScalerMetadata metadata = new ScalerMetadata
-            {
-                AccountName = "unitteststorage",
-                Cloud = nameof(CloudEnvironment.AzurePublicCloud),
-                MaxMessageLatencyMilliseconds = 500,
-                ScaleIncrement = 2,
-                TaskHubName = "UnitTestTaskHub",
-                UseAAdPodIdentity = true,
-            };
+        protected override string PeerCore => throw new NotImplementedException();
 
-            using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        protected override DateTime DeadlineCore => throw new NotImplementedException();
 
-            GetMetricsRequest request = CreateGetMetricsRequest(deployment, metadata);
-            ServerCallContext context = new MockServerCallContext(tokenSource.Token);
-            _mockScaler
-                .Setup(s => s.GetMetricValueAsync(deployment, It.Is(metadata, ScalerMetadataEqualityComparer.Instance), tokenSource.Token))
-                .ReturnsAsync(metricValue);
+        protected override Metadata RequestHeadersCore => throw new NotImplementedException();
 
-            DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
+        protected override Metadata ResponseTrailersCore => throw new NotImplementedException();
 
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetrics(null!, context)).ConfigureAwait(false);
-            await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetrics(request, null!)).ConfigureAwait(false);
-            GetMetricsResponse response = await service.GetMetrics(request, context).ConfigureAwait(false);
+        protected override Status StatusCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-            MetricValue actual = response.MetricValues.Single();
-            Assert.AreEqual(MetricName, actual.MetricName);
-            Assert.AreEqual(metricValue, actual.MetricValue_);
-        }
+        protected override WriteOptions WriteOptionsCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        private static ScaledObjectRef CreateScaledObjectRef(ScalerMetadata metadata)
-            => CreateScaledObjectRef(default, metadata);
+        protected override AuthContext AuthContextCore => throw new NotImplementedException();
 
-        private static GetMetricsRequest CreateGetMetricsRequest(DeploymentReference deployment, ScalerMetadata metadata)
-            => new GetMetricsRequest { MetricName = MetricName, ScaledObjectRef = CreateScaledObjectRef(deployment, metadata) };
+        protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions options) => throw new NotImplementedException();
 
-        private static ScaledObjectRef CreateScaledObjectRef(DeploymentReference deployment, ScalerMetadata metadata)
-        {
-            ScaledObjectRef result = deployment == default
-                ? new ScaledObjectRef()
-                : new ScaledObjectRef
-                {
-                    Name = deployment.Name,
-                    Namespace = deployment.Namespace,
-                };
+        protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders) => throw new NotImplementedException();
 
-            if (metadata.AccountName is not null)
-                result.ScalerMetadata[nameof(ScalerMetadata.AccountName)] = metadata.AccountName;
-
-            if (metadata.Connection is not null)
-                result.ScalerMetadata[nameof(ScalerMetadata.Connection)] = metadata.Connection;
-
-            if (metadata.ConnectionFromEnv is not null)
-                result.ScalerMetadata[nameof(ScalerMetadata.ConnectionFromEnv)] = metadata.ConnectionFromEnv;
-
-            if (metadata.TaskHubName is not null)
-                result.ScalerMetadata[nameof(ScalerMetadata.TaskHubName)] = metadata.TaskHubName;
-
-            result.ScalerMetadata[nameof(ScalerMetadata.Cloud)] = metadata.Cloud;
-            result.ScalerMetadata[nameof(ScalerMetadata.MaxMessageLatencyMilliseconds)] = metadata.MaxMessageLatencyMilliseconds.ToString(CultureInfo.InvariantCulture);
-            result.ScalerMetadata[nameof(ScalerMetadata.ScaleIncrement)] = metadata.ScaleIncrement.ToString(CultureInfo.InvariantCulture);
-            result.ScalerMetadata[nameof(ScalerMetadata.UseAAdPodIdentity)] = metadata.UseAAdPodIdentity.ToString(CultureInfo.InvariantCulture);
-
-            return result;
-        }
-
-        private sealed class MockServerCallContext : ServerCallContext
-        {
-            protected override CancellationToken CancellationTokenCore { get; }
-
-            public MockServerCallContext(CancellationToken cancellationToken)
-                => CancellationTokenCore = cancellationToken;
-
-            #region Not Implmented
-
-            protected override string MethodCore => throw new NotImplementedException();
-
-            protected override string HostCore => throw new NotImplementedException();
-
-            protected override string PeerCore => throw new NotImplementedException();
-
-            protected override DateTime DeadlineCore => throw new NotImplementedException();
-
-            protected override Metadata RequestHeadersCore => throw new NotImplementedException();
-
-            protected override Metadata ResponseTrailersCore => throw new NotImplementedException();
-
-            protected override Status StatusCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-            protected override WriteOptions WriteOptionsCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-            protected override AuthContext AuthContextCore => throw new NotImplementedException();
-
-            protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions options) => throw new NotImplementedException();
-
-            protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders) => throw new NotImplementedException();
-
-            #endregion
-        }
+        #endregion
     }
 }

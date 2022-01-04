@@ -6,10 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage.Auth;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Cloud
+namespace Keda.Scaler.DurableTask.AzureStorage.Cloud;
+
+internal interface ITokenCredentialFactory
 {
-    internal interface ITokenCredentialFactory
-    {
-        ValueTask<TokenCredential> CreateAsync(string resource, Uri authorityHost, CancellationToken cancellationToken = default);
-    }
+    ValueTask<TokenCredential> CreateAsync(string resource, Uri authorityHost, CancellationToken cancellationToken = default);
 }

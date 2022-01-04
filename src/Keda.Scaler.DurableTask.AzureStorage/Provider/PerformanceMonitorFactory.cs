@@ -12,75 +12,74 @@ using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Provider
+namespace Keda.Scaler.DurableTask.AzureStorage.Provider;
+
+internal delegate DisconnectedPerformanceMonitor CreateMonitor(CloudStorageAccount cloudStorageAccount, AzureStorageOrchestrationServiceSettings settings);
+
+internal sealed class PerformanceMonitorFactory : IPerformanceMonitorFactory
 {
-    internal delegate DisconnectedPerformanceMonitor CreateMonitor(CloudStorageAccount cloudStorageAccount, AzureStorageOrchestrationServiceSettings settings);
+    internal const string StorageAccountResource = "https://storage.azure.com/";
 
-    internal sealed class PerformanceMonitorFactory : IPerformanceMonitorFactory
+    private readonly CreateMonitor _monitorFactory;
+    private readonly ITokenCredentialFactory _credentialFactory;
+    private readonly IProcessEnvironment _environment;
+    private readonly ILoggerFactory _loggerFactory;
+
+    internal PerformanceMonitorFactory(
+        ITokenCredentialFactory credentialFactory,
+        IProcessEnvironment environment,
+        ILoggerFactory loggerFactory)
+        : this((c, s) => new DisconnectedPerformanceMonitor(c, s), credentialFactory, environment, loggerFactory)
+    { }
+
+    internal PerformanceMonitorFactory(
+        CreateMonitor monitorFactory,
+        ITokenCredentialFactory credentialFactory,
+        IProcessEnvironment environment,
+        ILoggerFactory loggerFactory)
     {
-        internal const string StorageAccountResource = "https://storage.azure.com/";
+        _monitorFactory = monitorFactory ?? throw new ArgumentNullException(nameof(monitorFactory));
+        _credentialFactory = credentialFactory ?? throw new ArgumentNullException(nameof(credentialFactory));
+        _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    }
 
-        private readonly CreateMonitor _monitorFactory;
-        private readonly ITokenCredentialFactory _credentialFactory;
-        private readonly IProcessEnvironment _environment;
-        private readonly ILoggerFactory _loggerFactory;
+    public async ValueTask<IPerformanceMonitor> CreateAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
+    {
+        if (metadata is null)
+            throw new ArgumentNullException(nameof(metadata));
 
-        internal PerformanceMonitorFactory(
-            ITokenCredentialFactory credentialFactory,
-            IProcessEnvironment environment,
-            ILoggerFactory loggerFactory)
-            : this((c, s) => new DisconnectedPerformanceMonitor(c, s), credentialFactory, environment, loggerFactory)
-        { }
-
-        internal PerformanceMonitorFactory(
-            CreateMonitor monitorFactory,
-            ITokenCredentialFactory credentialFactory,
-            IProcessEnvironment environment,
-            ILoggerFactory loggerFactory)
+        AzureStorageOrchestrationServiceSettings settings = new AzureStorageOrchestrationServiceSettings
         {
-            _monitorFactory = monitorFactory ?? throw new ArgumentNullException(nameof(monitorFactory));
-            _credentialFactory = credentialFactory ?? throw new ArgumentNullException(nameof(credentialFactory));
-            _environment = environment ?? throw new ArgumentNullException(nameof(environment));
-            _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+            LoggerFactory = _loggerFactory,
+            MaxQueuePollingInterval = TimeSpan.FromMilliseconds(metadata.MaxMessageLatencyMilliseconds),
+            TaskHubName = metadata.TaskHubName,
+        };
+
+        if (metadata.AccountName is null)
+        {
+            return new PerformanceMonitorDecorator(
+                _monitorFactory(
+                    CloudStorageAccount.Parse(metadata.ResolveConnectionString(_environment)),
+                    settings));
         }
-
-        public async ValueTask<IPerformanceMonitor> CreateAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
+        else
         {
-            if (metadata is null)
-                throw new ArgumentNullException(nameof(metadata));
+            CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(metadata.CloudEnvironment);
+            TokenCredential tokenCredential = await _credentialFactory.CreateAsync(
+                StorageAccountResource,
+                endpoints.AuthorityHost,
+                cancellationToken).ConfigureAwait(false);
 
-            AzureStorageOrchestrationServiceSettings settings = new AzureStorageOrchestrationServiceSettings
-            {
-                LoggerFactory = _loggerFactory,
-                MaxQueuePollingInterval = TimeSpan.FromMilliseconds(metadata.MaxMessageLatencyMilliseconds),
-                TaskHubName = metadata.TaskHubName,
-            };
+            DisconnectedPerformanceMonitor performanceMonitor = _monitorFactory(
+                new CloudStorageAccount(
+                    new StorageCredentials(tokenCredential),
+                    metadata.AccountName,
+                    endpoints.StorageSuffix,
+                    useHttps: true),
+                settings);
 
-            if (metadata.AccountName is null)
-            {
-                return new PerformanceMonitorDecorator(
-                    _monitorFactory(
-                        CloudStorageAccount.Parse(metadata.ResolveConnectionString(_environment)),
-                        settings));
-            }
-            else
-            {
-                CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(metadata.CloudEnvironment);
-                TokenCredential tokenCredential = await _credentialFactory.CreateAsync(
-                    StorageAccountResource,
-                    endpoints.AuthorityHost,
-                    cancellationToken).ConfigureAwait(false);
-
-                DisconnectedPerformanceMonitor performanceMonitor = _monitorFactory(
-                    new CloudStorageAccount(
-                        new StorageCredentials(tokenCredential),
-                        metadata.AccountName,
-                        endpoints.StorageSuffix,
-                        useHttps: true),
-                    settings);
-
-                return new PerformanceMonitorDecorator(performanceMonitor, tokenCredential);
-            }
+            return new PerformanceMonitorDecorator(performanceMonitor, tokenCredential);
         }
     }
 }
