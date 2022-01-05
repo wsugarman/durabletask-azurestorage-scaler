@@ -148,49 +148,49 @@ public sealed class ScalerMetadata : IValidatableObject
             throw new ArgumentNullException(nameof(validationContext));
 
         if (MaxMessageLatencyMilliseconds < 0)
-            yield return new ValidationResult($"{nameof(MaxMessageLatencyMilliseconds)} cannot be less than zero.");
+            yield return new ValidationResult(SR.Format(SR.NegativeValueFormat, nameof(MaxMessageLatencyMilliseconds)));
 
         if (MaxMessageLatencyMilliseconds > 1000)
-            yield return new ValidationResult($"{nameof(MaxMessageLatencyMilliseconds)} cannot be larger than 1 second.");
+            yield return new ValidationResult(SR.Format(SR.ValueTooBigFormat, nameof(MaxMessageLatencyMilliseconds), 1000));
 
         if (ScaleIncrement <= 1)
-            yield return new ValidationResult($"{nameof(ScaleIncrement)} must be greater than 1.");
+            yield return new ValidationResult(SR.Format(SR.ValueTooSmallFormat, nameof(ScaleIncrement), 1));
 
         if (string.IsNullOrWhiteSpace(TaskHubName))
-            yield return new ValidationResult($"{nameof(TaskHubName)} is required and cannot be empty or consist entirely of white space characters.");
+            yield return new ValidationResult(SR.Format(SR.RequiredBlankValueFormat, nameof(TaskHubName)));
 
         if (UseAAdPodIdentity)
         {
             if (AccountName is null)
-                yield return new ValidationResult($"{nameof(AccountName)} must be specified if using AAD pod identity.");
+                yield return new ValidationResult(SR.Format(SR.AadRequiredFieldFormat, nameof(AccountName)));
 
             if (AccountName is not null && string.IsNullOrWhiteSpace(AccountName))
-                yield return new ValidationResult($"If specified, {nameof(AccountName)} cannot be empty or consist entirely of white space characters.");
+                yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(AccountName)));
 
             if (CloudEnvironment == CloudEnvironment.Unknown)
-                yield return new ValidationResult($"Unknown value '{Cloud}' for {nameof(Cloud)}.");
+                yield return new ValidationResult(SR.Format(SR.UnknownValueFormat, Cloud, nameof(Cloud)));
 
             if (Connection is not null)
-                yield return new ValidationResult($"{nameof(Connection)} should not be specified if using AAD pod identity.");
+                yield return new ValidationResult(SR.Format(SR.InvalidAadFieldFormat, nameof(Connection)));
 
             if (ConnectionFromEnv is not null)
-                yield return new ValidationResult($"{nameof(ConnectionFromEnv)} should not be specified if using AAD pod identity.");
+                yield return new ValidationResult(SR.Format(SR.InvalidAadFieldFormat, nameof(ConnectionFromEnv)));
         }
         else
         {
             if (AccountName is not null)
-                yield return new ValidationResult($"{nameof(AccountName)} should only be specified if using AAD pod identity.");
+                yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(AccountName)));
 
             if (Cloud is not null)
-                yield return new ValidationResult($"{nameof(Cloud)} should only be specified if using AAD pod identity.");
+                yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(Cloud)));
 
             IProcessEnvironment environment = validationContext.GetRequiredService<IProcessEnvironment>();
             if (Connection is not null && string.IsNullOrWhiteSpace(Connection))
-                yield return new ValidationResult($"If specified, {nameof(Connection)} cannot be empty or consist entirely of white space characters.");
+                yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(Connection)));
             else if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))
-                yield return new ValidationResult($"If specified, {nameof(ConnectionFromEnv)} cannot be empty or consist entirely of white space characters.");
+                yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(ConnectionFromEnv)));
             else if (string.IsNullOrWhiteSpace(ResolveConnectionString(environment)))
-                yield return new ValidationResult($"Unable to resolve the connection string from environment variable '{ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable}'.");
+                yield return new ValidationResult(SR.Format(SR.BlankConnectionVarFormat, ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable));
         }
     }
 }
