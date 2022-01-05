@@ -17,8 +17,6 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
 {
     internal const long MetricSpecValue = 100;
 
-    private const string LoggerCategory = "DurableTask.AzureStorage.Keda"; // Reuse prefix from the Durable Task framework
-
     private readonly IKubernetes _kubernetes;
     private readonly IPerformanceMonitorFactory _monitorFactory;
     private readonly ILogger _logger;
@@ -32,7 +30,7 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
     {
         _kubernetes = kubernetes ?? throw new ArgumentNullException(nameof(kubernetes));
         _monitorFactory = monitorFactory ?? throw new ArgumentNullException(nameof(monitorFactory));
-        _logger = loggerFactory?.CreateLogger(LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _logger = loggerFactory?.CreateLogger(Diagnostics.LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
     public ValueTask<long> GetMetricSpecAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)

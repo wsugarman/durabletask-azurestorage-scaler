@@ -22,11 +22,15 @@ public class IValidatableObjectExtensionsTest
         // Null object
         Assert.ThrowsException<ArgumentNullException>(() => IValidatableObjectExtensions.EnsureValidated<Example>(null!));
 
+        // Single error
+        Example single = new Example { EvenNumber = 3 };
+        Assert.ThrowsException<ValidationException>(() => single.EnsureValidated(services));
+
         // Multiple validation results
-        Example example = new Example { EvenNumber = 101, RecentTime = DateTime.MinValue + TimeSpan.FromHours(1) };
-        AggregateException actual = Assert.ThrowsException<AggregateException>(() => example.EnsureValidated(services));
+        Example multiple = new Example { EvenNumber = 101, RecentTime = DateTime.MinValue + TimeSpan.FromHours(1) };
+        AggregateException actual = Assert.ThrowsException<AggregateException>(() => multiple.EnsureValidated(services));
         Assert.AreEqual(2, actual.InnerExceptions.Count);
-        Assert.IsTrue(actual.InnerExceptions.All(x => x.GetType() == typeof(ArgumentException)));
+        Assert.IsTrue(actual.InnerExceptions.All(x => x.GetType() == typeof(ValidationException)));
     }
 
     private sealed class Example : IValidatableObject

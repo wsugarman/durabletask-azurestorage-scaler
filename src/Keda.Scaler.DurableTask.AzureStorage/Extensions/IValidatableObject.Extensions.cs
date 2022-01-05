@@ -16,14 +16,13 @@ internal static class IValidatableObjectExtensions
         if (obj is null)
             throw new ArgumentNullException(nameof(obj));
 
-        List<ArgumentException> errors = obj
+        List<ValidationException> errors = obj
             .Validate(new ValidationContext(obj, serviceProvider, null))
-            .Select(x => new ArgumentException(x.ErrorMessage))
+            .Select(x => new ValidationException(x, null, null))
             .ToList();
 
-
         if (errors.Count > 0)
-            throw new AggregateException(errors);
+            throw errors.Count == 1 ? errors.Single() : new AggregateException(errors);
 
         return obj;
     }
