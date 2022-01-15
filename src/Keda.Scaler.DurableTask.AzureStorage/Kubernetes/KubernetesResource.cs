@@ -3,12 +3,12 @@
 
 using System;
 
-namespace Keda.Scaler.DurableTask.AzureStorage;
+namespace Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
 
 /// <summary>
 /// Represents a reference to a Kubernetes deployment.
 /// </summary>
-public readonly struct DeploymentReference : IEquatable<DeploymentReference>
+public readonly struct KubernetesResource : IEquatable<KubernetesResource>
 {
     /// <summary>
     /// Gets the unique name for the deployment within the <see cref="Namespace"/>.
@@ -23,7 +23,7 @@ public readonly struct DeploymentReference : IEquatable<DeploymentReference>
     public string Namespace { get; }
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="DeploymentReference"/> structure
+    /// Initializes a new instance of the <see cref="KubernetesResource"/> structure
     /// with the specified <paramref name="name"/> and <paramref name="namespace"/>.
     /// </summary>
     /// <param name="name">The unique name of the deployment within the <paramref name="namespace"/>.</param>
@@ -32,7 +32,7 @@ public readonly struct DeploymentReference : IEquatable<DeploymentReference>
     /// <paramref name="name"/> or <paramref name="namespace"/> is <see langword="null"/>, empty, or consists
     /// entirely of white space characters.
     /// </exception>
-    public DeploymentReference(string name, string @namespace = "default")
+    public KubernetesResource(string name, string @namespace = "default")
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
@@ -49,22 +49,22 @@ public readonly struct DeploymentReference : IEquatable<DeploymentReference>
     /// </summary>
     /// <param name="obj">The object to compare to this instance.</param>
     /// <returns>
-    /// <see langword="true"/> if <paramref name="obj"/> is an instance of <see cref="DeploymentReference"/>
+    /// <see langword="true"/> if <paramref name="obj"/> is an instance of <see cref="KubernetesResource"/>
     /// and equals the value of this instance; otherwise, <see langword="false"/>.
     /// </returns>
     public override bool Equals(object? obj)
-        => obj is DeploymentReference other && Equals(other);
+        => obj is KubernetesResource other && Equals(other);
 
     /// <summary>
     /// Returns a value indicating whether the value of this instance is equal
-    /// to the value of the specified <see cref="DeploymentReference"/> instance.
+    /// to the value of the specified <see cref="KubernetesResource"/> instance.
     /// </summary>
     /// <param name="other">The object to compare to this instance.</param>
     /// <returns>
     /// <see langword="true"/> if the <paramref name="other"/> parameter equals the value of
     /// this instance; otherwise, <see langword="false"/>.
     /// </returns>
-    public bool Equals(DeploymentReference other)
+    public bool Equals(KubernetesResource other)
         => Name == other.Name && Namespace == other.Namespace;
 
     /// <summary>
@@ -75,26 +75,26 @@ public readonly struct DeploymentReference : IEquatable<DeploymentReference>
         => HashCode.Combine(Name, Namespace);
 
     /// <summary>
-    /// Determines whether two specified instances of <see cref="DeploymentReference"/> are equal.
+    /// Determines whether two specified instances of <see cref="KubernetesResource"/> are equal.
     /// </summary>
     /// <param name="left">The first object to compare.</param>
     /// <param name="right">The second object to compare.</param>
     /// <returns>
     /// <see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> represent
-    /// the same <see cref="DeploymentReference"/>; otherwise, <see langword="true"/>.
+    /// the same <see cref="KubernetesResource"/>; otherwise, <see langword="true"/>.
     /// </returns>
-    public static bool operator ==(DeploymentReference left, DeploymentReference right)
+    public static bool operator ==(KubernetesResource left, KubernetesResource right)
         => left.Equals(right);
 
     /// <summary>
-    /// Determines whether two specified instances of <see cref="DeploymentReference"/> are not equal.
+    /// Determines whether two specified instances of <see cref="KubernetesResource"/> are not equal.
     /// </summary>
     /// <param name="left">The first object to compare.</param>
     /// <param name="right">The second object to compare.</param>
     /// <returns>
     /// <see langword="true"/> if <paramref name="left"/> and <paramref name="right"/> do not represent
-    /// the same <see cref="DeploymentReference"/>; otherwise, <see langword="true"/>.
+    /// the same <see cref="KubernetesResource"/>; otherwise, <see langword="true"/>.
     /// </returns>
-    public static bool operator !=(DeploymentReference left, DeploymentReference right)
+    public static bool operator !=(KubernetesResource left, KubernetesResource right)
         => !left.Equals(right);
 }

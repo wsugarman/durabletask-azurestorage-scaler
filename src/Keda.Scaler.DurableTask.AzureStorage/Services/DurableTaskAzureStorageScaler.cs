@@ -8,6 +8,7 @@ using DurableTask.AzureStorage.Monitoring;
 using k8s;
 using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
+using Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
 using Keda.Scaler.DurableTask.AzureStorage.Provider;
 using Microsoft.Extensions.Logging;
 
@@ -41,20 +42,15 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
         return ValueTask.FromResult(MetricSpecValue);
     }
 
-    public async ValueTask<long> GetMetricValueAsync(DeploymentReference deployment, ScalerMetadata metadata, CancellationToken cancellationToken = default)
+    public async ValueTask<long> GetMetricValueAsync(KubernetesResource scaledObject, ScalerMetadata metadata, CancellationToken cancellationToken = default)
     {
         if (metadata is null)
             throw new ArgumentNullException(nameof(metadata));
 
-        V1Scale scale = await _kubernetes.ReadNamespacedDeploymentScaleAsync(deployment.Name, deployment.Namespace, cancellationToken: cancellationToken).ConfigureAwait(false);
-        _logger.LogInformation(
-            "Found current scale for deployment '{Name}' in namespace '{Namespace}' to be {Replicas} replicas.",
-            deployment.Name,
-            deployment.Namespace,
-            scale.Status.Replicas);
+        int replicaCount = await GetCurrentScaleAsync(scaledObject, cancellationToken).ConfigureAwait(false);
 
         using IPerformanceMonitor monitor = await _monitorFactory.CreateAsync(metadata, cancellationToken).ConfigureAwait(false);
-        PerformanceHeartbeat? heartbeat = await monitor.GetHeartbeatAsync(scale.Status.Replicas).ConfigureAwait(false);
+        PerformanceHeartbeat? heartbeat = await monitor.GetHeartbeatAsync(replicaCount).ConfigureAwait(false);
         if (heartbeat is null)
         {
             _logger.LogWarning("Failed to measure Durable Task performance");
@@ -77,7 +73,7 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
 
         // Note: Currently only average metric value are supported by external scalers,
         //       so we need to multiply the result by the number of replicas.
-        return (long)(MetricSpecValue * scaleFactor * scale.Status.Replicas);
+        return (long)(MetricSpecValue * scaleFactor * replicaCount);
     }
 
     public async ValueTask<bool> IsActiveAsync(ScalerMetadata metadata, CancellationToken cancellationToken = default)
@@ -88,5 +84,32 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
         using IPerformanceMonitor monitor = await _monitorFactory.CreateAsync(metadata, cancellationToken).ConfigureAwait(false);
         PerformanceHeartbeat? heartbeat = await monitor.GetHeartbeatAsync().ConfigureAwait(false);
         return heartbeat is not null && !heartbeat.IsIdle();
+    }
+
+    private async ValueTask<int> GetCurrentScaleAsync(KubernetesResource scaledObjRef, CancellationToken cancellationToken)
+    {
+        V1ScaledObject scaledObj = await _kubernetes.ReadNamespacedScaledObjectAsync(scaledObjRef.Name, scaledObjRef.Namespace, cancellationToken).ConfigureAwait(false);
+
+        V1KedaScaleTarget scaleTarget = scaledObj.Spec.ScaleTargetRef;
+        (string group, string version) = ApiVersion.Split(scaleTarget.ApiVersion ?? "apps/v1");
+        string kind = scaleTarget.Kind ?? "Deployment";
+
+        V1Scale scale = await _kubernetes.ReadNamespacedCustomObjectScaleAsync(
+            scaleTarget.Name,
+            scaledObjRef.Namespace,
+            group,
+            version,
+            kind,
+            cancellationToken).ConfigureAwait(false);
+
+        _logger.LogInformation(
+            "Found current scale for '{Kind}.{Version}/{Name}' in namespace '{Namespace}' to be {Replicas} replicas.",
+            kind,
+            version,
+            scaledObjRef.Name,
+            scaledObjRef.Namespace,
+            scale.Status.Replicas);
+
+        return scale.Status.Replicas;
     }
 }

@@ -9,6 +9,7 @@ using DurableTask.AzureStorage.Monitoring;
 using k8s;
 using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
 using Keda.Scaler.DurableTask.AzureStorage.Provider;
 using Keda.Scaler.DurableTask.AzureStorage.Services;
 using Microsoft.Extensions.Logging;
@@ -74,7 +75,7 @@ public class DurableTaskAzureStorageScalerTest
     public async Task GetMetricValueAsync(ScaleAction? action, double ratio, int replicas, long expectedMetric)
     {
         // Create input
-        DeploymentReference deployment = new DeploymentReference("unit-test-func", "durable-task");
+        KubernetesResource deployment = new KubernetesResource("unit-test-func", "durable-task");
         ScalerMetadata metadata = new ScalerMetadata
         {
             AccountName = "unitteststorage",

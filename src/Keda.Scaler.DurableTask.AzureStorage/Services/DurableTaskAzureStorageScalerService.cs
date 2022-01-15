@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
+using Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -109,7 +110,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             throw new ArgumentNullException(nameof(context));
 
         ScalerMetadata metadata = request.ScaledObjectRef.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>().EnsureValidated(_serviceProvider);
-        DeploymentReference deployment = new DeploymentReference(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
+        KubernetesResource deployment = new KubernetesResource(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
 
         GetMetricsResponse response = new GetMetricsResponse();
         response.MetricValues.Add(
