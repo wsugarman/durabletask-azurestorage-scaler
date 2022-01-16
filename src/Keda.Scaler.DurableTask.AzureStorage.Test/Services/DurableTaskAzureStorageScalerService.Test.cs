@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
+using Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
 using Keda.Scaler.DurableTask.AzureStorage.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -106,7 +107,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     {
         const long metricValue = 17;
 
-        DeploymentReference deployment = new DeploymentReference("unit-test-func", "durable-task");
+        ScaledObjectReference deployment = new ScaledObjectReference("unit-test-func", "durable-task");
         ScalerMetadata metadata = new ScalerMetadata
         {
             AccountName = "unitteststorage",
@@ -139,10 +140,10 @@ public class DurableTaskAzureStorageScalerServiceTest
     private static ScaledObjectRef CreateScaledObjectRef(ScalerMetadata metadata)
         => CreateScaledObjectRef(default, metadata);
 
-    private static GetMetricsRequest CreateGetMetricsRequest(DeploymentReference deployment, ScalerMetadata metadata)
+    private static GetMetricsRequest CreateGetMetricsRequest(ScaledObjectReference deployment, ScalerMetadata metadata)
         => new GetMetricsRequest { MetricName = MetricName, ScaledObjectRef = CreateScaledObjectRef(deployment, metadata) };
 
-    private static ScaledObjectRef CreateScaledObjectRef(DeploymentReference deployment, ScalerMetadata metadata)
+    private static ScaledObjectRef CreateScaledObjectRef(ScaledObjectReference deployment, ScalerMetadata metadata)
     {
         ScaledObjectRef result = deployment == default
             ? new ScaledObjectRef()
