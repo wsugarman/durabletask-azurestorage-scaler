@@ -20,7 +20,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
 [TestClass]
 public class KubernetesExtensionsTest
 {
-    // HttpOperationResponse<object> _result = await operations.GetNamespacedCustomObjectScaleWithHttpMessagesAsync(group, version, namespaceParameter, plural, name, null, cancellationToken).ConfigureAwait(continueOnCapturedContext: false);
     [TestMethod]
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Request and Response not set for HttpOperationResponse.")]
     public async Task ReadNamespacedCustomObjectScaleAsync()

@@ -121,7 +121,7 @@
     <value>Invalid API version format. Expected '&lt;api&gt;/&lt;version&gt;' but received '{0}'.</value>
   </data>
   <data name="InvalidK8sResourceFormat" xml:space="preserve">
-    <value>'{0}/{1}' in namespace '{2}' is invalid: {3}</value>
+    <value>'{0}.{1}/{2}' in namespace '{3}' is invalid: {4}</value>
   </data>
   <data name="JsonParseFormat" xml:space="preserve">
     <value>Unable to parse JSON document as type '{0}'.</value>

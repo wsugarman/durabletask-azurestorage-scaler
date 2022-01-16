@@ -37,7 +37,7 @@ public interface IDurableTaskAzureStorageScaler
     /// <summary>
     /// Asynchronously retrieves the metric value based on the <paramref name="metadata"/>.
     /// </summary>
-    /// <param name="scaledObject">The scaled object that defines the scaler metadata.</param>
+    /// <param name="scaledObjRef">The reference to the <c>ScaledObject</c> resource.</param>
     /// <param name="metadata">The external scaler's metadata.</param>
     /// <param name="cancellationToken">
     /// The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.
@@ -48,7 +48,7 @@ public interface IDurableTaskAzureStorageScaler
     /// </returns>
     /// <exception cref="ArgumentNullException"><paramref name="metadata"/> is <see langword="null"/>.</exception>
     /// <exception cref="OperationCanceledException">The <paramref name="cancellationToken"/> is canceled.</exception>
-    ValueTask<long> GetMetricValueAsync(KubernetesResource scaledObject, ScalerMetadata metadata, CancellationToken cancellationToken = default);
+    ValueTask<long> GetMetricValueAsync(ScaledObjectReference scaledObjRef, ScalerMetadata metadata, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Asynchronously indicates whether the scaler is active due to durable functions or actors.

@@ -73,12 +73,12 @@ public class DurableTaskAzureStorageScalerTest
     [DataRow(ScaleAction.AddWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 2 * 5, null, null)]
     [DataRow(ScaleAction.AddWorker, 2, null, DurableTaskAzureStorageScaler.MetricSpecValue * 2, null, null)]
     [DataRow(ScaleAction.RemoveWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue / 2 * 5, null, "Deployment")]
-    [DataRow(ScaleAction.RemoveWorker, 2, null, DurableTaskAzureStorageScaler.MetricSpecValue, null, "StatefulSet")]
+    [DataRow(ScaleAction.RemoveWorker, 2, 0, DurableTaskAzureStorageScaler.MetricSpecValue, null, "StatefulSet")]
     [DataRow(ScaleAction.None, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5, "apps/v1", null)]
     [DataRow(ScaleAction.None, 2, null, DurableTaskAzureStorageScaler.MetricSpecValue, "apps/v2", null)]
     [DataRow(null, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5, "apps/v1", "StatefulSet")]
     [DataRow((ScaleAction)123, 2, 5, 0, "custom.sh/v2beta", "beehive")]
-    [DataRow((ScaleAction)456, 2, null, 0, "custom.sh/v3beta", "gaggle")]
+    [DataRow((ScaleAction)456, 2, 0, 0, "custom.sh/v3beta", "gaggle")]
     public async Task GetMetricValueAsync(
         ScaleAction? action,
         double ratio,
@@ -88,7 +88,7 @@ public class DurableTaskAzureStorageScalerTest
         string? kind)
     {
         // Create input
-        KubernetesResource scaledObject = new KubernetesResource("unit-test-func", "durable-task");
+        ScaledObjectReference scaledObject = new ScaledObjectReference("unit-test-func", "durable-task");
         ScalerMetadata metadata = new ScalerMetadata
         {
             AccountName = "unitteststorage",
@@ -213,7 +213,7 @@ public class DurableTaskAzureStorageScalerTest
 
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Kubernetes.Client APIs will dipose of the encapsulating HttpOperationResponse<T>")]
     private static IKubernetes CreateMockKubernetesClient(
-        KubernetesResource scaledObject,
+        ScaledObjectReference scaledObject,
         V1ScaleTargetRef scaleTarget,
         V1ScaleStatus? scaleStatus,
         CancellationToken cancellationToken)

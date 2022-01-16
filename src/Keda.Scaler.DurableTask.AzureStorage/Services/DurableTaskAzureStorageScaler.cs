@@ -43,12 +43,12 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
         return ValueTask.FromResult(MetricSpecValue);
     }
 
-    public async ValueTask<long> GetMetricValueAsync(KubernetesResource scaledObject, ScalerMetadata metadata, CancellationToken cancellationToken = default)
+    public async ValueTask<long> GetMetricValueAsync(ScaledObjectReference scaledObjRef, ScalerMetadata metadata, CancellationToken cancellationToken = default)
     {
         if (metadata is null)
             throw new ArgumentNullException(nameof(metadata));
 
-        int replicaCount = await GetCurrentScaleAsync(scaledObject, cancellationToken).ConfigureAwait(false);
+        int replicaCount = await GetCurrentScaleAsync(scaledObjRef, cancellationToken).ConfigureAwait(false);
 
         using IPerformanceMonitor monitor = await _monitorFactory.CreateAsync(metadata, cancellationToken).ConfigureAwait(false);
         PerformanceHeartbeat? heartbeat = await monitor.GetHeartbeatAsync(replicaCount).ConfigureAwait(false);
@@ -100,7 +100,7 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
     }
 
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Normalize Kubernetes kind to lowercase")]
-    private async ValueTask<int> GetCurrentScaleAsync(KubernetesResource scaledObjRef, CancellationToken cancellationToken)
+    private async ValueTask<int> GetCurrentScaleAsync(ScaledObjectReference scaledObjRef, CancellationToken cancellationToken)
     {
         V1ScaledObject scaledObj = await _kubernetes.ReadNamespacedScaledObjectAsync(scaledObjRef.Name, scaledObjRef.Namespace, cancellationToken).ConfigureAwait(false);
 
@@ -118,9 +118,9 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
 
         int replicaCount = scale.Status?.Replicas ?? 0;
         _logger.LogInformation(
-            "Found current scale for '{Kind}.{Version}/{Name}' in namespace '{Namespace}' to be {Replicas} replicas.",
+            "Found current scale for '{Kind}.{Group}/{Name}' in namespace '{Namespace}' to be {Replicas} replicas.",
             kind.ToLowerInvariant(),
-            version,
+            group,
             scaledObjRef.Name,
             scaledObjRef.Namespace,
             replicaCount);

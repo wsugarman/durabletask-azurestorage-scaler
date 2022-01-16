@@ -110,14 +110,14 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             throw new ArgumentNullException(nameof(context));
 
         ScalerMetadata metadata = request.ScaledObjectRef.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>().EnsureValidated(_serviceProvider);
-        KubernetesResource deployment = new KubernetesResource(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
+        ScaledObjectReference scaledObject = new ScaledObjectReference(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
 
         GetMetricsResponse response = new GetMetricsResponse();
         response.MetricValues.Add(
             new MetricValue
             {
                 MetricName = request.MetricName,
-                MetricValue_ = await _scaler.GetMetricValueAsync(deployment, metadata, context.CancellationToken).ConfigureAwait(false),
+                MetricValue_ = await _scaler.GetMetricValueAsync(scaledObject, metadata, context.CancellationToken).ConfigureAwait(false),
             });
 
         return response;

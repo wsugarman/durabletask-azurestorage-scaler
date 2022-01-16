@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -18,7 +19,6 @@ internal static class KubernetesExtensions
     private const string KedaApiGroup = "keda.sh";
     private const string KedaScaledObjectVersion = "v1alpha1";
     private const string KedaScaledObjectKind = "ScaledObject";
-    private const string KedaScaledObjectKindExact = KedaScaledObjectKind + "." + KedaApiGroup;
     private const string KedaScaledObjectPlural = "ScaledObjects";
 
     internal static readonly JsonSerializerOptions JsonSerializerOptions = CreateJsonSerializerOptions();
@@ -66,7 +66,7 @@ internal static class KubernetesExtensions
         if (scale is null)
             throw new SerializationException(SR.Format(SR.JsonParseFormat, nameof(V1ScaledObject)));
 
-        return scale.Validate(kind + "." + group, name, namespaceParameter);
+        return scale.Validate(kind, group, name, namespaceParameter);
     }
 
     public static async ValueTask<V1ScaledObject> ReadNamespacedScaledObjectAsync(
@@ -99,10 +99,11 @@ internal static class KubernetesExtensions
         if (scaledObject is null)
             throw new SerializationException(SR.Format(SR.JsonParseFormat, nameof(V1ScaledObject)));
 
-        return scaledObject.Validate(KedaScaledObjectKindExact, name, namespaceParameter);
+        return scaledObject.Validate(KedaScaledObjectKind, KedaApiGroup, name, namespaceParameter);
     }
 
-    private static T Validate<T>(this T obj, string kind, string name, string namespaceParameter, Action<T>? supplemental = null)
+    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Normalize Kubernetes kind to lowercase")]
+    private static T Validate<T>(this T obj, string kind, string group, string name, string namespaceParameter, Action<T>? supplemental = null)
         where T : IValidate
     {
         try
@@ -116,7 +117,8 @@ internal static class KubernetesExtensions
             throw new ArgumentException(
                 SR.Format(
                     SR.InvalidK8sResourceFormat,
-                    kind,
+                    kind.ToLowerInvariant(),
+                    group,
                     name,
                     namespaceParameter,
                     ex.Message));
