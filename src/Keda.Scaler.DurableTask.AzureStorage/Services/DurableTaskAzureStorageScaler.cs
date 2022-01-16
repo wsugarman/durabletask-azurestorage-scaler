@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using DurableTask.AzureStorage.Monitoring;
@@ -63,16 +64,28 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
                 heartbeat.ScaleRecommendation.Reason);
         }
 
-        double scaleFactor = (heartbeat?.ScaleRecommendation.Action ?? ScaleAction.None) switch
+        // Note: Currently only average metric value are supported by external scalers,
+        //       so we need to multiply the result by the number of replicas.
+        //       If the replicaCount is 0 or invalid, then we need to adjust the calculation
+        ScaleAction scaleAction = heartbeat?.ScaleRecommendation.Action ?? ScaleAction.None;
+        if (replicaCount <= 0)
+        {
+            return scaleAction switch
+            {
+                ScaleAction.None or ScaleAction.RemoveWorker => MetricSpecValue,
+                ScaleAction.AddWorker => (long)(MetricSpecValue * metadata.ScaleIncrement),
+                _ => throw new InvalidOperationException(SR.Format(SR.UnknownScaleActionFormat, scaleAction)),
+            };
+        }
+
+        double scaleFactor = scaleAction switch
         {
             ScaleAction.None => 1d,
             ScaleAction.AddWorker => metadata.ScaleIncrement,
             ScaleAction.RemoveWorker => 1 / metadata.ScaleIncrement,
-            _ => throw new InvalidOperationException($"Unknown scale action '{heartbeat!.ScaleRecommendation.Action}'."),
+            _ => throw new InvalidOperationException(SR.Format(SR.UnknownScaleActionFormat, scaleAction)),
         };
 
-        // Note: Currently only average metric value are supported by external scalers,
-        //       so we need to multiply the result by the number of replicas.
         return (long)(MetricSpecValue * scaleFactor * replicaCount);
     }
 
@@ -86,12 +99,13 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
         return heartbeat is not null && !heartbeat.IsIdle();
     }
 
+    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Normalize Kubernetes kind to lowercase")]
     private async ValueTask<int> GetCurrentScaleAsync(KubernetesResource scaledObjRef, CancellationToken cancellationToken)
     {
         V1ScaledObject scaledObj = await _kubernetes.ReadNamespacedScaledObjectAsync(scaledObjRef.Name, scaledObjRef.Namespace, cancellationToken).ConfigureAwait(false);
 
-        V1KedaScaleTarget scaleTarget = scaledObj.Spec.ScaleTargetRef;
-        (string group, string version) = ApiVersion.Split(scaleTarget.ApiVersion ?? "apps/v1");
+        V1ScaleTargetRef scaleTarget = scaledObj.Spec.ScaleTargetRef;
+        (string group, string version) = scaleTarget.ApiVersion is not null ? scaleTarget.ApiGroupAndVersion() : ("apps", "v1");
         string kind = scaleTarget.Kind ?? "Deployment";
 
         V1Scale scale = await _kubernetes.ReadNamespacedCustomObjectScaleAsync(
@@ -102,14 +116,15 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
             kind,
             cancellationToken).ConfigureAwait(false);
 
+        int replicaCount = scale.Status?.Replicas ?? 0;
         _logger.LogInformation(
             "Found current scale for '{Kind}.{Version}/{Name}' in namespace '{Namespace}' to be {Replicas} replicas.",
-            kind,
+            kind.ToLowerInvariant(),
             version,
             scaledObjRef.Name,
             scaledObjRef.Namespace,
-            scale.Status.Replicas);
+            replicaCount);
 
-        return scale.Status.Replicas;
+        return replicaCount;
     }
 }

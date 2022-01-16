@@ -10,7 +10,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
 
 internal sealed class V1ScaledObjectSpec : IValidate
 {
-    public V1KedaScaleTarget ScaleTargetRef { get; set; }
+    public V1ScaleTargetRef ScaleTargetRef { get; set; }
 
     public void Validate()
     {

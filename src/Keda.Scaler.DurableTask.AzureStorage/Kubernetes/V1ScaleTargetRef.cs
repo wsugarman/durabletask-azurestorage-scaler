@@ -8,7 +8,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
 
 #nullable disable
 
-internal sealed class V1KedaScaleTarget : IKubernetesObject, IValidate
+internal sealed class V1ScaleTargetRef : IKubernetesObject, IValidate
 {
     public string ApiVersion { get; set; }
 

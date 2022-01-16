@@ -14,5 +14,7 @@ static partial class SR
 
     public static string JsonParseFormat => ExceptionsManager.GetString(nameof(JsonParseFormat), CultureInfo.CurrentUICulture)!;
 
+    public static string UnknownScaleActionFormat => ExceptionsManager.GetString(nameof(UnknownScaleActionFormat), CultureInfo.CurrentUICulture)!;
+
     private static readonly ResourceManager ExceptionsManager = new ResourceManager("Keda.Scaler.DurableTask.AzureStorage.Resources.Exceptions", typeof(SR).Assembly);
 }

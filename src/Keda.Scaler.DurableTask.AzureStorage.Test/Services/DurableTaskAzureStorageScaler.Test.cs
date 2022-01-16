@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using DurableTask.AzureStorage.Monitoring;
@@ -17,6 +19,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Rest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using ScalerKubernetesExtensions = Keda.Scaler.DurableTask.AzureStorage.Extensions.KubernetesExtensions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Services;
 
@@ -67,15 +70,25 @@ public class DurableTaskAzureStorageScalerTest
     }
 
     [DataTestMethod]
-    [DataRow(ScaleAction.AddWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 2 * 5)]
-    [DataRow(ScaleAction.RemoveWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue / 2 * 5)]
-    [DataRow(ScaleAction.None, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5)]
-    [DataRow(null, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5)]
-    [DataRow((ScaleAction)123, 2, 5, 0)]
-    public async Task GetMetricValueAsync(ScaleAction? action, double ratio, int replicas, long expectedMetric)
+    [DataRow(ScaleAction.AddWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 2 * 5, null, null)]
+    [DataRow(ScaleAction.AddWorker, 2, null, DurableTaskAzureStorageScaler.MetricSpecValue * 2, null, null)]
+    [DataRow(ScaleAction.RemoveWorker, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue / 2 * 5, null, "Deployment")]
+    [DataRow(ScaleAction.RemoveWorker, 2, null, DurableTaskAzureStorageScaler.MetricSpecValue, null, "StatefulSet")]
+    [DataRow(ScaleAction.None, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5, "apps/v1", null)]
+    [DataRow(ScaleAction.None, 2, null, DurableTaskAzureStorageScaler.MetricSpecValue, "apps/v2", null)]
+    [DataRow(null, 2, 5, DurableTaskAzureStorageScaler.MetricSpecValue * 5, "apps/v1", "StatefulSet")]
+    [DataRow((ScaleAction)123, 2, 5, 0, "custom.sh/v2beta", "beehive")]
+    [DataRow((ScaleAction)456, 2, null, 0, "custom.sh/v3beta", "gaggle")]
+    public async Task GetMetricValueAsync(
+        ScaleAction? action,
+        double ratio,
+        int? replicas,
+        long expectedMetric,
+        string? apiVersion,
+        string? kind)
     {
         // Create input
-        KubernetesResource deployment = new KubernetesResource("unit-test-func", "durable-task");
+        KubernetesResource scaledObject = new KubernetesResource("unit-test-func", "durable-task");
         ScalerMetadata metadata = new ScalerMetadata
         {
             AccountName = "unitteststorage",
@@ -88,19 +101,19 @@ public class DurableTaskAzureStorageScalerTest
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
 
         // Create mock services
-        V1Scale scale = new V1Scale { Status = new V1ScaleStatus { Replicas = replicas } };
+        V1ScaleTargetRef scaledTarget = new V1ScaleTargetRef
+        {
+            ApiVersion = apiVersion,
+            Kind = kind,
+            Name = "unit-test",
+        };
+        V1ScaleStatus? scaleStatus = replicas is null ? null : new V1ScaleStatus { Replicas = replicas.Value };
+        IKubernetes k8s = CreateMockKubernetesClient(scaledObject, scaledTarget, scaleStatus, tokenSource.Token);
+
         PerformanceHeartbeat? heartbeat = action is null ? null : CreateHeartbeat(action.GetValueOrDefault());
-
-#pragma warning disable CA2000 // ReadNamespacedDeploymentScaleAsync will dipose
-        Mock<IKubernetes> k8sMock = new Mock<IKubernetes>(MockBehavior.Strict);
-        k8sMock
-            .Setup(k => k.ReadNamespacedDeploymentScaleWithHttpMessagesAsync(deployment.Name, deployment.Namespace, null, null, tokenSource.Token))
-            .ReturnsAsync(new HttpOperationResponse<V1Scale> { Body = scale });
-#pragma warning restore CA2000
-
         Mock<IPerformanceMonitor> monitorMock = new Mock<IPerformanceMonitor>(MockBehavior.Strict);
         monitorMock
-            .Setup(m => m.GetHeartbeatAsync(replicas))
+            .Setup(m => m.GetHeartbeatAsync(replicas ?? 0))
             .ReturnsAsync(heartbeat);
         monitorMock
             .Setup(m => m.Dispose());
@@ -113,13 +126,13 @@ public class DurableTaskAzureStorageScalerTest
         IProcessEnvironment environment = CurrentEnvironment.Instance;
         ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
-        DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(k8sMock.Object, factoryMock.Object, loggerFactory);
+        DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(k8s, factoryMock.Object, loggerFactory);
 
         // Null metadata
         await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => scaler.GetMetricValueAsync(default, null!).AsTask()).ConfigureAwait(false);
 
         // Non-null metadata
-        Task<long> metricTask = scaler.GetMetricValueAsync(deployment, metadata, tokenSource.Token).AsTask();
+        Task<long> metricTask = scaler.GetMetricValueAsync(scaledObject, metadata, tokenSource.Token).AsTask();
         if (Enum.IsDefined(action.GetValueOrDefault()))
             Assert.AreEqual(expectedMetric, await metricTask.ConfigureAwait(false));
         else
@@ -196,6 +209,82 @@ public class DurableTaskAzureStorageScalerTest
         PerformanceHeartbeat heartbeat = new PerformanceHeartbeat();
         method.Invoke(heartbeat, new object[] { ctor.Invoke(new object?[] { action, false, reason }) });
         return heartbeat;
+    }
+
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Kubernetes.Client APIs will dipose of the encapsulating HttpOperationResponse<T>")]
+    private static IKubernetes CreateMockKubernetesClient(
+        KubernetesResource scaledObject,
+        V1ScaleTargetRef scaleTarget,
+        V1ScaleStatus? scaleStatus,
+        CancellationToken cancellationToken)
+    {
+        Mock<IKubernetes> k8sMock = new Mock<IKubernetes>(MockBehavior.Strict);
+
+        // Setup mock behavior for fetching the ScaledObject
+        k8sMock
+            .Setup(k => k.GetNamespacedCustomObjectWithHttpMessagesAsync(
+                "keda.sh",
+                "v1alpha1",
+                scaledObject.Namespace,
+                "ScaledObjects",
+                scaledObject.Name,
+                null,
+                cancellationToken))
+            .ReturnsAsync(
+                new HttpOperationResponse<object>
+                {
+                    Body = JsonSerializer.Deserialize<object>(
+                        JsonSerializer.Serialize(
+                            new V1ScaledObject
+                            {
+                                ApiVersion = "keda.sh/v1alpha1",
+                                Kind = "ScaledObject",
+                                Metadata = new V1ObjectMeta
+                                {
+                                    Name = scaledObject.Name,
+                                    NamespaceProperty = scaledObject.Namespace,
+                                },
+                                Spec = new V1ScaledObjectSpec
+                                {
+                                    ScaleTargetRef = scaleTarget,
+                                },
+                            },
+                            ScalerKubernetesExtensions.JsonSerializerOptions),
+                        ScalerKubernetesExtensions.JsonSerializerOptions)!
+                });
+
+        // Setup mock behavior for fetching the referenced resource scale
+        (string? group, string? version) = scaleTarget.ApiGroupAndVersion();
+        k8sMock
+            .Setup(k => k.GetNamespacedCustomObjectScaleWithHttpMessagesAsync(
+                group ?? "apps",
+                version ?? "v1",
+                scaledObject.Namespace,
+                scaleTarget.Kind == null ? "Deployments" : scaleTarget.Kind + 's',
+                scaleTarget.Name,
+                null,
+                cancellationToken))
+            .ReturnsAsync(
+                new HttpOperationResponse<object>
+                {
+                    Body = JsonSerializer.Deserialize<object>(
+                        JsonSerializer.Serialize(
+                            new V1Scale
+                            {
+                                ApiVersion = scaleTarget.ApiVersion ?? "apps/v1",
+                                Kind = scaleTarget.Kind ?? "Deployment",
+                                Metadata = new V1ObjectMeta
+                                {
+                                    Name = scaleTarget.Name,
+                                    NamespaceProperty = scaledObject.Namespace,
+                                },
+                                Status = scaleStatus,
+                            },
+                            ScalerKubernetesExtensions.JsonSerializerOptions),
+                        ScalerKubernetesExtensions.JsonSerializerOptions)!
+                });
+
+        return k8sMock.Object;
     }
 
     public enum ScalerActivity

@@ -17,11 +17,11 @@ internal static class KubernetesExtensions
 {
     private const string KedaApiGroup = "keda.sh";
     private const string KedaScaledObjectVersion = "v1alpha1";
-    private const string KedaScaledObjectKind = "scaledobject";
+    private const string KedaScaledObjectKind = "ScaledObject";
     private const string KedaScaledObjectKindExact = KedaScaledObjectKind + "." + KedaApiGroup;
-    private const string KedaScaledObjectPlural = "scaledobjects";
+    private const string KedaScaledObjectPlural = "ScaledObjects";
 
-    private static readonly JsonSerializerOptions JsonSerializerOptions = CreateJsonSerializerOptions();
+    internal static readonly JsonSerializerOptions JsonSerializerOptions = CreateJsonSerializerOptions();
 
     public static async ValueTask<V1Scale> ReadNamespacedCustomObjectScaleAsync(
         this IKubernetes kubernetes,
@@ -66,17 +66,7 @@ internal static class KubernetesExtensions
         if (scale is null)
             throw new SerializationException(SR.Format(SR.JsonParseFormat, nameof(V1ScaledObject)));
 
-        return scale.Validate(
-            kind + "." + group,
-            name,
-            namespaceParameter,
-            s =>
-            {
-#pragma warning disable CA2208 // This is by convention in Kubernetes.Client
-                if (s.Status is null)
-                    throw new ArgumentNullException(nameof(V1Scale.Status));
-#pragma warning restore CA2208
-            });
+        return scale.Validate(kind + "." + group, name, namespaceParameter);
     }
 
     public static async ValueTask<V1ScaledObject> ReadNamespacedScaledObjectAsync(
