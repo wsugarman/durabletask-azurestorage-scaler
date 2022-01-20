@@ -28,7 +28,7 @@ This specification describes the `external` trigger for applications that use th
 - **`connectionFromEnv`** - Optional name of the environment variable your deployment uses to get the connection string. Defaults to `AzureWebJobsStorage`
 - **`scaleIncrement`** - Optional ratio by which replicas are increased or decreased at a time (e.g. a value of `2` indicates that under load the number of replicas are doubled, and halved in lieu of pending work). Unlike other scalers, the scaler for the Durable Task Framework (DTFx) emulates the behavior found in Azure App Services and incrementally scales up and down by a constant amount. Must be greater than 1. Defaults to `1.5`
 - **`maxMessageLatencyMilliseconds`** - Optional maximum amount that a message should sit in the work item or control queues. See [here](https://docs.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-perf-and-scale#internal-queue-triggers) for more information about the back-end architecture. Cannot be larger than `1000` or 1 second. Defaults to `1000`
-- **`taskHubName`** - Name of the Durable Task Framework (DTFx) task hub. This name is used when determining the name of blob containers, tables, and queues related to the application. Defaults to `TestHubName`
+- **`taskHubName`** - Optional name of the Durable Task Framework (DTFx) task hub. This name is used when determining the name of blob containers, tables, and queues related to the application. Defaults to `TestHubName`
 - **`useAAdPodIdentity`** - Optionally indicates that AAD pod identity should be used to authenticate between the scaler and the Azure Storage account. If `true`, `Account` must be specified and an AAD pod identity must be bound to the deployment. Defaults to `false`
 
 ## Authentication
@@ -45,7 +45,7 @@ Connection strings may be specified using an environment variable exposed to the
         connectionFromEnv: <variable> # Optional. By default 'AzureWebJobsStorage'
 ```
 
-Connection strings may also be specified manually via the `connection` parameter:
+Connection strings may also be specified directly via the `connection` parameter:
 
 ```yml
   triggers:
@@ -72,3 +72,6 @@ An example specification that uses an identity-based connection can be seen belo
 
 ## Helm
 Coming soon
+
+## Licenses
+The external scaler is licensed under the [MIT](https://github.com/wsugarman/durabletask-azurestorage-external-scaler/blob/main/LICENSE) license. The storm icon was created by [Evon](https://thenounproject.com/evonmbon/) and is licensed royalty-free through [The Noun Project](https://thenounproject.com/).
