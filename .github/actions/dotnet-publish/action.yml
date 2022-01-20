@@ -9,7 +9,7 @@ inputs:
     description: The dotnet build configuration
     required: false
   helmChartPath:
-    default: './helm/Chart.yaml'
+    default: './charts/durabletask-azurestorage-external-scaler/Chart.yaml'
     description: The corresponding Helm chart
     required: false
   pullRequestNumber:
