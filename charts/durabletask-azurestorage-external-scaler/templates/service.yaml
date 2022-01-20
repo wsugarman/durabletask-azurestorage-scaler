@@ -11,4 +11,4 @@ spec:
       port: {{ .Values.port }}
       targetPort: scaler-grpc
   selector:
-    app: {{ .Chart.Name }}
+    {{- include "durabletask-azurestorage-external-scaler.matchLabels" . | nindent 4 }}

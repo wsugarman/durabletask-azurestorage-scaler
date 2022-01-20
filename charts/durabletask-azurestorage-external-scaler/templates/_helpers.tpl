@@ -57,10 +57,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{/*
 Create the name of the service account to use
 */}}
-{{- define "helm.serviceAccountName" -}}
+{{- define "durabletask-azurestorage-external-scaler.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "helm.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "durabletask-azurestorage-external-scaler.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Returns a set of matchLabels applied.
+*/}}
+{{- define "durabletask-azurestorage-external-scaler.matchLabels" -}}
+app: {{ template "durabletask-azurestorage-external-scaler.name" . }}
+release: {{ .Release.Name }}
+{{- end -}}

@@ -13,8 +13,13 @@ param
 Set-PSDebug -Off
 $ErrorActionPreference = "Stop"
 
-$chart = Get-Content $HelmChartPath | Out-String | ConvertFrom-Yaml
-$tagVersion = $chart.appVersion
+$line = Get-Content $HelmChartPath | Select-String -Pattern '^appVersion: (?<appVersion>.+)$' | Select-Object -First 1
+if (!$line || !$line.Matches.Success)
+{
+    throw [InvalidOperationException]::new("Cannot find appVersion in helm chart '$HelmChartPath'")
+}
+
+$tagVersion = $line.Matches.Groups[1].Value.Trim()
 if (!($tagVersion -match '^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)(?:-(?<suffix>[a-zA-Z]+\.\d+))?$'))
 {
     throw [InvalidOperationException]::new("Unexpected helm chart version '$tagVersion'")
