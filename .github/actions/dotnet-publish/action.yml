@@ -8,9 +8,9 @@ inputs:
     default: Debug
     description: The dotnet build configuration
     required: false
-  versionFile:
-    default: './Version.json'
-    description: The product version
+  helmChartPath:
+    default: './charts/durabletask-azurestorage-external-scaler/Chart.yaml'
+    description: The corresponding Helm chart
     required: false
   pullRequestNumber:
     default: ''
@@ -28,7 +28,7 @@ runs:
       shell: pwsh
       run: |
         ./.github/actions/dotnet-publish/scripts/ParseVersion.ps1 `
-          -VersionFilePath '${{ inputs.versionFile }}' `
+          -HelmChartPath '${{ inputs.helmChartPath }}' `
           -PullRequestNumber '${{ inputs.pullRequestNumber }}'
 
     - name: Build

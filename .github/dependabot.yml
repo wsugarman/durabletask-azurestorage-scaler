@@ -1,5 +1,13 @@
 version: 2
 updates:
+  - package-ecosystem: "docker"
+    directory: "/src/Keda.Scaler.DurableTask.AzureStorage"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

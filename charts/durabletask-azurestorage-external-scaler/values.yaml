@@ -1,0 +1,35 @@
+# Default names are derived from the name of the chart
+nameOverride:
+fullnameOverride:
+
+# Optional additional labels for each Kubernetes resource
+additionalLabels: {}
+#  name: <value>
+
+# Docker image metadata
+image:
+  repository: ghcr.io/wsugarman/durabletask-azurestorage-external-scaler
+  tag: ""  # will default to the appVersion in Chart.yaml
+  pullPolicy: Always
+  pullSecrets: []
+
+# gRPC port
+port: 4370
+
+# Container resource requests and limits
+resources:
+  requests:
+    cpu: 10m
+    memory: 128Mi
+  limits:
+    cpu: 100m
+    memory: 512Mi
+
+# Cluster RBAC settings
+rbac:
+  create: true
+
+# Service Account information for querying the scale
+serviceAccount:
+  create: true
+  name: # If not set and create is true, a name is generated using the fullname template

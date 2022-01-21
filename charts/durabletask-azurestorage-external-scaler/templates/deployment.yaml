@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "durabletask-azurestorage-external-scaler.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "durabletask-azurestorage-external-scaler.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "durabletask-azurestorage-external-scaler.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "durabletask-azurestorage-external-scaler.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "durabletask-azurestorage-external-scaler.serviceAccountName" . }}
+      restartPolicy: Always
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | indent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: scaler-grpc
+              containerPort: {{ .Values.port }}
+          resources:
+            {{- .Values.resources | toYaml | nindent 12 }}
+      terminationGracePeriodSeconds: 60
