@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
@@ -31,14 +32,14 @@ internal class PerformanceMonitor : IPerformanceMonitor
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get task result after task completes.")]
-    public async Task<PerformanceHeartbeat?> GetHeartbeatAsync()
+    public async Task<PerformanceHeartbeat?> GetHeartbeatAsync(CancellationToken cancellationToken)
     {
         PerformanceHeartbeat heartbeat = new PerformanceHeartbeat();
         QueueClient workItemQueue = GetWorkItemQueue();
         QueueClient[] controlQueues = GetControlQueues();
         var tasks = new List<Task>(controlQueues.Length + 1);
-        Task<CloudQueueMetric> workItemMetricTask = GetQueueMetricsAsync(workItemQueue);
-        List<Task<CloudQueueMetric>> controlQueueMetricTasks = controlQueues.Select(GetQueueMetricsAsync).ToList();
+        Task<CloudQueueMetric> workItemMetricTask = GetQueueMetricsAsync(workItemQueue, cancellationToken);
+        List<Task<CloudQueueMetric>> controlQueueMetricTasks = controlQueues.Select(x => GetQueueMetricsAsync(x, cancellationToken)).ToList();
 
         tasks.Add(workItemMetricTask);
         tasks.AddRange(controlQueueMetricTasks);
@@ -66,10 +67,10 @@ internal class PerformanceMonitor : IPerformanceMonitor
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get result after task is completed.")]
-    private async Task<CloudQueueMetric> GetQueueMetricsAsync(QueueClient queue)
+    private static async Task<CloudQueueMetric> GetQueueMetricsAsync(QueueClient queue, CancellationToken cancellationToken)
     {
-        Task<TimeSpan> latencyTask = GetQueueLatencyAsync(queue);
-        Task<int> lengthTask = GetQueueLengthAsync(queue);
+        Task<TimeSpan> latencyTask = GetQueueLatencyAsync(queue, cancellationToken);
+        Task<int> lengthTask = GetQueueLengthAsync(queue, cancellationToken);
         await Task.WhenAll(latencyTask, lengthTask).ConfigureAwait(false);
 
         TimeSpan latency = latencyTask.Result;
@@ -85,10 +86,10 @@ internal class PerformanceMonitor : IPerformanceMonitor
         return new CloudQueueMetric { Latency = latency, Length = length };
     }
 
-    private static async Task<TimeSpan> GetQueueLatencyAsync(QueueClient queue)
+    private static async Task<TimeSpan> GetQueueLatencyAsync(QueueClient queue, CancellationToken cancellationToken)
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
-        PeekedMessage firstMessage = await queue.PeekMessageAsync().ConfigureAwait(false);
+        PeekedMessage firstMessage = await queue.PeekMessageAsync(cancellationToken).ConfigureAwait(false);
         if (firstMessage == null)
         {
             return TimeSpan.MinValue;
@@ -99,9 +100,9 @@ internal class PerformanceMonitor : IPerformanceMonitor
         return latency < TimeSpan.Zero ? TimeSpan.Zero : latency;
     }
 
-    static async Task<int> GetQueueLengthAsync(QueueClient queue)
+    static async Task<int> GetQueueLengthAsync(QueueClient queue, CancellationToken cancellationToken)
     {
-        var properties = await queue.GetPropertiesAsync().ConfigureAwait(false);
+        var properties = await queue.GetPropertiesAsync(cancellationToken).ConfigureAwait(false);
         return properties.Value.ApproximateMessagesCount;
     }
 

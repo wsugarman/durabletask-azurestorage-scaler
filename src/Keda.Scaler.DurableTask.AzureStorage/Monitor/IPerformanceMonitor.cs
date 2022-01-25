@@ -1,6 +1,7 @@
 ﻿// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
@@ -14,5 +15,5 @@ internal interface IPerformanceMonitor
     /// Get heart beat of durable task.
     /// </summary>
     /// <returns>The heart beat.</returns>
-    Task<PerformanceHeartbeat?> GetHeartbeatAsync();
+    Task<PerformanceHeartbeat?> GetHeartbeatAsync(CancellationToken cancellationToken = default);
 }
