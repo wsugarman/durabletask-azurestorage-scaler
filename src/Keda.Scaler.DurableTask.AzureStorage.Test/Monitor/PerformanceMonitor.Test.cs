@@ -56,7 +56,7 @@ public class PerformanceMonitorTest
         PerformanceHeartbeat? heartbeat = await monitor.GetHeartbeatAsync().ConfigureAwait(false);
         Assert.IsNotNull(heartbeat);
         Assert.AreEqual(heartbeat.PartitionCount, 4);
-        Assert.IsTrue(heartbeat.ControlQueueMetrixs.All(item => item.Latency == TimeSpan.Zero && item.Length == 0));
+        Assert.IsTrue(heartbeat.ControlQueueMetrics.All(item => item.Latency == TimeSpan.Zero && item.Length == 0));
         Assert.AreEqual(heartbeat.WorkItemQueueMetric.Length, 0);
         Assert.AreEqual(heartbeat.WorkItemQueueMetric.Latency, TimeSpan.Zero);
     }

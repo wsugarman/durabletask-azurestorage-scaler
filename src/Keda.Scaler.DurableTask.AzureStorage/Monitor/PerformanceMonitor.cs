@@ -12,7 +12,10 @@ using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 
-class PerformanceMonitor : IPerformanceMonitor
+/// <summary>
+/// An implementation of <see cref="IPerformanceMonitor"/>
+/// </summary>
+internal class PerformanceMonitor : IPerformanceMonitor
 {
     private readonly PerformanceMonitorSettings _settings;
     private readonly ILogger _logger;
@@ -21,20 +24,20 @@ class PerformanceMonitor : IPerformanceMonitor
     public PerformanceMonitor(CloudQueueClient client, PerformanceMonitorSettings settings, ILogger logger)
     {
         _settings = EnsureArg.IsNotNull(settings, nameof(settings));
-        _logger = EnsureArg.IsNotNull(logger, nameof(logger));
         _client = EnsureArg.IsNotNull(client, nameof(client));
+        _logger = EnsureArg.IsNotNull(logger, nameof(logger));
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get task result after task completes.")]
     public async Task<PerformanceHeartbeat?> GetHeartbeatAsync()
     {
-        PerformanceHeartbeat result = new PerformanceHeartbeat();
-
+        PerformanceHeartbeat heartbeat = new PerformanceHeartbeat();
         CloudQueue workItemQueue = GetWorkItemQueue();
         CloudQueue[] controlQueues = GetControlQueues();
-        Task<QueueMetric> workItemMetricTask = GetQueueMetricsAsync(workItemQueue);
-        List<Task<QueueMetric>> controlQueueMetricTasks = controlQueues.Select(GetQueueMetricsAsync).ToList();
-        var tasks = new List<Task>(controlQueueMetricTasks.Count + 1);
+        var tasks = new List<Task>(controlQueues.Length + 1);
+        Task<CloudQueueMetric> workItemMetricTask = GetQueueMetricsAsync(workItemQueue);
+        List<Task<CloudQueueMetric>> controlQueueMetricTasks = controlQueues.Select(GetQueueMetricsAsync).ToList();
+        
         tasks.Add(workItemMetricTask);
         tasks.AddRange(controlQueueMetricTasks);
         try
@@ -54,13 +57,13 @@ class PerformanceMonitor : IPerformanceMonitor
             return null;
         }
 
-        result.WorkItemQueueMetric = workItemMetricTask.Result;
-        result.ControlQueueMetrixs = controlQueueMetricTasks.Select(item => item.Result).ToList();
-        result.PartitionCount = controlQueues.Length;
-        return result;
+        heartbeat.WorkItemQueueMetric = workItemMetricTask.Result;
+        heartbeat.ControlQueueMetrics = controlQueueMetricTasks.Select(item => item.Result).ToList();
+        heartbeat.PartitionCount = controlQueues.Length;
+        return heartbeat;
     }
 
-    private async Task<QueueMetric> GetQueueMetricsAsync(CloudQueue queue)
+    private async Task<CloudQueueMetric> GetQueueMetricsAsync(CloudQueue queue)
     {
         Task<TimeSpan> latencyTask = GetQueueLatencyAsync(queue);
         Task<int> lengthTask = GetQueueLengthAsync(queue);
@@ -76,7 +79,7 @@ class PerformanceMonitor : IPerformanceMonitor
             length = 0;
         }
 
-        return new QueueMetric { Latency = latency, Length = length };
+        return new CloudQueueMetric { Latency = latency, Length = length };
     }
 
     private static async Task<TimeSpan> GetQueueLatencyAsync(CloudQueue queue)
