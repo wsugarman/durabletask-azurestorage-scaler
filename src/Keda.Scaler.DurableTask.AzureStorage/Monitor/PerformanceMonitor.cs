@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using EnsureThat;
@@ -21,25 +22,36 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 internal class PerformanceMonitor : IPerformanceMonitor
 {
     private readonly PerformanceMonitorSettings _settings;
-    private readonly ILogger _logger;
-    private readonly QueueServiceClient _client;
+    private readonly ILogger<PerformanceMonitor> _logger;
+    private readonly QueueServiceClient _queueServiceClient;
+    private readonly BlobServiceClient _blobServiceClient;
+    private readonly ITaskHubBrowser _taskHubBrowser;
 
-    public PerformanceMonitor(QueueServiceClient client, PerformanceMonitorSettings settings, ILogger logger)
+    public PerformanceMonitor(QueueServiceClient queueServiceclient, BlobServiceClient blobServiceClient, ITaskHubBrowser taskHubBrowser, PerformanceMonitorSettings settings, ILogger<PerformanceMonitor> logger)
     {
         _settings = EnsureArg.IsNotNull(settings, nameof(settings));
-        _client = EnsureArg.IsNotNull(client, nameof(client));
+        _queueServiceClient = EnsureArg.IsNotNull(queueServiceclient, nameof(queueServiceclient));
+        _blobServiceClient = EnsureArg.IsNotNull(blobServiceClient, nameof(blobServiceClient));
         _logger = EnsureArg.IsNotNull(logger, nameof(logger));
+        _taskHubBrowser = EnsureArg.IsNotNull(taskHubBrowser, nameof(taskHubBrowser));
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get task result after task completes.")]
     public async Task<PerformanceHeartbeat?> GetHeartbeatAsync(CancellationToken cancellationToken)
     {
+        TaskHubInfo? taskHubInfo = await _taskHubBrowser.GetAsync(_blobServiceClient, _settings.TaskHubName, cancellationToken).ConfigureAwait(false);
+
+        if (taskHubInfo == null)
+        {
+            return null;
+        }
+
         PerformanceHeartbeat heartbeat = new PerformanceHeartbeat();
         QueueClient workItemQueue = GetWorkItemQueue();
         QueueClient[] controlQueues = GetControlQueues();
         var tasks = new List<Task>(controlQueues.Length + 1);
-        Task<CloudQueueMetric> workItemMetricTask = GetQueueMetricsAsync(workItemQueue, cancellationToken);
-        List<Task<CloudQueueMetric>> controlQueueMetricTasks = controlQueues.Select(x => GetQueueMetricsAsync(x, cancellationToken)).ToList();
+        Task<QueueMetric> workItemMetricTask = GetQueueMetricsAsync(workItemQueue, cancellationToken);
+        List<Task<QueueMetric>> controlQueueMetricTasks = controlQueues.Select(x => GetQueueMetricsAsync(x, cancellationToken)).ToList();
 
         tasks.Add(workItemMetricTask);
         tasks.AddRange(controlQueueMetricTasks);
@@ -54,7 +66,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
             _logger.LogWarning(
                 "Task hub {TaskHubName} in {AccountName} has not been provisioned: {ErrorMessage}",
                 _settings.TaskHubName,
-                _client.AccountName,
+                _queueServiceClient.AccountName,
                 e.RequestInformation.ExtendedErrorInformation?.ErrorMessage);
 
             return null;
@@ -67,7 +79,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get result after task is completed.")]
-    private static async Task<CloudQueueMetric> GetQueueMetricsAsync(QueueClient queue, CancellationToken cancellationToken)
+    private static async Task<QueueMetric> GetQueueMetricsAsync(QueueClient queue, CancellationToken cancellationToken)
     {
         Task<TimeSpan> latencyTask = GetQueueLatencyAsync(queue, cancellationToken);
         Task<int> lengthTask = GetQueueLengthAsync(queue, cancellationToken);
@@ -83,7 +95,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
             length = 0;
         }
 
-        return new CloudQueueMetric { Latency = latency, Length = length };
+        return new QueueMetric { Latency = latency, Length = length };
     }
 
     private static async Task<TimeSpan> GetQueueLatencyAsync(QueueClient queue, CancellationToken cancellationToken)
@@ -109,7 +121,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
     private QueueClient GetWorkItemQueue()
     {
         string queueName = GetWorkItemQueueName();
-        return _client.GetQueueClient(queueName);
+        return _queueServiceClient.GetQueueClient(queueName);
     }
 
     private QueueClient[] GetControlQueues()
@@ -117,7 +129,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
         QueueClient[] result = new QueueClient[_settings.PartitionCount];
         for (int i = 0; i < result.Length; i++)
         {
-            result[i] = _client.GetQueueClient(GetControlQueueName(i));
+            result[i] = _queueServiceClient.GetQueueClient(GetControlQueueName(i));
         }
         return result;
     }
