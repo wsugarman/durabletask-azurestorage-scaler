@@ -63,14 +63,15 @@ internal class PerformanceMonitor : IPerformanceMonitor
         return heartbeat;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get result after task is completed.")]
     private async Task<CloudQueueMetric> GetQueueMetricsAsync(CloudQueue queue)
     {
         Task<TimeSpan> latencyTask = GetQueueLatencyAsync(queue);
         Task<int> lengthTask = GetQueueLengthAsync(queue);
         await Task.WhenAll(latencyTask, lengthTask).ConfigureAwait(false);
 
-        TimeSpan latency = await latencyTask.ConfigureAwait(false);
-        int length = await lengthTask.ConfigureAwait(false);
+        TimeSpan latency = latencyTask.Result;
+        int length = lengthTask.Result;
 
         if (latency == TimeSpan.MinValue)
         {
@@ -129,7 +130,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
         return GetQueueName(_settings.TaskHubName, "workitems");
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "<Pending>")]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "durable task framework use lowercase queue name.")]
     private static string GetQueueName(string taskHub, string suffix)
     {
         EnsureArg.IsNotEmptyOrWhiteSpace(taskHub, nameof(taskHub));

@@ -21,7 +21,7 @@ public class PerformanceMonitorTest
 {
     [TestMethod]
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Durable Task Framework use lowercase for Queue name")]
-    public async Task GetHeartbeatAsync()
+    public async Task GetHeartbeat()
     {
         string taskHubName = "TestHub";
         string workItemQueueName = $"{taskHubName.ToLowerInvariant()}-workitems";
@@ -33,7 +33,7 @@ public class PerformanceMonitorTest
         var controlQueue3Name = $"{taskHubName.ToLowerInvariant()}-control-02";
         var controlQueue3 = new Mock<MockCloudQueue>();
         var controlQueue4Name = $"{taskHubName.ToLowerInvariant()}-control-03";
-        var controlQueue4 = new Mock<MockCloudQueue>();
+        var controlQueue4 = new Mock<MockCloudQueue>();        
 
         Dictionary<string, CloudQueue> dict = new Dictionary<string, CloudQueue>();
         dict.Add(workItemQueueName, workItemQueue.Object);

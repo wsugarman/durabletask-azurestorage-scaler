@@ -10,5 +10,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 /// </summary>
 internal interface IPerformanceMonitor
 {
+    /// <summary>
+    /// Get heart beat of durable task.
+    /// </summary>
+    /// <returns>The heart beat.</returns>
     Task<PerformanceHeartbeat?> GetHeartbeatAsync();
 }
