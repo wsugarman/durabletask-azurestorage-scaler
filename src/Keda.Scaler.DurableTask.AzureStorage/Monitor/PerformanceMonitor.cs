@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Storage.Blobs;
@@ -30,9 +31,9 @@ internal class PerformanceMonitor : IPerformanceMonitor
 
     public PerformanceMonitor(
         QueueServiceClient queueServiceclient,
-        BlobServiceClient blobServiceClient, 
-        ITaskHubBrowser taskHubBrowser, 
-        IOptionsSnapshot<PerformanceMonitorOptions> options, 
+        BlobServiceClient blobServiceClient,
+        ITaskHubBrowser taskHubBrowser,
+        IOptionsSnapshot<PerformanceMonitorOptions> options,
         ILogger<PerformanceMonitor> logger)
     {
         _options = EnsureArg.IsNotNull(options?.Value, nameof(options));
@@ -65,9 +66,8 @@ internal class PerformanceMonitor : IPerformanceMonitor
         {
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
-        catch (StorageException e) when (e.RequestInformation?.HttpStatusCode == 404)
+        catch (StorageException e) when (e.RequestInformation?.HttpStatusCode == (int)HttpStatusCode.NotFound)
         {
-
             // The queues are not yet provisioned.
             _logger.LogWarning(
                 "Task hub {TaskHubName} in {AccountName} has not been provisioned: {ErrorMessage}",
