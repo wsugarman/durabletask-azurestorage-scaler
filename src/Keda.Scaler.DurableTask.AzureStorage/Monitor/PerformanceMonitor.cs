@@ -11,6 +11,7 @@ using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using EnsureThat;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 
@@ -21,15 +22,20 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 /// </summary>
 internal class PerformanceMonitor : IPerformanceMonitor
 {
-    private readonly PerformanceMonitorSettings _settings;
+    private readonly PerformanceMonitorOptions _options;
     private readonly ILogger<PerformanceMonitor> _logger;
     private readonly QueueServiceClient _queueServiceClient;
     private readonly BlobServiceClient _blobServiceClient;
     private readonly ITaskHubBrowser _taskHubBrowser;
 
-    public PerformanceMonitor(QueueServiceClient queueServiceclient, BlobServiceClient blobServiceClient, ITaskHubBrowser taskHubBrowser, PerformanceMonitorSettings settings, ILogger<PerformanceMonitor> logger)
+    public PerformanceMonitor(
+        QueueServiceClient queueServiceclient,
+        BlobServiceClient blobServiceClient, 
+        ITaskHubBrowser taskHubBrowser, 
+        IOptionsSnapshot<PerformanceMonitorOptions> options, 
+        ILogger<PerformanceMonitor> logger)
     {
-        _settings = EnsureArg.IsNotNull(settings, nameof(settings));
+        _options = EnsureArg.IsNotNull(options?.Value, nameof(options));
         _queueServiceClient = EnsureArg.IsNotNull(queueServiceclient, nameof(queueServiceclient));
         _blobServiceClient = EnsureArg.IsNotNull(blobServiceClient, nameof(blobServiceClient));
         _logger = EnsureArg.IsNotNull(logger, nameof(logger));
@@ -39,7 +45,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get task result after task completes.")]
     public async Task<PerformanceHeartbeat?> GetHeartbeatAsync(CancellationToken cancellationToken)
     {
-        TaskHubInfo? taskHubInfo = await _taskHubBrowser.GetAsync(_blobServiceClient, _settings.TaskHubName, cancellationToken).ConfigureAwait(false);
+        TaskHubInfo? taskHubInfo = await _taskHubBrowser.GetAsync(_blobServiceClient, _options.TaskHubName, cancellationToken).ConfigureAwait(false);
 
         if (taskHubInfo == null)
         {
@@ -65,7 +71,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
             // The queues are not yet provisioned.
             _logger.LogWarning(
                 "Task hub {TaskHubName} in {AccountName} has not been provisioned: {ErrorMessage}",
-                _settings.TaskHubName,
+                _options.TaskHubName,
                 _queueServiceClient.AccountName,
                 e.RequestInformation.ExtendedErrorInformation?.ErrorMessage);
 
@@ -126,7 +132,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
 
     private QueueClient[] GetControlQueues()
     {
-        QueueClient[] result = new QueueClient[_settings.PartitionCount];
+        QueueClient[] result = new QueueClient[_options.PartitionCount];
         for (int i = 0; i < result.Length; i++)
         {
             result[i] = _queueServiceClient.GetQueueClient(GetControlQueueName(i));
@@ -136,12 +142,12 @@ internal class PerformanceMonitor : IPerformanceMonitor
 
     private string GetControlQueueName(int partitionIndex)
     {
-        return GetQueueName(_settings.TaskHubName, $"control-{partitionIndex:00}");
+        return GetQueueName(_options.TaskHubName, $"control-{partitionIndex:00}");
     }
 
     private string GetWorkItemQueueName()
     {
-        return GetQueueName(_settings.TaskHubName, "workitems");
+        return GetQueueName(_options.TaskHubName, "workitems");
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "durable task framework use lowercase queue name.")]

@@ -6,7 +6,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 /// <summary>
 /// Settings for <see cref="PerformanceMonitor"/>
 /// </summary>
-internal class PerformanceMonitorSettings
+internal class PerformanceMonitorOptions
 {
     /// <summary>
     /// Gets or sets task hub name.
