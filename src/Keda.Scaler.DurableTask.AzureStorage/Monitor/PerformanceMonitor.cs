@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
 using EnsureThat;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
@@ -19,9 +21,9 @@ internal class PerformanceMonitor : IPerformanceMonitor
 {
     private readonly PerformanceMonitorSettings _settings;
     private readonly ILogger _logger;
-    private readonly CloudQueueClient _client;
+    private readonly QueueServiceClient _client;
 
-    public PerformanceMonitor(CloudQueueClient client, PerformanceMonitorSettings settings, ILogger logger)
+    public PerformanceMonitor(QueueServiceClient client, PerformanceMonitorSettings settings, ILogger logger)
     {
         _settings = EnsureArg.IsNotNull(settings, nameof(settings));
         _client = EnsureArg.IsNotNull(client, nameof(client));
@@ -32,12 +34,12 @@ internal class PerformanceMonitor : IPerformanceMonitor
     public async Task<PerformanceHeartbeat?> GetHeartbeatAsync()
     {
         PerformanceHeartbeat heartbeat = new PerformanceHeartbeat();
-        CloudQueue workItemQueue = GetWorkItemQueue();
-        CloudQueue[] controlQueues = GetControlQueues();
+        QueueClient workItemQueue = GetWorkItemQueue();
+        QueueClient[] controlQueues = GetControlQueues();
         var tasks = new List<Task>(controlQueues.Length + 1);
         Task<CloudQueueMetric> workItemMetricTask = GetQueueMetricsAsync(workItemQueue);
         List<Task<CloudQueueMetric>> controlQueueMetricTasks = controlQueues.Select(GetQueueMetricsAsync).ToList();
-        
+
         tasks.Add(workItemMetricTask);
         tasks.AddRange(controlQueueMetricTasks);
         try
@@ -49,9 +51,9 @@ internal class PerformanceMonitor : IPerformanceMonitor
 
             // The queues are not yet provisioned.
             _logger.LogWarning(
-                "Task hub {TaskHubName} in {QueueBaseUri} has not been provisioned: {ErrorMessage}",
+                "Task hub {TaskHubName} in {AccountName} has not been provisioned: {ErrorMessage}",
                 _settings.TaskHubName,
-                _client.BaseUri,
+                _client.AccountName,
                 e.RequestInformation.ExtendedErrorInformation?.ErrorMessage);
 
             return null;
@@ -64,7 +66,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get result after task is completed.")]
-    private async Task<CloudQueueMetric> GetQueueMetricsAsync(CloudQueue queue)
+    private async Task<CloudQueueMetric> GetQueueMetricsAsync(QueueClient queue)
     {
         Task<TimeSpan> latencyTask = GetQueueLatencyAsync(queue);
         Task<int> lengthTask = GetQueueLengthAsync(queue);
@@ -83,39 +85,38 @@ internal class PerformanceMonitor : IPerformanceMonitor
         return new CloudQueueMetric { Latency = latency, Length = length };
     }
 
-    private static async Task<TimeSpan> GetQueueLatencyAsync(CloudQueue queue)
+    private static async Task<TimeSpan> GetQueueLatencyAsync(QueueClient queue)
     {
         DateTimeOffset now = DateTimeOffset.UtcNow;
-        CloudQueueMessage firstMessage = await queue.PeekMessageAsync().ConfigureAwait(false);
+        PeekedMessage firstMessage = await queue.PeekMessageAsync().ConfigureAwait(false);
         if (firstMessage == null)
         {
             return TimeSpan.MinValue;
         }
 
         // Make sure we always return a non-negative timespan in the success case.
-        TimeSpan latency = now.Subtract(firstMessage.InsertionTime.GetValueOrDefault(now));
+        TimeSpan latency = now.Subtract(firstMessage.InsertedOn.GetValueOrDefault(now));
         return latency < TimeSpan.Zero ? TimeSpan.Zero : latency;
     }
 
-    static async Task<int> GetQueueLengthAsync(CloudQueue queue)
+    static async Task<int> GetQueueLengthAsync(QueueClient queue)
     {
-        // Update attributes
-        await queue.FetchAttributesAsync().ConfigureAwait(false);
-        return queue.ApproximateMessageCount.GetValueOrDefault(0);
+        var properties = await queue.GetPropertiesAsync().ConfigureAwait(false);
+        return properties.Value.ApproximateMessagesCount;
     }
 
-    private CloudQueue GetWorkItemQueue()
+    private QueueClient GetWorkItemQueue()
     {
         string queueName = GetWorkItemQueueName();
-        return _client.GetQueueReference(queueName);
+        return _client.GetQueueClient(queueName);
     }
 
-    private CloudQueue[] GetControlQueues()
+    private QueueClient[] GetControlQueues()
     {
-        CloudQueue[] result = new CloudQueue[_settings.PartitionCount];
+        QueueClient[] result = new QueueClient[_settings.PartitionCount];
         for (int i = 0; i < result.Length; i++)
         {
-            result[i] = _client.GetQueueReference(GetControlQueueName(i));
+            result[i] = _client.GetQueueClient(GetControlQueueName(i));
         }
         return result;
     }
