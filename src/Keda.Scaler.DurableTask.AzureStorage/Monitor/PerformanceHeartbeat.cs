@@ -18,11 +18,11 @@ internal class PerformanceHeartbeat
     /// <summary>
     /// Gets or sets metric of work item queue.
     /// </summary>
-    public CloudQueueMetric WorkItemQueueMetric { get; set; } = new CloudQueueMetric();
+    public QueueMetric WorkItemQueueMetric { get; set; } = new QueueMetric();
 
     /// <summary>
     /// Gets or sets metrics of control queues.
     /// </summary>
-    public IReadOnlyList<CloudQueueMetric> ControlQueueMetrics { get; set; } = new List<CloudQueueMetric>();
+    public IReadOnlyList<QueueMetric> ControlQueueMetrics { get; set; } = new List<QueueMetric>();
 
 }

@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.5.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.10.0" />
     <PackageReference Include="Azure.Storage.Queues" Version="12.8.0" />
     <PackageReference Include="Ensure.That" Version="10.1.0" />
     <PackageReference Include="Google.Protobuf" Version="3.19.3" />

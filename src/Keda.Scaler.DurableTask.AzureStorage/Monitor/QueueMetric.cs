@@ -8,7 +8,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 /// <summary>
 /// Class contains metric data of cloud queue.
 /// </summary>
-internal class CloudQueueMetric
+internal class QueueMetric
 {
     /// <summary>
     /// Gets or sets the approximate age of the first work-item queue message.

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 
