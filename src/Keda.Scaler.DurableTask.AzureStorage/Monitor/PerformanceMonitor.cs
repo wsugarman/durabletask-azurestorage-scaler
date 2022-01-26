@@ -115,7 +115,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
         return latency < TimeSpan.Zero ? TimeSpan.Zero : latency;
     }
 
-    static async Task<int> GetQueueLengthAsync(QueueClient queue, CancellationToken cancellationToken)
+    private static async Task<int> GetQueueLengthAsync(QueueClient queue, CancellationToken cancellationToken)
     {
         var properties = await queue.GetPropertiesAsync(cancellationToken).ConfigureAwait(false);
         return properties.Value.ApproximateMessagesCount;

@@ -54,8 +54,8 @@ internal class TaskHubBrowser : ITaskHubBrowser
     }
 
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "DurableTask framework normalizes to lowercase.")]
-    public static string GetLeaseContainerName(string taskHubName)
-          => !string.IsNullOrEmpty(taskHubName)
-          ? taskHubName.ToLowerInvariant() + "-leases"
-          : throw new ArgumentNullException(nameof(taskHubName));
+    private static string GetLeaseContainerName(string taskHubName)
+          => EnsureArg.IsNotEmptyOrWhiteSpace(taskHubName, nameof(taskHubName)).ToLowerInvariant() + "-leases";
+
+
 }

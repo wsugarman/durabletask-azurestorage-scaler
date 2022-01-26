@@ -19,10 +19,10 @@ using Moq;
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Monitor;
 
 [TestClass]
-public class Perf
+public class TaskHubBrowserTest
 {
     [TestMethod]
-    public async Task TestGetAsync()
+    public async Task GetAsync()
     {
         string taskHubName = "testhub";
         string leaseContainerName = $"{taskHubName}-leases";
