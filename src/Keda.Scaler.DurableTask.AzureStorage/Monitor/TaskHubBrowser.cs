@@ -19,15 +19,18 @@ internal class TaskHubBrowser : ITaskHubBrowser
 {
     private const string TaskHubBlobName = "taskhub.json";
     private readonly ILogger<TaskHubBrowser> _logger;
+    private readonly BlobServiceClient _client;
 
-    public TaskHubBrowser(ILogger<TaskHubBrowser> logger)
-        => _logger = EnsureArg.IsNotNull(logger, nameof(logger));
-
-    public async ValueTask<TaskHubInfo?> GetAsync(BlobServiceClient client, string taskHubName, CancellationToken cancellationToken = default)
+    public TaskHubBrowser(BlobServiceClient client, ILogger<TaskHubBrowser> logger)
     {
-        EnsureArg.IsNotNull(client, nameof(client));
+        _logger = EnsureArg.IsNotNull(logger, nameof(logger));
+        _client = EnsureArg.IsNotNull(client, nameof(client));
+    }
+
+    public async ValueTask<TaskHubInfo?> GetAsync(string taskHubName, CancellationToken cancellationToken = default)
+    {
         EnsureArg.IsNotEmptyOrWhiteSpace(taskHubName, nameof(taskHubName));
-        BlobContainerClient containerClient = client.GetBlobContainerClient(GetLeaseContainerName(taskHubName));
+        BlobContainerClient containerClient = _client.GetBlobContainerClient(GetLeaseContainerName(taskHubName));
         BlobClient blobClient = containerClient.GetBlobClient(TaskHubBlobName);
 
         try
@@ -44,7 +47,7 @@ internal class TaskHubBrowser : ITaskHubBrowser
                 "Cannot find Task Hub lease '{LeaseName}' for Task Hub '{TaskHubName}' in Azure Storage Account '{AccountName}'.",
                 containerClient.Name,
                 taskHubName,
-                client.AccountName);
+                _client.AccountName);
 
             return null;
         }

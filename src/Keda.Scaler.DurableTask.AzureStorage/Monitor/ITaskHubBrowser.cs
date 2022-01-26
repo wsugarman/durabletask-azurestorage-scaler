@@ -9,5 +9,5 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 
 internal interface ITaskHubBrowser
 {
-    ValueTask<TaskHubInfo?> GetAsync(BlobServiceClient client, string taskHubName, CancellationToken cancellationToken = default);
+    ValueTask<TaskHubInfo?> GetAsync(string taskHubName, CancellationToken cancellationToken = default);
 }

@@ -26,19 +26,16 @@ internal class PerformanceMonitor : IPerformanceMonitor
     private readonly PerformanceMonitorOptions _options;
     private readonly ILogger<PerformanceMonitor> _logger;
     private readonly QueueServiceClient _queueServiceClient;
-    private readonly BlobServiceClient _blobServiceClient;
     private readonly ITaskHubBrowser _taskHubBrowser;
 
     public PerformanceMonitor(
         QueueServiceClient queueServiceclient,
-        BlobServiceClient blobServiceClient,
         ITaskHubBrowser taskHubBrowser,
         IOptionsSnapshot<PerformanceMonitorOptions> options,
         ILogger<PerformanceMonitor> logger)
     {
         _options = EnsureArg.IsNotNull(options?.Value, nameof(options));
         _queueServiceClient = EnsureArg.IsNotNull(queueServiceclient, nameof(queueServiceclient));
-        _blobServiceClient = EnsureArg.IsNotNull(blobServiceClient, nameof(blobServiceClient));
         _logger = EnsureArg.IsNotNull(logger, nameof(logger));
         _taskHubBrowser = EnsureArg.IsNotNull(taskHubBrowser, nameof(taskHubBrowser));
     }
@@ -46,7 +43,7 @@ internal class PerformanceMonitor : IPerformanceMonitor
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1849:Call async methods when in an async method", Justification = "It's OK to get task result after task completes.")]
     public async Task<PerformanceHeartbeat?> GetHeartbeatAsync(CancellationToken cancellationToken)
     {
-        TaskHubInfo? taskHubInfo = await _taskHubBrowser.GetAsync(_blobServiceClient, _options.TaskHubName, cancellationToken).ConfigureAwait(false);
+        TaskHubInfo? taskHubInfo = await _taskHubBrowser.GetAsync(_options.TaskHubName, cancellationToken).ConfigureAwait(false);
 
         if (taskHubInfo == null)
         {
