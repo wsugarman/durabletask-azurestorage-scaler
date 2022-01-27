@@ -2,12 +2,14 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 
 /// <summary>
 ///  Represents performance of durable task.
 /// </summary>
+[ExcludeFromCodeCoverage]
 internal class PerformanceHeartbeat
 {
     /// <summary>
