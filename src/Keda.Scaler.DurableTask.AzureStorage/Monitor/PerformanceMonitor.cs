@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -21,6 +22,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Monitor;
 /// <summary>
 /// An implementation of <see cref="IPerformanceMonitor"/>
 /// </summary>
+
+[ExcludeFromCodeCoverage(Justification = "Cannot mock QueueClient for Moq bug https://github.com/moq/moq4/issues/991")]
 internal class PerformanceMonitor : IPerformanceMonitor
 {
     private readonly PerformanceMonitorOptions _options;

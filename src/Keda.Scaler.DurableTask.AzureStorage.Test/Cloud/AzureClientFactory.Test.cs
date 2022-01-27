@@ -18,7 +18,7 @@ public class AzureClientFactoryTest
     [TestMethod]
     public void GetBlobServiceClient()
     {
-        // BlobSerivceClient validate account key, so provide real account key here, but associated storage account has been deleted 
+        // A valid account key 
         string accountKey = "/J3m0VCxNztyamCFlEXKMggO0SGZc1kB2Z7UksJkm1SS7Eyf0aUuTyRS3Q4lQzNix4Usx6BGwfIq3sDEwa+I5w==";
         string accountName = "testaccount";
         var blobClientOptions = new BlobClientOptions();
@@ -42,7 +42,7 @@ public class AzureClientFactoryTest
     [TestMethod]
     public void GetQueueServiceClient()
     {
-        // QueueSerivceClient validate account key, so provide real account key here, but associated storage account has been deleted 
+        // // A valid account key
         string accountKey = "/J3m0VCxNztyamCFlEXKMggO0SGZc1kB2Z7UksJkm1SS7Eyf0aUuTyRS3Q4lQzNix4Usx6BGwfIq3sDEwa+I5w==";
         string accountName = "testaccount";
         var blobClientOptions = new BlobClientOptions();
