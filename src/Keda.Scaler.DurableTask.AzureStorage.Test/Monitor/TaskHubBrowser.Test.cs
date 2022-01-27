@@ -53,7 +53,7 @@ public class TaskHubBrowserTest
         string taskHubName = "testhub";
         string leaseContainerName = $"{taskHubName}-leases";
         var serviceClient = new Mock<BlobServiceClient>(connString) { CallBase = true };
-        var containerClient = new Mock<BlobContainerClient>() { CallBase = true };
+        var containerClient = new Mock<BlobContainerClient>(connString, leaseContainerName) { CallBase = true };
         var blobClient = new Mock<BlobClient>();
 
         serviceClient.Setup(x => x.GetBlobContainerClient(leaseContainerName)).Returns(containerClient.Object);
