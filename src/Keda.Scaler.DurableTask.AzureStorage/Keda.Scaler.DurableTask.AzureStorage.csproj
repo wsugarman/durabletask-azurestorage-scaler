@@ -16,7 +16,7 @@
     <PackageReference Include="Grpc.Core.Api" Version="2.43.0" />
     <PackageReference Include="Grpc.Tools" Version="2.43.0" PrivateAssets="All" />
     <PackageReference Include="KubernetesClient" Version="7.0.8" />
-    <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" Version="1.10.0" />
+    <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" Version="1.10.1" />
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.23" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.14.0" PrivateAssets="All" />
