@@ -14,7 +14,7 @@
     <PackageReference Include="Google.Protobuf" Version="3.19.4" />
     <PackageReference Include="Grpc.AspNetCore.Server" Version="2.44.0" />
     <PackageReference Include="Grpc.Core.Api" Version="2.44.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.44.0" PrivateAssets="All" />
+    <PackageReference Include="Grpc.Tools" Version="2.45.0" PrivateAssets="All" />
     <PackageReference Include="KubernetesClient" Version="7.0.15" />
     <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" Version="1.10.1" />
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
