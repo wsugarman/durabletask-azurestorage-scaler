@@ -3,14 +3,15 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using k8s;
+using k8s.Autorest;
 using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
-using Microsoft.Rest;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;
 
@@ -64,7 +65,7 @@ internal static class KubernetesExtensions
             : null;
 
         if (scale is null)
-            throw new SerializationException(SR.Format(SR.JsonParseFormat, nameof(V1ScaledObject)));
+            throw new JsonException(SR.Format(SR.JsonParseFormat, nameof(V1ScaledObject)));
 
         return scale.Validate(kind, group, name, namespaceParameter);
     }
@@ -97,7 +98,7 @@ internal static class KubernetesExtensions
             : null;
 
         if (scaledObject is null)
-            throw new SerializationException(SR.Format(SR.JsonParseFormat, nameof(V1ScaledObject)));
+            throw new JsonException(SR.Format(SR.JsonParseFormat, nameof(V1ScaledObject)));
 
         return scaledObject.Validate(KedaScaledObjectKind, KedaApiGroup, name, namespaceParameter);
     }

@@ -43,7 +43,7 @@ internal sealed class MockServerCallContext : ServerCallContext
 
     protected override Status StatusCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-    protected override WriteOptions WriteOptionsCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    protected override WriteOptions? WriteOptionsCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
     protected override AuthContext AuthContextCore => throw new NotImplementedException();
 

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +10,6 @@ using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Rest;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Interceptors;
