@@ -2,13 +2,13 @@
 // Licensed under the MIT License.
 
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Rest;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 
