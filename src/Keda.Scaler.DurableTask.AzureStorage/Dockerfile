@@ -9,7 +9,7 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0.202-alpine3.14@sha256:3322ccf973ecdff1b23792186d7360c698d06cb909aa773c0929b2c6b1881125 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0.300-alpine3.14@sha256:8e46a0062102cd8ecfd8bc3a44b211f7e70dc6266bfc2a0f8df5328ac2e5680b AS build
 WORKDIR /src
 COPY ["Keda.Scaler.DurableTask.AzureStorage.csproj", "."]
 RUN dotnet restore "./Keda.Scaler.DurableTask.AzureStorage.csproj"
