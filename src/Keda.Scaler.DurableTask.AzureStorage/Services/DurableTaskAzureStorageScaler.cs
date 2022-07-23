@@ -102,13 +102,13 @@ internal sealed class DurableTaskAzureStorageScaler : IDurableTaskAzureStorageSc
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Normalize Kubernetes kind to lowercase")]
     private async ValueTask<int> GetCurrentScaleAsync(ScaledObjectReference scaledObjRef, CancellationToken cancellationToken)
     {
-        V1ScaledObject scaledObj = await _kubernetes.ReadNamespacedScaledObjectAsync(scaledObjRef.Name, scaledObjRef.Namespace, cancellationToken).ConfigureAwait(false);
+        V1ScaledObject scaledObj = await _kubernetes.CustomObjects.ReadNamespacedScaledObjectAsync(scaledObjRef.Name, scaledObjRef.Namespace, cancellationToken).ConfigureAwait(false);
 
         V1ScaleTargetRef scaleTarget = scaledObj.Spec.ScaleTargetRef;
         (string group, string version) = scaleTarget.ApiVersion is not null ? scaleTarget.ApiGroupAndVersion() : ("apps", "v1");
         string kind = scaleTarget.Kind ?? "Deployment";
 
-        V1Scale scale = await _kubernetes.ReadNamespacedCustomObjectScaleAsync(
+        V1Scale scale = await _kubernetes.CustomObjects.ReadNamespacedCustomObjectScaleAsync(
             scaleTarget.Name,
             scaledObjRef.Namespace,
             group,

@@ -25,7 +25,7 @@ internal static class KubernetesExtensions
     internal static readonly JsonSerializerOptions JsonSerializerOptions = CreateJsonSerializerOptions();
 
     public static async ValueTask<V1Scale> ReadNamespacedCustomObjectScaleAsync(
-        this IKubernetes kubernetes,
+        this ICustomObjectsOperations operations,
         string name,
         string namespaceParameter,
         string group,
@@ -33,8 +33,8 @@ internal static class KubernetesExtensions
         string kind,
         CancellationToken cancellationToken = default)
     {
-        if (kubernetes is null)
-            throw new ArgumentNullException(nameof(kubernetes));
+        if (operations is null)
+            throw new ArgumentNullException(nameof(operations));
 
         if (name is null)
             throw new ArgumentNullException(nameof(name));
@@ -52,7 +52,7 @@ internal static class KubernetesExtensions
             throw new ArgumentNullException(nameof(kind));
 
         // Note: We're assuming the plural simply has an 's' at the end, which may be incorrect for custom resources
-        object obj = await kubernetes.GetNamespacedCustomObjectScaleAsync(
+        object obj = await operations.GetNamespacedCustomObjectScaleAsync(
             group,
             version,
             namespaceParameter,
@@ -71,13 +71,13 @@ internal static class KubernetesExtensions
     }
 
     public static async ValueTask<V1ScaledObject> ReadNamespacedScaledObjectAsync(
-        this IKubernetes kubernetes,
+        this ICustomObjectsOperations operations,
         string name,
         string namespaceParameter,
         CancellationToken cancellationToken = default)
     {
-        if (kubernetes is null)
-            throw new ArgumentNullException(nameof(kubernetes));
+        if (operations is null)
+            throw new ArgumentNullException(nameof(operations));
 
         if (name is null)
             throw new ArgumentNullException(nameof(name));
@@ -85,7 +85,7 @@ internal static class KubernetesExtensions
         if (namespaceParameter is null)
             throw new ArgumentNullException(nameof(namespaceParameter));
 
-        object obj = await kubernetes.GetNamespacedCustomObjectAsync(
+        object obj = await operations.GetNamespacedCustomObjectAsync(
             KedaApiGroup,
             KedaScaledObjectVersion,
             namespaceParameter,
