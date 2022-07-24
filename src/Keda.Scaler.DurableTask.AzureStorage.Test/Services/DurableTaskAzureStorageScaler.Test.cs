@@ -108,7 +108,7 @@ public class DurableTaskAzureStorageScalerTest
             Name = "unit-test",
         };
         V1ScaleStatus? scaleStatus = replicas is null ? null : new V1ScaleStatus { Replicas = replicas.Value };
-        IKubernetes k8s = CreateMockKubernetesClient(scaledObject, scaledTarget, scaleStatus, tokenSource.Token);
+        using IKubernetes k8s = CreateMockKubernetesClient(scaledObject, scaledTarget, scaleStatus, tokenSource.Token);
 
         PerformanceHeartbeat? heartbeat = action is null ? null : CreateHeartbeat(action.GetValueOrDefault());
         Mock<IPerformanceMonitor> monitorMock = new Mock<IPerformanceMonitor>(MockBehavior.Strict);
@@ -219,10 +219,16 @@ public class DurableTaskAzureStorageScalerTest
         CancellationToken cancellationToken)
     {
         Mock<IKubernetes> k8sMock = new Mock<IKubernetes>(MockBehavior.Strict);
+        Mock<ICustomObjectsOperations> operationsMock = new Mock<ICustomObjectsOperations>(MockBehavior.Strict);
+
+        // Setup CustomObjects APIs
+        k8sMock
+            .Setup(k => k.CustomObjects)
+            .Returns(() => operationsMock.Object);
 
         // Setup mock behavior for fetching the ScaledObject
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectWithHttpMessagesAsync(
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectWithHttpMessagesAsync(
                 "keda.sh",
                 "v1alpha1",
                 scaledObject.Namespace,
@@ -255,8 +261,8 @@ public class DurableTaskAzureStorageScalerTest
 
         // Setup mock behavior for fetching the referenced resource scale
         (string? group, string? version) = scaleTarget.ApiGroupAndVersion();
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectScaleWithHttpMessagesAsync(
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectScaleWithHttpMessagesAsync(
                 group ?? "apps",
                 version ?? "v1",
                 scaledObject.Namespace,
@@ -283,6 +289,11 @@ public class DurableTaskAzureStorageScalerTest
                             ScalerKubernetesExtensions.JsonSerializerOptions),
                         ScalerKubernetesExtensions.JsonSerializerOptions)!
                 });
+
+        // Mock Dispose
+        k8sMock
+            .Setup(k => k.Dispose())
+            .Verifiable();
 
         return k8sMock.Object;
     }

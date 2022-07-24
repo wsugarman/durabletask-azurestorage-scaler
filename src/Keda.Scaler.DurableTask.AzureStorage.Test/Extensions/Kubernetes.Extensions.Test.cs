@@ -25,49 +25,49 @@ public class KubernetesExtensionsTest
     public async Task ReadNamespacedCustomObjectScaleAsync()
     {
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
-        Mock<IKubernetes> k8sMock = new Mock<IKubernetes>(MockBehavior.Strict);
+        Mock<ICustomObjectsOperations> operationsMock = new Mock<ICustomObjectsOperations>(MockBehavior.Strict);
 
         // Invalid input
         await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => ScalerKubernetesExtensions
             .ReadNamespacedCustomObjectScaleAsync(null!, "foo", "default", "apps", "v1", "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync(null!, "default", "apps", "v1", "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync("foo", null!, "apps", "v1", "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync("foo", "default", null!, "v1", "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync("foo", "default", "apps", null!, "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync("foo", "default", "apps", "v1", null!, tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // null
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "foo", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "foo", null, tokenSource.Token))
             .ReturnsAsync(new HttpOperationResponse<object> { Body = null! });
 
-        await Assert.ThrowsExceptionAsync<JsonException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<JsonException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync("foo", "default", "apps", "v1", "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Invalid type (should be JSON)
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "bar", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "bar", null, tokenSource.Token))
             .ReturnsAsync(new HttpOperationResponse<object> { Body = new V1Scale() });
 
-        await Assert.ThrowsExceptionAsync<JsonException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<JsonException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync("bar", "default", "apps", "v1", "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Invalid json kind
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "baz", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "baz", null, tokenSource.Token))
             .ReturnsAsync(new HttpOperationResponse<object> { Body = JsonSerializer.Deserialize<object>("[ 1, 2, 3 ]")! });
 
-        await Assert.ThrowsExceptionAsync<JsonException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<JsonException>(() => operationsMock.Object
             .ReadNamespacedCustomObjectScaleAsync("baz", "default", "apps", "v1", "deployment", tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Valid
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "good", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectScaleWithHttpMessagesAsync("apps", "v1", "default", "deployments", "good", null, tokenSource.Token))
             .ReturnsAsync(
                 new HttpOperationResponse<object>
                 {
@@ -87,7 +87,7 @@ public class KubernetesExtensionsTest
                     ScalerKubernetesExtensions.JsonSerializerOptions)!,
                 });
 
-        V1Scale actual = await k8sMock.Object.ReadNamespacedCustomObjectScaleAsync("good", "default", "apps", "v1", "deployment", tokenSource.Token).ConfigureAwait(false);
+        V1Scale actual = await operationsMock.Object.ReadNamespacedCustomObjectScaleAsync("good", "default", "apps", "v1", "deployment", tokenSource.Token).ConfigureAwait(false);
         Assert.AreEqual("autoscaling/v1", actual.ApiVersion);
         Assert.AreEqual("Scale", actual.Kind);
         Assert.AreEqual("good", actual.Metadata.Name);
@@ -100,43 +100,43 @@ public class KubernetesExtensionsTest
     public async Task ReadNamespacedScaledObjectAsync()
     {
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
-        Mock<IKubernetes> k8sMock = new Mock<IKubernetes>(MockBehavior.Strict);
+        Mock<ICustomObjectsOperations> operationsMock = new Mock<ICustomObjectsOperations>(MockBehavior.Strict);
 
         // Invalid input
         await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => ScalerKubernetesExtensions
             .ReadNamespacedScaledObjectAsync(null!, "foo", "default", tokenSource.Token).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => operationsMock.Object
             .ReadNamespacedScaledObjectAsync(null!, "default", tokenSource.Token).AsTask()).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => operationsMock.Object
             .ReadNamespacedScaledObjectAsync("foo", null!, tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // null
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "foo", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "foo", null, tokenSource.Token))
             .ReturnsAsync(new HttpOperationResponse<object> { Body = null! });
 
-        await Assert.ThrowsExceptionAsync<JsonException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<JsonException>(() => operationsMock.Object
             .ReadNamespacedScaledObjectAsync("foo", "default", tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Invalid type (should be JSON)
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "bar", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "bar", null, tokenSource.Token))
             .ReturnsAsync(new HttpOperationResponse<object> { Body = new V1ScaledObject() });
 
-        await Assert.ThrowsExceptionAsync<JsonException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<JsonException>(() => operationsMock.Object
             .ReadNamespacedScaledObjectAsync("bar", "default", tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Invalid json kind
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "baz", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "baz", null, tokenSource.Token))
             .ReturnsAsync(new HttpOperationResponse<object> { Body = JsonSerializer.Deserialize<object>("[ 1, 2, 3 ]")! });
 
-        await Assert.ThrowsExceptionAsync<JsonException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<JsonException>(() => operationsMock.Object
             .ReadNamespacedScaledObjectAsync("baz", "default", tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Invalid values
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "bad", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "default", "ScaledObjects", "bad", null, tokenSource.Token))
             .ReturnsAsync(
                 new HttpOperationResponse<object>
                 {
@@ -168,12 +168,12 @@ public class KubernetesExtensionsTest
                         ScalerKubernetesExtensions.JsonSerializerOptions)!,
                 });
 
-        await Assert.ThrowsExceptionAsync<ArgumentException>(() => k8sMock.Object
+        await Assert.ThrowsExceptionAsync<ArgumentException>(() => operationsMock.Object
             .ReadNamespacedScaledObjectAsync("bad", "default", tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Valid
-        k8sMock
-            .Setup(k => k.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "honeycomb", "ScaledObjects", "good", null, tokenSource.Token))
+        operationsMock
+            .Setup(o => o.GetNamespacedCustomObjectWithHttpMessagesAsync("keda.sh", "v1alpha1", "honeycomb", "ScaledObjects", "good", null, tokenSource.Token))
             .ReturnsAsync(
                 new HttpOperationResponse<object>
                 {
@@ -205,7 +205,7 @@ public class KubernetesExtensionsTest
                         ScalerKubernetesExtensions.JsonSerializerOptions)!,
                 });
 
-        V1ScaledObject actual = await k8sMock.Object.ReadNamespacedScaledObjectAsync("good", "honeycomb", tokenSource.Token).ConfigureAwait(false);
+        V1ScaledObject actual = await operationsMock.Object.ReadNamespacedScaledObjectAsync("good", "honeycomb", tokenSource.Token).ConfigureAwait(false);
         Assert.AreEqual("keda.sh/v1alpha1", actual.ApiVersion);
         Assert.AreEqual("ScaledObject", actual.Kind);
         Assert.AreEqual("good", actual.Metadata.Name);
