@@ -18,9 +18,10 @@
     <Deterministic>true</Deterministic>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <LangVersion>latest</LangVersion>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>enable</Nullable>
     <RunSettingsFilePath>$(SrcDirectory)CodeCoverage.runsettings</RunSettingsFilePath>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>
@@ -41,26 +42,26 @@
 
   <!-- Tools -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
   </ItemGroup>
 
   <Choose>
     <When Condition="$(MSBuildProjectName.EndsWith('.Test'))">
 
       <PropertyGroup>
-        <SourceProjectName>$(MSBuildProjectName.Substring(0, $([MSBuild]::Subtract($(MSBuildProjectName.Length), 5))))</SourceProjectName>
+        <TargetProjectName>$(MSBuildProjectName.Substring(0, $([MSBuild]::Subtract($(MSBuildProjectName.Length), 5))))</TargetProjectName>
       </PropertyGroup>
 
       <ItemGroup>
-        <ProjectReference Include="..\Keda.Scaler.DurableTask.AzureStorage\$(SourceProjectName).csproj" />
+        <ProjectReference Include="..\Keda.Scaler.DurableTask.AzureStorage\$(TargetProjectName).csproj" />
       </ItemGroup>
 
       <ItemGroup>
-        <PackageReference Include="coverlet.collector" Version="3.2.0" PrivateAssets="All" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" PrivateAssets="All" />
-        <PackageReference Include="Moq" Version="4.18.3" />
-        <PackageReference Include="MSTest.TestAdapter" Version="2.2.10" PrivateAssets="All" />
-        <PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
+        <PackageReference Include="coverlet.collector" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="All" />
+        <PackageReference Include="Moq" />
+        <PackageReference Include="MSTest.TestAdapter" PrivateAssets="All" />
+        <PackageReference Include="MSTest.TestFramework" />
       </ItemGroup>
 
     </When>

@@ -71,8 +71,8 @@ public class PerformanceMonitorFactoryTest
 
         createFactory = (c, s) =>
         {
-                // Assert dev account
-                Assert.AreEqual("http://127.0.0.1:10000/devstoreaccount1", c.BlobEndpoint.AbsoluteUri);
+            // Assert dev account
+            Assert.AreEqual("http://127.0.0.1:10000/devstoreaccount1", c.BlobEndpoint.AbsoluteUri);
             Assert.IsFalse(c.Credentials.IsToken);
             AssertSettings(NullLoggerFactory.Instance, TimeSpan.FromMilliseconds(500), "UnitTestTaskHub", s);
 

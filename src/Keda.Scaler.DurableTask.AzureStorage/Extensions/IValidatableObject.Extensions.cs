@@ -4,13 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;
 
 internal static class IValidatableObjectExtensions
 {
-    public static T EnsureValidated<T>(this T obj, IServiceProvider? serviceProvider = null)
+    [return: NotNull]
+    public static T EnsureValidated<T>([DisallowNull] this T obj, IServiceProvider? serviceProvider = null)
         where T : IValidatableObject
     {
         if (obj is null)

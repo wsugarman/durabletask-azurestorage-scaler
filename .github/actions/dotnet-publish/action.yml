@@ -21,7 +21,7 @@ runs:
   using: composite
   steps:
     - name: Setup
-      uses: actions/setup-dotnet@v1.9.0
+      uses: actions/setup-dotnet@v3
 
     - name: Determine Version
       id: version
@@ -43,7 +43,7 @@ runs:
     # TODO: Docker Build
 
     - name: Upload Scaler Service
-      uses: actions/upload-artifact@v2.2.3
+      uses: actions/upload-artifact@v3
       with:
         name: Service
         path: ${{ runner.temp }}/service/

@@ -16,7 +16,7 @@ runs:
   using: composite
   steps:
     - name: Setup
-      uses: actions/setup-dotnet@v1.9.0
+      uses: actions/setup-dotnet@v3
 
     - name: Build
       shell: bash
@@ -34,7 +34,7 @@ runs:
           -p:ContinuousIntegrationBuild=true \
           -warnaserror \
           --no-build \
-          -r "${{ inputs.resultsDirectory }}" \
+          --results-directory "${{ inputs.resultsDirectory }}" \
           --collect "XPlat Code Coverage" \
           -s "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \
           -v normal

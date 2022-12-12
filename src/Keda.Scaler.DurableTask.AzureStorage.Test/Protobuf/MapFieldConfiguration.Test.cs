@@ -68,7 +68,7 @@ public class MapFieldConfigurationTest
                     { "three", "3" },
             });
 
-        Dictionary<string, string> children = config.GetChildren().ToDictionary(x => x.Key, x => x.Value);
+        Dictionary<string, string?> children = config.GetChildren().ToDictionary(x => x.Key, x => x.Value);
         Assert.AreEqual(3, children.Count);
         Assert.AreEqual("1", children["one"]);
         Assert.AreEqual("2", children["two"]);

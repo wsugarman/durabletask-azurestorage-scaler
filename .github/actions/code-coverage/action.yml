@@ -14,13 +14,13 @@ runs:
         Copy-Item '${{ inputs.reportPath }}' -Destination '${{ runner.temp }}/codecoverage/'
 
     - name: Upload Code Coverage Report
-      uses: actions/upload-artifact@v2.2.3
+      uses: actions/upload-artifact@v3
       with:
         name: Coverage
         path: ${{ runner.temp }}/codecoverage
 
     - name: Codecov Upload
-      uses: codecov/codecov-action@v2.1.0
+      uses: codecov/codecov-action@v3
       with:
         files: ${{ runner.temp }}/codecoverage/coverage.cobertura.xml
         fail_ci_if_error: true
