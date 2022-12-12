@@ -1,4 +1,4 @@
-// Copyright © William Sugarman.
+// Copyright Â© William Sugarman.
 // Licensed under the MIT License.
 
 using System;
