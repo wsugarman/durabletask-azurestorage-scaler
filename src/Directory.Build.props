@@ -21,7 +21,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>enable</Nullable>
     <RunSettingsFilePath>$(SrcDirectory)CodeCoverage.runsettings</RunSettingsFilePath>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>

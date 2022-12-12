@@ -53,7 +53,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         if (context is null)
             throw new ArgumentNullException(nameof(context));
 
-        ScalerMetadata metadata = request.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>().EnsureValidated(_serviceProvider);
+        ScalerMetadata? metadata = request.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>()!.EnsureValidated(_serviceProvider);
         return new IsActiveResponse { Result = await _scaler.IsActiveAsync(metadata, context.CancellationToken).ConfigureAwait(false) };
     }
 
@@ -77,7 +77,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         if (context is null)
             throw new ArgumentNullException(nameof(context));
 
-        ScalerMetadata metadata = request.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>().EnsureValidated(_serviceProvider);
+        ScalerMetadata? metadata = request.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>()!.EnsureValidated(_serviceProvider);
 
         GetMetricSpecResponse response = new GetMetricSpecResponse();
         response.MetricSpecs.Add(
@@ -109,7 +109,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         if (context is null)
             throw new ArgumentNullException(nameof(context));
 
-        ScalerMetadata metadata = request.ScaledObjectRef.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>().EnsureValidated(_serviceProvider);
+        ScalerMetadata? metadata = request.ScaledObjectRef.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>()!.EnsureValidated(_serviceProvider);
         ScaledObjectReference scaledObject = new ScaledObjectReference(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
 
         GetMetricsResponse response = new GetMetricsResponse();

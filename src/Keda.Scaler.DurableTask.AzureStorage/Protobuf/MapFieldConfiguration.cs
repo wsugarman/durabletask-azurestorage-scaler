@@ -119,7 +119,7 @@ internal sealed class MapFieldConfiguration : IConfiguration
         private NullChangeToken()
         { }
 
-        public IDisposable RegisterChangeCallback(Action<object> callback, object state)
+        public IDisposable RegisterChangeCallback(Action<object> callback, object? state)
             => NullDisposable.Instance;
     }
 
