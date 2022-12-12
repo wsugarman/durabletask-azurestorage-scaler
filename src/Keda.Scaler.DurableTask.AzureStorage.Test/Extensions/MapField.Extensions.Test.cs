@@ -32,7 +32,7 @@ public class MapFieldExtensionsTest
                 { nameof(ScalerMetadata.UseAAdPodIdentity), "true" },
             };
 
-        ScalerMetadata? actual = raw.ToConfiguration().Get<ScalerMetadata>();
+        ScalerMetadata? actual = raw.ToConfiguration().Get<ScalerMetadata>()!;
         Assert.IsNotNull(actual);
         Assert.AreEqual("unittest", actual.AccountName);
         Assert.AreEqual(nameof(CloudEnvironment.AzureUSGovernmentCloud), actual.Cloud);
