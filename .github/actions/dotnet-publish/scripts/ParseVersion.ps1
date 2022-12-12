@@ -44,6 +44,6 @@ else
 }
 
 # Output environment variables to be used in the build step
-"assembly=$assemblyVersio" >> $env:GITHUB_OUTPUT
+"assembly=$assemblyVersion" >> $env:GITHUB_OUTPUT
 "file=$fileVersion" >> $env:GITHUB_OUTPUT
 "tag=$tagVersion" >> $env:GITHUB_OUTPUT
