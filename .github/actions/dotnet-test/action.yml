@@ -18,14 +18,6 @@ runs:
     - name: Setup
       uses: actions/setup-dotnet@v3
 
-    - name: Build
-      shell: bash
-      run: |
-        dotnet build "./src/${{ inputs.solution }}.sln" \
-          -c "${{ inputs.buildConfiguration }}" \
-          -p:ContinuousIntegrationBuild=true \
-          -warnaserror
-
     - name: Test
       shell: bash
       run: |
@@ -33,7 +25,6 @@ runs:
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \
           -warnaserror \
-          --no-build \
           -r "${{ inputs.resultsDirectory }}" \
           --collect "XPlat Code Coverage" \
           -s "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \

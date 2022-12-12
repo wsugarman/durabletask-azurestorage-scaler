@@ -43,7 +43,7 @@ else
     }
 }
 
-# Output variables to be used in the build
-Write-Host "::set-output name=assembly::$assemblyVersion"
-Write-Host "::set-output name=file::$fileVersion"
-Write-Host "::set-output name=tag::$tagVersion"
+# Output environment variables to be used in the build step
+"assembly=$assemblyVersio" >> $env:GITHUB_OUTPUT
+"file=$fileVersion" >> $env:GITHUB_OUTPUT
+"tag=$tagVersion" >> $env:GITHUB_OUTPUT
