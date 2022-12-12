@@ -17,6 +17,14 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
+    directory: "/actions/code-coverage"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
     directory: "/actions/dotnet-publish"
     schedule:
       interval: "daily"
