@@ -50,7 +50,7 @@ public class DurableTaskAzureStorageScalerServiceTest
             MaxMessageLatencyMilliseconds = 500,
             ScaleIncrement = 2,
             TaskHubName = "UnitTestTaskHub",
-            UseAAdPodIdentity = true,
+            UseManagedIdentity = true,
         };
 
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
@@ -80,7 +80,7 @@ public class DurableTaskAzureStorageScalerServiceTest
             MaxMessageLatencyMilliseconds = 500,
             ScaleIncrement = 2,
             TaskHubName = "UnitTestTaskHub",
-            UseAAdPodIdentity = true,
+            UseManagedIdentity = true,
         };
 
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
@@ -115,7 +115,7 @@ public class DurableTaskAzureStorageScalerServiceTest
             MaxMessageLatencyMilliseconds = 500,
             ScaleIncrement = 2,
             TaskHubName = "UnitTestTaskHub",
-            UseAAdPodIdentity = true,
+            UseManagedIdentity = true,
         };
 
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
@@ -168,7 +168,7 @@ public class DurableTaskAzureStorageScalerServiceTest
         result.ScalerMetadata[nameof(ScalerMetadata.Cloud)] = metadata.Cloud;
         result.ScalerMetadata[nameof(ScalerMetadata.MaxMessageLatencyMilliseconds)] = metadata.MaxMessageLatencyMilliseconds.ToString(CultureInfo.InvariantCulture);
         result.ScalerMetadata[nameof(ScalerMetadata.ScaleIncrement)] = metadata.ScaleIncrement.ToString(CultureInfo.InvariantCulture);
-        result.ScalerMetadata[nameof(ScalerMetadata.UseAAdPodIdentity)] = metadata.UseAAdPodIdentity.ToString(CultureInfo.InvariantCulture);
+        result.ScalerMetadata[nameof(ScalerMetadata.UseManagedIdentity)] = metadata.UseManagedIdentity.ToString(CultureInfo.InvariantCulture);
 
         return result;
     }

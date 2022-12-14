@@ -29,7 +29,7 @@ public class MapFieldExtensionsTest
                 { nameof(ScalerMetadata.MaxMessageLatencyMilliseconds), "500" },
                 { nameof(ScalerMetadata.ScaleIncrement), "4" },
                 { nameof(ScalerMetadata.TaskHubName), "MyTaskHub" },
-                { nameof(ScalerMetadata.UseAAdPodIdentity), "true" },
+                { nameof(ScalerMetadata.UseManagedIdentity), "true" },
             };
 
         ScalerMetadata? actual = raw.ToConfiguration().Get<ScalerMetadata>()!;
@@ -41,6 +41,6 @@ public class MapFieldExtensionsTest
         Assert.AreEqual(500, actual.MaxMessageLatencyMilliseconds);
         Assert.AreEqual(4, actual.ScaleIncrement);
         Assert.AreEqual("MyTaskHub", actual.TaskHubName);
-        Assert.IsTrue(actual.UseAAdPodIdentity);
+        Assert.IsTrue(actual.UseManagedIdentity);
     }
 }

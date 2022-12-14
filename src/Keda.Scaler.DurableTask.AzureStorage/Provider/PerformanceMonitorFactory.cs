@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -8,6 +8,7 @@ using DurableTask.AzureStorage;
 using DurableTask.AzureStorage.Monitoring;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Auth;

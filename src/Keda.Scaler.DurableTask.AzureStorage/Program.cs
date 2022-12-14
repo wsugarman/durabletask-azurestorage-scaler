@@ -1,8 +1,8 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using Keda.Scaler.DurableTask.AzureStorage;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
-using Keda.Scaler.DurableTask.AzureStorage.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 

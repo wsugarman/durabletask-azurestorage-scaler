@@ -1,11 +1,10 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
-using DurableTask.AzureStorage.Monitoring;
 using k8s;
 using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;

@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -13,12 +13,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services;
 /// </summary>
 public interface IDurableTaskAzureStorageScaler
 {
-    /// <summary>
-    /// Gets the name of the HPA metric.
-    /// </summary>
-    /// <value>The metric name.</value>
-    string MetricName { get; }
-
     /// <summary>
     /// Asynchronously retrieves the metric specification based on the <paramref name="metadata"/>.
     /// </summary>

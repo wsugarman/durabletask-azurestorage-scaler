@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System.Globalization;
@@ -6,7 +6,7 @@ using System.Resources;
 
 namespace Keda.Scaler.DurableTask.AzureStorage;
 
-static partial class SR
+internal static partial class SR
 {
     public static string InternalErrorMessage => ResponseResourceManager.GetString(nameof(InternalErrorMessage), CultureInfo.CurrentUICulture)!;
 

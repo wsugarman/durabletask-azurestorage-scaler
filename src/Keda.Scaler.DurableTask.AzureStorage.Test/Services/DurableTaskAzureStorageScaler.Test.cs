@@ -95,7 +95,7 @@ public class DurableTaskAzureStorageScalerTest
             MaxMessageLatencyMilliseconds = 1000,
             ScaleIncrement = ratio,
             TaskHubName = "UnitTestTaskHub",
-            UseAAdPodIdentity = true,
+            UseManagedIdentity = true,
         };
 
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
@@ -123,7 +123,7 @@ public class DurableTaskAzureStorageScalerTest
             .Setup(f => f.CreateAsync(metadata, tokenSource.Token))
             .ReturnsAsync(monitorMock.Object);
 
-        IProcessEnvironment environment = CurrentEnvironment.Instance;
+        IProcessEnvironment environment = ProcessEnvironment.Current;
         ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
         DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(k8s, factoryMock.Object, loggerFactory);
@@ -151,7 +151,7 @@ public class DurableTaskAzureStorageScalerTest
             AccountName = "unitteststorage",
             MaxMessageLatencyMilliseconds = 1000,
             TaskHubName = "UnitTestTaskHub",
-            UseAAdPodIdentity = true,
+            UseManagedIdentity = true,
         };
 
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
@@ -185,7 +185,7 @@ public class DurableTaskAzureStorageScalerTest
             .Setup(f => f.CreateAsync(metadata, tokenSource.Token))
             .ReturnsAsync(monitorMock.Object);
 
-        IProcessEnvironment environment = CurrentEnvironment.Instance;
+        IProcessEnvironment environment = ProcessEnvironment.Current;
         ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
         DurableTaskAzureStorageScaler scaler = new DurableTaskAzureStorageScaler(Mock.Of<IKubernetes>(), factoryMock.Object, loggerFactory);

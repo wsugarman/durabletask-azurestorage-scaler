@@ -25,7 +25,7 @@ internal sealed class ScalerMetadataEqualityComparer : IEqualityComparer<ScalerM
             && x.MaxMessageLatencyMilliseconds == y.MaxMessageLatencyMilliseconds
             && x.ScaleIncrement == y.ScaleIncrement
             && x.TaskHubName == y.TaskHubName
-            && x.UseAAdPodIdentity == y.UseAAdPodIdentity;
+            && x.UseManagedIdentity == y.UseManagedIdentity;
     }
 
     public int GetHashCode([DisallowNull] ScalerMetadata obj)
@@ -41,6 +41,6 @@ internal sealed class ScalerMetadataEqualityComparer : IEqualityComparer<ScalerM
             obj.MaxMessageLatencyMilliseconds,
             obj.ScaleIncrement,
             obj.TaskHubName,
-            obj.UseAAdPodIdentity);
+            obj.UseManagedIdentity);
     }
 }

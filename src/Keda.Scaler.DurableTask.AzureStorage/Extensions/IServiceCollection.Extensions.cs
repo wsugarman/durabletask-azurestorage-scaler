@@ -21,7 +21,7 @@ internal static class IServiceCollectionExtensions
         if (services is null)
             throw new ArgumentNullException(nameof(services));
 
-        services.TryAddScoped<IProcessEnvironment>(p => new EnvironmentCache(CurrentEnvironment.Instance));
+        services.TryAddScoped<IProcessEnvironment>(p => new EnvironmentCache(ProcessEnvironment.Current));
         services.TryAddSingleton<ITokenCredentialFactory, TokenCredentialFactory>();
         services.TryAddScoped<IDurableTaskAzureStorageScaler, DurableTaskAzureStorageScaler>();
 

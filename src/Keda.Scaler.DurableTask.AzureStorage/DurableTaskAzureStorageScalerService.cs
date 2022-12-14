@@ -5,11 +5,12 @@ using System;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
-using Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
+using Keda.Scaler.DurableTask.AzureStorage.Services;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Services;
+namespace Keda.Scaler.DurableTask.AzureStorage;
 
 /// <summary>
 /// Implements the KEDA external scaler gRPC service for the Durable Task framework with an Azure Storage backend provider.
@@ -17,7 +18,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Services;
 public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScalerBase
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IDurableTaskAzureStorageScaler _scaler;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DurableTaskAzureStorageScalerService"/> class
@@ -28,7 +28,6 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     public DurableTaskAzureStorageScalerService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _scaler = serviceProvider.GetRequiredService<IDurableTaskAzureStorageScaler>();
     }
 
     /// <summary>
@@ -77,16 +76,23 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         if (context is null)
             throw new ArgumentNullException(nameof(context));
 
-        ScalerMetadata? metadata = request.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>()!.EnsureValidated(_serviceProvider);
+        ScalerMetadata? metadata = request
+            .ScalerMetadata
+            .ToConfiguration()
+            .Get<ScalerMetadata>()!
+            .EnsureValidated(_serviceProvider);
 
-        GetMetricSpecResponse response = new GetMetricSpecResponse();
-        response.MetricSpecs.Add(
-            new MetricSpec
+        return new GetMetricSpecResponse
+        {
+            MetricSpecs =
             {
-                MetricName = _scaler.MetricName,
-                TargetSize = await _scaler.GetMetricSpecAsync(metadata, context.CancellationToken).ConfigureAwait(false),
-            });
-        return response;
+                new MetricSpec
+                {
+                    MetricName = _scaler.MetricName,
+                    TargetSize = await _scaler.GetMetricSpecAsync(metadata, context.CancellationToken).ConfigureAwait(false),
+                },
+            },
+        };
     }
 
     /// <summary>
@@ -109,17 +115,24 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         if (context is null)
             throw new ArgumentNullException(nameof(context));
 
-        ScalerMetadata? metadata = request.ScaledObjectRef.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>()!.EnsureValidated(_serviceProvider);
-        ScaledObjectReference scaledObject = new ScaledObjectReference(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
+        ScaledObjectReference scaledObjRef = new ScaledObjectReference(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
+        ScalerMetadata? metadata = request
+            .ScaledObjectRef
+            .ScalerMetadata
+            .ToConfiguration()
+            .Get<ScalerMetadata>()!
+            .EnsureValidated(_serviceProvider);
 
-        GetMetricsResponse response = new GetMetricsResponse();
-        response.MetricValues.Add(
-            new MetricValue
+        return new GetMetricsResponse
+        {
+            MetricValues =
             {
-                MetricName = request.MetricName,
-                MetricValue_ = await _scaler.GetMetricValueAsync(scaledObject, metadata, context.CancellationToken).ConfigureAwait(false),
-            });
-
-        return response;
+                new MetricValue
+                {
+                    MetricName = request.MetricName,
+                    MetricValue_ = await _scaler.GetMetricValueAsync(scaledObjRef, metadata, context.CancellationToken).ConfigureAwait(false),
+                },
+            },
+        };
     }
 }

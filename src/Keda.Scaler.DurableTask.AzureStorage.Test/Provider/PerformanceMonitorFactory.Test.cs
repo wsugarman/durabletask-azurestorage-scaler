@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -27,7 +27,7 @@ public class PerformanceMonitorFactoryTest
     {
         CreateMonitor createMonitor = (c, s) => null!;
         ITokenCredentialFactory credentialFactory = Mock.Of<ITokenCredentialFactory>();
-        IProcessEnvironment environment = CurrentEnvironment.Instance;
+        IProcessEnvironment environment = ProcessEnvironment.Current;
         ILoggerFactory loggerFactory = NullLoggerFactory.Instance;
 
         Assert.ThrowsException<ArgumentNullException>(() => new PerformanceMonitorFactory(null!, credentialFactory, environment, loggerFactory));
@@ -58,7 +58,7 @@ public class PerformanceMonitorFactoryTest
             .ReturnsAsync(credential);
 
         // Null metadata
-        factory = new PerformanceMonitorFactory(mockCredentialFactory.Object, CurrentEnvironment.Instance, NullLoggerFactory.Instance);
+        factory = new PerformanceMonitorFactory(mockCredentialFactory.Object, ProcessEnvironment.Current, NullLoggerFactory.Instance);
         await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => factory.CreateAsync(null!, tokenSource.Token).AsTask()).ConfigureAwait(false);
 
         // Connection string
@@ -79,7 +79,7 @@ public class PerformanceMonitorFactoryTest
             return monitor;
         };
 
-        factory = new PerformanceMonitorFactory(createFactory, mockCredentialFactory.Object, CurrentEnvironment.Instance, NullLoggerFactory.Instance);
+        factory = new PerformanceMonitorFactory(createFactory, mockCredentialFactory.Object, ProcessEnvironment.Current, NullLoggerFactory.Instance);
         actual = (PerformanceMonitorDecorator)await factory.CreateAsync(metadata, tokenSource.Token).ConfigureAwait(false);
         Assert.IsFalse(actual.HasTokenCredential);
         Assert.AreSame(monitor, actual.ToDisconnectedPerformanceMonitor());
@@ -90,7 +90,7 @@ public class PerformanceMonitorFactoryTest
             AccountName = "unitteststorage",
             MaxMessageLatencyMilliseconds = 500,
             TaskHubName = "UnitTestTaskHub",
-            UseAAdPodIdentity = true,
+            UseManagedIdentity = true,
         };
 
         createFactory = (c, s) =>
@@ -102,7 +102,7 @@ public class PerformanceMonitorFactoryTest
             return monitor;
         };
 
-        factory = new PerformanceMonitorFactory(createFactory, mockCredentialFactory.Object, CurrentEnvironment.Instance, NullLoggerFactory.Instance);
+        factory = new PerformanceMonitorFactory(createFactory, mockCredentialFactory.Object, ProcessEnvironment.Current, NullLoggerFactory.Instance);
         actual = (PerformanceMonitorDecorator)await factory.CreateAsync(metadata, tokenSource.Token).ConfigureAwait(false);
         Assert.IsTrue(actual.HasTokenCredential);
         Assert.AreSame(monitor, actual.ToDisconnectedPerformanceMonitor());
