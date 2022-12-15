@@ -2,16 +2,19 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Data.Tables;
 using Azure.Identity;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Account;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
@@ -20,6 +23,19 @@ namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 /// </summary>
 public class AzureStorageTaskHubBrowser
 {
+    private const string LeaseContainerSuffix = "-leases";
+    private const string TaskHubJson = "taskhub.json";
+
+    private readonly ILogger _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AzureStorageTaskHubBrowser"/> class.
+    /// </summary>
+    /// <param name="loggerFactory">A factory for creating loggers.</param>
+    /// <exception cref="ArgumentNullException"><paramref name="loggerFactory"/> is <see langword="null"/>.</exception>
+    public AzureStorageTaskHubBrowser(ILoggerFactory loggerFactory)
+        => _logger = loggerFactory?.CreateLogger(Diagnostics.LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
+
     /// <summary>
     /// Asynchronously attempts to retrieve an <see cref="ITaskHubMonitor"/> for the Task Hub
     /// with the given <paramref name="name"/>.
@@ -31,7 +47,7 @@ public class AzureStorageTaskHubBrowser
     /// </param>
     /// <returns>
     /// A value task that represents the asynchronous operation. The value of the type parameter
-    /// of the value task contains the monitor for the given Task Hub if found; otherwise, <see langword="null"/>.
+    /// of the value task contains the monitor for the given Task Hub..
     /// </returns>
     /// <exception cref="ArgumentException"><paramref name="accountInfo"/> is missing information.</exception>
     /// <exception cref="ArgumentNullException">
@@ -41,7 +57,7 @@ public class AzureStorageTaskHubBrowser
     /// <exception cref="RequestFailedException">
     /// A problem occurred connecting to the Storage Account based on <paramref name="accountInfo"/>.
     /// </exception>
-    public virtual ValueTask<ITaskHubMonitor> GetMonitorAsync(AzureStorageAccountInfo accountInfo, string taskHub, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<ITaskHubMonitor> GetMonitorAsync(AzureStorageAccountInfo accountInfo, string taskHub, CancellationToken cancellationToken = default)
     {
         if (accountInfo is null)
             throw new ArgumentNullException(nameof(accountInfo));
@@ -88,8 +104,22 @@ public class AzureStorageTaskHubBrowser
             tableServiceClient = new TableServiceClient(accountInfo.ConnectionString);
         }
 
-        // Get task hub metadata
-        await blobServiceClient.CreateBlobContainerAsync("", cancellationToken);
-        var b = 
+        // Fetch metadata about the Task Hub
+        BlobClient client = blobServiceClient
+            .GetBlobContainerClient(taskHub + LeaseContainerSuffix)
+            .GetBlobClient(TaskHubJson);
+
+        try
+        {
+            BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
+            TaskHubInfo info = result.Content.ToObjectFromJson<TaskHubInfo>();
+
+            return new AzureStorageTaskHubMonitor(info, queueServiceClient, tableServiceClient, _logger);
+        }
+        catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Cannot find Task Hub '{TaskHub}' metadata in ", taskHub);
+            return NullTaskHubMonitor.Instance;
+        }
     }
 }

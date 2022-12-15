@@ -18,6 +18,8 @@ internal static partial class SR
 
     public static string OptionalBlankValueFormat => ValidationResourceManager.GetString(nameof(OptionalBlankValueFormat), CultureInfo.CurrentUICulture)!;
 
+    public static string PositiveValueFormat => ValidationResourceManager.GetString(nameof(PositiveValueFormat), CultureInfo.CurrentUICulture)!;
+
     public static string RequiredBlankValueFormat => ValidationResourceManager.GetString(nameof(RequiredBlankValueFormat), CultureInfo.CurrentUICulture)!;
 
     public static string UnknownValueFormat => ValidationResourceManager.GetString(nameof(UnknownValueFormat), CultureInfo.CurrentUICulture)!;

@@ -4,8 +4,9 @@
 using System;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Keda.Scaler.DurableTask.AzureStorage.Account;
+using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
-using Keda.Scaler.DurableTask.AzureStorage.Services;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +19,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage;
 public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScalerBase
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly AzureStorageTaskHubBrowser _taskHubBrowser;
+    private readonly IProcessEnvironment _environment;
+
+    private const string ActivitiesMetric = "Activities";
+    private const string OrchestrationsMetric = "Orchestrations";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DurableTaskAzureStorageScalerService"/> class
@@ -28,6 +34,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     public DurableTaskAzureStorageScalerService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _taskHubBrowser = _serviceProvider.GetRequiredService<AzureStorageTaskHubBrowser>();
+        _environment = _serviceProvider.GetRequiredService<IProcessEnvironment>();
     }
 
     /// <summary>
@@ -52,8 +60,21 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         if (context is null)
             throw new ArgumentNullException(nameof(context));
 
-        ScalerMetadata? metadata = request.ScalerMetadata.ToConfiguration().Get<ScalerMetadata>()!.EnsureValidated(_serviceProvider);
-        return new IsActiveResponse { Result = await _scaler.IsActiveAsync(metadata, context.CancellationToken).ConfigureAwait(false) };
+        ScalerMetadata? metadata = request
+            .ScalerMetadata
+            .ToConfiguration()
+            .Get<ScalerMetadata>()!
+            .EnsureValidated(_serviceProvider);
+
+        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
+
+        ITaskHubMonitor monitor = await _taskHubBrowser
+            .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        TaskHubUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
+
+        return new IsActiveResponse { Result = usage.CurrentActivityCount > 0 || usage.CurrentOrchestrationCount > 0 };
     }
 
     /// <summary>
@@ -68,7 +89,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// <exception cref="ArgumentNullException">
     /// <paramref name="request"/> or <paramref name="context"/> is <see langword="null"/>.
     /// </exception>
-    public override async Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
+    public override Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
     {
         if (request is null)
             throw new ArgumentNullException(nameof(request));
@@ -82,17 +103,23 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .Get<ScalerMetadata>()!
             .EnsureValidated(_serviceProvider);
 
-        return new GetMetricSpecResponse
-        {
-            MetricSpecs =
+        return Task.FromResult(
+            new GetMetricSpecResponse
             {
-                new MetricSpec
+                MetricSpecs =
                 {
-                    MetricName = _scaler.MetricName,
-                    TargetSize = await _scaler.GetMetricSpecAsync(metadata, context.CancellationToken).ConfigureAwait(false),
+                    new MetricSpec
+                    {
+                        MetricName = ActivitiesMetric,
+                        TargetSize = metadata.MaxActivitiesPerWorker,
+                    },
+                    new MetricSpec
+                    {
+                        MetricName = OrchestrationsMetric,
+                        TargetSize = metadata.MaxOrchestrationsPerWorker,
+                    },
                 },
-            },
-        };
+            });
     }
 
     /// <summary>
@@ -115,7 +142,6 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         if (context is null)
             throw new ArgumentNullException(nameof(context));
 
-        ScaledObjectReference scaledObjRef = new ScaledObjectReference(request.ScaledObjectRef.Name, request.ScaledObjectRef.Namespace);
         ScalerMetadata? metadata = request
             .ScaledObjectRef
             .ScalerMetadata
@@ -123,15 +149,28 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .Get<ScalerMetadata>()!
             .EnsureValidated(_serviceProvider);
 
+        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
+
+        ITaskHubMonitor monitor = await _taskHubBrowser
+            .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        TaskHubUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
         return new GetMetricsResponse
         {
             MetricValues =
             {
                 new MetricValue
                 {
-                    MetricName = request.MetricName,
-                    MetricValue_ = await _scaler.GetMetricValueAsync(scaledObjRef, metadata, context.CancellationToken).ConfigureAwait(false),
+                    MetricName = ActivitiesMetric,
+                    MetricValue_ = usage.CurrentActivityCount,
                 },
+                new MetricValue
+                {
+                    MetricName = OrchestrationsMetric,
+                    MetricValue_ = usage.CurrentOrchestrationCount,
+                },
+
             },
         };
     }
