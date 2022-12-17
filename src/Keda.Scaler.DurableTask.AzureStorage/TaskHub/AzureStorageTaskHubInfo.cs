@@ -5,7 +5,7 @@ using System;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
-internal sealed class TaskHubInfo
+internal sealed class AzureStorageTaskHubInfo
 {
     public string? TaskHubName { get; set; }
 

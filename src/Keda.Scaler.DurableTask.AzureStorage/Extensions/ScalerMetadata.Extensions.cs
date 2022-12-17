@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using Keda.Scaler.DurableTask.AzureStorage.Account;
+using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;

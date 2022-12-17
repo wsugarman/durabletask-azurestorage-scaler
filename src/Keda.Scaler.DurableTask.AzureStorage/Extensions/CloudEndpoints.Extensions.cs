@@ -3,7 +3,7 @@
 
 using System;
 using System.Globalization;
-using Keda.Scaler.DurableTask.AzureStorage.Account;
+using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;
@@ -21,6 +21,7 @@ internal static class CloudEndpointsExtensions
         if (!Enum.IsDefined(service))
             throw new ArgumentOutOfRangeException(nameof(service));
 
+#pragma warning disable CA1308 // Normalize strings to uppercase
         return new Uri(
             string.Format(
                 CultureInfo.InvariantCulture,
@@ -29,5 +30,6 @@ internal static class CloudEndpointsExtensions
                 service.ToString("G").ToLowerInvariant(),
                 endpoints.StorageSuffix),
             UriKind.Absolute);
+#pragma warning restore CA1308
     }
 }

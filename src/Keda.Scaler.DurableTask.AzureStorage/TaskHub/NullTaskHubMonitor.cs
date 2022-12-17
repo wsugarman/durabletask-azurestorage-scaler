@@ -8,7 +8,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 internal sealed class NullTaskHubMonitor : ITaskHubMonitor
 {
-    public static ITaskHubMonitor Instance { get; } = new NullTaskHubMonitor();
+    public static NullTaskHubMonitor Instance { get; } = new NullTaskHubMonitor();
 
     private NullTaskHubMonitor()
     { }

@@ -2,72 +2,73 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
-using Azure.Data.Tables;
 using Azure.Storage.Queues;
+using Azure.Storage.Queues.Models;
+using Keda.Scaler.DurableTask.AzureStorage.Queues;
 using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 internal class AzureStorageTaskHubMonitor : ITaskHubMonitor
 {
-    private readonly TaskHubInfo _taskHubInfo;
+    private readonly AzureStorageTaskHubInfo _taskHubInfo;
     private readonly QueueServiceClient _queueServiceClient;
-    private readonly TableServiceClient _tableServiceClient;
     private readonly ILogger _logger;
 
-    private const string InstancesTableSuffix = "Instances";
-
-    public AzureStorageTaskHubMonitor(
-        TaskHubInfo taskHubInfo,
-        QueueServiceClient queueServiceClient,
-        TableServiceClient tableServiceClient,
-        ILogger logger)
+    public AzureStorageTaskHubMonitor(AzureStorageTaskHubInfo taskHubInfo, QueueServiceClient queueServiceClient, ILogger logger)
     {
         _taskHubInfo = taskHubInfo ?? throw new ArgumentNullException(nameof(taskHubInfo));
         if (taskHubInfo.PartitionCount < 1)
             throw new ArgumentException(SR.InvalidPartitionCountFormat, nameof(taskHubInfo));
 
         _queueServiceClient = queueServiceClient ?? throw new ArgumentNullException(nameof(queueServiceClient));
-        _tableServiceClient = tableServiceClient ?? throw new ArgumentNullException(nameof(tableServiceClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async ValueTask<TaskHubUsage> GetUsageAsync(CancellationToken cancellationToken = default)
     {
-        // First check the Task Hub Instances table
-        TaskHubUsage? usage = await GetInstancesTableUsage(cancellationToken).ConfigureAwait(false);
-        if (usage.GetValueOrDefault() == default)
+        int activePartitionCount = 0, activeWorkItemCount = 0;
+
+        // Look at the Control Queues to determine the number of active partitions
+        for (int i = 0; i < _taskHubInfo.PartitionCount; i++)
         {
-            // If the table could not be found, or if the table devoid of activity,
-            // then look the control and work items queues to ensure we aren't missing anything.
-            // For example, a message could have been enqueued before the client could finish writing to the table.
-            usage = await GetQueueUsage(cancellationToken).ConfigureAwait(false);
+            QueueClient controlQueueClient = _queueServiceClient.GetQueueClient(ControlQueue.GetName(_taskHubInfo.TaskHubName, i));
+
+            try
+            {
+                QueueProperties properties = await controlQueueClient.GetPropertiesAsync(cancellationToken).ConfigureAwait(false);
+                if (properties.ApproximateMessagesCount > 0)
+                    activePartitionCount++;
+            }
+            catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
+            {
+                _logger.LogWarning("Could not find control queue '{ControlQueueName}'.", controlQueueClient.Name);
+                return default;
+            }
         }
 
-        if (usage is null)
-        {
-            _logger.LogWarning("Could not find relevant queues or tables. Task Hub must not have completed initialization yet.");
-            usage = new TaskHubUsage { CurrentActivityCount = 0, CurrentOrchestrationCount = 0 };
-        }
-
-        return usage.GetValueOrDefault();
-    }
-
-    private async ValueTask<TaskHubUsage?> GetInstancesTableUsage(CancellationToken cancellationToken)
-    {
-        TableClient instancesTableClient = _tableServiceClient.GetTableClient(_taskHubInfo.TaskHubName + InstancesTableSuffix);
+        // Look at the Work Item queue to determine the number of active activities, events, etc
+        QueueClient workItemQueueClient = _queueServiceClient.GetQueueClient(WorkItemQueue.GetName(_taskHubInfo.TaskHubName));
 
         try
         {
-            AsyncPageable< query = await instancesTableClient.QueryAsync("", cancellationToken: cancellationToken);
+            QueueProperties properties = await workItemQueueClient.GetPropertiesAsync(cancellationToken).ConfigureAwait(false);
+            activeWorkItemCount = properties.ApproximateMessagesCount;
         }
-    }
+        catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Could not find work item queue '{WorkItemQueueName}'.", workItemQueueClient.Name);
+            return default;
+        }
 
-    private async ValueTask<TaskHubUsage?> GetQueueUsage(CancellationToken cancellationToken)
-    {
-
+        return new TaskHubUsage
+        {
+            ActiveOrchestrationCount = activePartitionCount,
+            ActiveWorkItemCount = activeWorkItemCount,
+        };
     }
 }

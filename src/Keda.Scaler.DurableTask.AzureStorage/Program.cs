@@ -13,7 +13,6 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services
-    .AddKubernetesClient(builder.Configuration, builder.Environment)
     .AddScaler()
     .AddGrpc(o =>
     {

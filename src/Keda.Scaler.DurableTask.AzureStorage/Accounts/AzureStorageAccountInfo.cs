@@ -3,7 +3,7 @@
 
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Account;
+namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 
 /// <summary>
 /// Represents a collection of metadata that specifies the connection for a particular Azure Storage account.

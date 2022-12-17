@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Keda.Scaler.DurableTask.AzureStorage.Account;
+using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
@@ -18,12 +18,30 @@ namespace Keda.Scaler.DurableTask.AzureStorage;
 /// </summary>
 public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScalerBase
 {
+    // Let R = the recommended number of workers
+    //     W = the number of work items
+    //     P = the number of active orchestration partitions (which has a maximum of the partition count)
+    //     M = the user-specified maximum activity work item count per worker
+    //     O = 1 = the number of orchestration partitions per worker
+    //
+    // Then R = W/M + P/O = (W*O + P*M)/(M*O) = (W + P*M)/M
+    //
+    // From the HPA definition, the computation of targetAverageValue uses the following formulua:
+    // (See https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details)
+    // Let T = the target metric
+    //     V = the metric value
+    //     D = the desired number of workers
+    //
+    // Then D = ceil[V/T] = R
+    // Therefore V/T = (W + P*M)/M
+    // And in turn V = W + P*M
+    //             T = M
+
     private readonly IServiceProvider _serviceProvider;
     private readonly AzureStorageTaskHubBrowser _taskHubBrowser;
     private readonly IProcessEnvironment _environment;
 
-    private const string ActivitiesMetric = "Activities";
-    private const string OrchestrationsMetric = "Orchestrations";
+    private const string MetricName = "TaskHubScale";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DurableTaskAzureStorageScalerService"/> class
@@ -74,7 +92,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
 
         TaskHubUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
 
-        return new IsActiveResponse { Result = usage.CurrentActivityCount > 0 || usage.CurrentOrchestrationCount > 0 };
+        return new IsActiveResponse { Result = usage.ActiveWorkItemCount > 0 || usage.ActiveOrchestrationCount > 0 };
     }
 
     /// <summary>
@@ -110,13 +128,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
                 {
                     new MetricSpec
                     {
-                        MetricName = ActivitiesMetric,
-                        TargetSize = metadata.MaxActivitiesPerWorker,
-                    },
-                    new MetricSpec
-                    {
-                        MetricName = OrchestrationsMetric,
-                        TargetSize = metadata.MaxOrchestrationsPerWorker,
+                        MetricName = MetricName,
+                        TargetSize = metadata.MaxWorkItemsPerWorker,
                     },
                 },
             });
@@ -162,15 +175,9 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             {
                 new MetricValue
                 {
-                    MetricName = ActivitiesMetric,
-                    MetricValue_ = usage.CurrentActivityCount,
+                    MetricName = MetricName,
+                    MetricValue_ = usage.ActiveWorkItemCount + usage.ActiveOrchestrationCount * metadata.MaxWorkItemsPerWorker,
                 },
-                new MetricValue
-                {
-                    MetricName = OrchestrationsMetric,
-                    MetricValue_ = usage.CurrentOrchestrationCount,
-                },
-
             },
         };
     }

@@ -11,16 +11,16 @@ namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 public readonly struct TaskHubUsage : IEquatable<TaskHubUsage>
 {
     /// <summary>
-    /// Gets the number of ongoing activities.
+    /// Gets the number active orchestrations.
     /// </summary>
-    /// <value>The non-negative number of activities.</value>
-    public long CurrentActivityCount { get; init; }
+    /// <value>The non-negative count.</value>
+    public long ActiveOrchestrationCount { get; init; }
 
     /// <summary>
-    /// Gets the number of ongoing orchestrations.
+    /// Gets the number active work items.
     /// </summary>
-    /// <value>The non-negative number of orchestrations.</value>
-    public long CurrentOrchestrationCount { get; init; }
+    /// <value>The non-negative count.</value>
+    public long ActiveWorkItemCount { get; init; }
 
     /// <summary>
     /// Returns a value indicating whether this instance is equal to a specified object.
@@ -43,14 +43,14 @@ public readonly struct TaskHubUsage : IEquatable<TaskHubUsage>
     /// this instance; otherwise, <see langword="false"/>.
     /// </returns>
     public bool Equals(TaskHubUsage other)
-        => CurrentActivityCount == other.CurrentActivityCount && CurrentOrchestrationCount == other.CurrentOrchestrationCount;
+        => ActiveOrchestrationCount == other.ActiveOrchestrationCount && ActiveWorkItemCount == other.ActiveWorkItemCount;
 
     /// <summary>
     /// Returns the hash code for this instance.
     /// </summary>
     /// <returns>A 32-bit signed integer hash code.</returns>
     public override int GetHashCode()
-        => HashCode.Combine(CurrentActivityCount, CurrentOrchestrationCount);
+        => HashCode.Combine(ActiveOrchestrationCount, ActiveWorkItemCount);
 
     /// <summary>
     /// Determines whether two specified instances of <see cref="TaskHubUsage"/> are equal.

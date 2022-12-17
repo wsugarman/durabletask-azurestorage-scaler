@@ -6,12 +6,11 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
-using Azure.Data.Tables;
 using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
-using Keda.Scaler.DurableTask.AzureStorage.Account;
+using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.Extensions.Logging;
@@ -23,9 +22,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 /// </summary>
 public class AzureStorageTaskHubBrowser
 {
-    private const string LeaseContainerSuffix = "-leases";
-    private const string TaskHubJson = "taskhub.json";
-
     private readonly ILogger _logger;
 
     /// <summary>
@@ -67,7 +63,6 @@ public class AzureStorageTaskHubBrowser
 
         BlobServiceClient blobServiceClient;
         QueueServiceClient queueServiceClient;
-        TableServiceClient tableServiceClient;
 
         if (string.IsNullOrWhiteSpace(accountInfo.ConnectionString))
         {
@@ -81,44 +76,48 @@ public class AzureStorageTaskHubBrowser
 
             Uri blobServiceUri = endpoints.GetStorageServiceUri(accountInfo.AccountName, AzureStorageService.Blob);
             Uri queueServiceUri = endpoints.GetStorageServiceUri(accountInfo.AccountName, AzureStorageService.Queue);
-            Uri tableServiceUri = endpoints.GetStorageServiceUri(accountInfo.AccountName, AzureStorageService.Table);
 
             if (string.Equals(accountInfo.Credential, Credential.ManagedIdentity, StringComparison.OrdinalIgnoreCase))
             {
-                TokenCredentialOptions options = new TokenCredentialOptions { AuthorityHost = endpoints.AuthorityHost };
-                blobServiceClient = new BlobServiceClient(blobServiceUri, new ManagedIdentityCredential(accountInfo.ClientId, options));
-                queueServiceClient = new QueueServiceClient(queueServiceUri, new ManagedIdentityCredential(accountInfo.ClientId, options));
-                tableServiceClient = new TableServiceClient(tableServiceUri, new ManagedIdentityCredential(accountInfo.ClientId, options));
+                ManagedIdentityCredential credential = new ManagedIdentityCredential(
+                    accountInfo.ClientId,
+                    new TokenCredentialOptions { AuthorityHost = endpoints.AuthorityHost });
+
+                blobServiceClient = new BlobServiceClient(blobServiceUri, credential);
+                queueServiceClient = new QueueServiceClient(queueServiceUri, credential);
             }
             else
             {
                 blobServiceClient = new BlobServiceClient(blobServiceUri);
                 queueServiceClient = new QueueServiceClient(queueServiceUri);
-                tableServiceClient = new TableServiceClient(tableServiceUri);
             }
         }
         else
         {
             blobServiceClient = new BlobServiceClient(accountInfo.ConnectionString);
             queueServiceClient = new QueueServiceClient(accountInfo.ConnectionString);
-            tableServiceClient = new TableServiceClient(accountInfo.ConnectionString);
         }
 
         // Fetch metadata about the Task Hub
         BlobClient client = blobServiceClient
-            .GetBlobContainerClient(taskHub + LeaseContainerSuffix)
-            .GetBlobClient(TaskHubJson);
+            .GetBlobContainerClient(taskHub + "-leases")
+            .GetBlobClient("taskhub.json");
 
         try
         {
             BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
-            TaskHubInfo info = result.Content.ToObjectFromJson<TaskHubInfo>();
+            AzureStorageTaskHubInfo info = result.Content.ToObjectFromJson<AzureStorageTaskHubInfo>();
 
-            return new AzureStorageTaskHubMonitor(info, queueServiceClient, tableServiceClient, _logger);
+            return new AzureStorageTaskHubMonitor(info, queueServiceClient, _logger);
         }
         catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
         {
-            _logger.LogWarning("Cannot find Task Hub '{TaskHub}' metadata in ", taskHub);
+            _logger.LogWarning(
+                "Cannot find Task Hub '{TaskHub}' metadata blob '{TaskHubJson}' in container '{LeaseContainerName}'.",
+                taskHub,
+                client.Name,
+                client.BlobContainerName);
+
             return NullTaskHubMonitor.Instance;
         }
     }
