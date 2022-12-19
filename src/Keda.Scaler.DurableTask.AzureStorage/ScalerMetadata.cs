@@ -88,10 +88,16 @@ public sealed class ScalerMetadata : IValidatableObject
     public string? ConnectionFromEnv { get; init; }
 
     /// <summary>
-    /// Gets the maximum number of work items that a single worker may process at any time.
+    /// Gets the maximum number of activity work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
-    public int MaxWorkItemsPerWorker { get; init; } = 1;
+    public int MaxActivitiesPerWorker { get; init; } = 1;
+
+    /// <summary>
+    /// Gets the maximum number of orchestration work items that a single worker may process at any time.
+    /// </summary>
+    /// <value>The positive number of work items.</value>
+    public int MaxOrchestrationsPerWorker { get; init; } = 1;
 
     /// <summary>
     /// Gets the name of the configured task hub present in Azure Storage.
@@ -151,8 +157,11 @@ public sealed class ScalerMetadata : IValidatableObject
         if (string.IsNullOrWhiteSpace(TaskHubName))
             yield return new ValidationResult(SR.Format(SR.RequiredBlankValueFormat, nameof(TaskHubName)));
 
-        if (MaxWorkItemsPerWorker < 1)
-            yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxWorkItemsPerWorker)));
+        if (MaxActivitiesPerWorker < 1)
+            yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxActivitiesPerWorker)));
+
+        if (MaxOrchestrationsPerWorker < 1)
+            yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxOrchestrationsPerWorker)));
 
         if (UseManagedIdentity)
         {

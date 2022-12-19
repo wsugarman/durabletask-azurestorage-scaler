@@ -6,34 +6,42 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
-using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
-using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 /// <summary>
-/// Represents a browser over one or more Durable Task Hubs in an Azure Storage account.
+/// Represents a browser over one or more Durable Task Hubs that use the Azure Storage backend provider.
 /// </summary>
 public class AzureStorageTaskHubBrowser
 {
+    private readonly IStorageAccountClientFactory<BlobServiceClient> _blobServiceClientFactory;
+    private readonly IStorageAccountClientFactory<QueueServiceClient> _queueServiceClientFactory;
     private readonly ILogger _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AzureStorageTaskHubBrowser"/> class.
     /// </summary>
+    /// <param name="blobServiceClientFactory">A factory for creating Azure Blob Storage service clients.</param>
+    /// <param name="queueServiceClientFactory">A factory for creating Azure Queue service clients.</param>
     /// <param name="loggerFactory">A factory for creating loggers.</param>
     /// <exception cref="ArgumentNullException"><paramref name="loggerFactory"/> is <see langword="null"/>.</exception>
-    public AzureStorageTaskHubBrowser(ILoggerFactory loggerFactory)
-        => _logger = loggerFactory?.CreateLogger(Diagnostics.LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
+    public AzureStorageTaskHubBrowser(
+        IStorageAccountClientFactory<BlobServiceClient> blobServiceClientFactory,
+        IStorageAccountClientFactory<QueueServiceClient> queueServiceClientFactory,
+        ILoggerFactory loggerFactory)
+    {
+        _blobServiceClientFactory = blobServiceClientFactory ?? throw new ArgumentNullException(nameof(blobServiceClientFactory));
+        _queueServiceClientFactory = queueServiceClientFactory ?? throw new ArgumentNullException(nameof(queueServiceClientFactory));
+        _logger = loggerFactory?.CreateLogger(Diagnostics.LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
+    }
 
     /// <summary>
-    /// Asynchronously attempts to retrieve an <see cref="ITaskHubMonitor"/> for the Task Hub
+    /// Asynchronously attempts to retrieve an <see cref="ITaskHubQueueMonitor"/> for the Task Hub
     /// with the given <paramref name="name"/>.
     /// </summary>
     /// <param name="accountInfo">The account information for the Azure Storage account.</param>
@@ -53,7 +61,7 @@ public class AzureStorageTaskHubBrowser
     /// <exception cref="RequestFailedException">
     /// A problem occurred connecting to the Storage Account based on <paramref name="accountInfo"/>.
     /// </exception>
-    public virtual async ValueTask<ITaskHubMonitor> GetMonitorAsync(AzureStorageAccountInfo accountInfo, string taskHub, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<ITaskHubQueueMonitor> GetMonitorAsync(AzureStorageAccountInfo accountInfo, string taskHub, CancellationToken cancellationToken = default)
     {
         if (accountInfo is null)
             throw new ArgumentNullException(nameof(accountInfo));
@@ -61,45 +69,9 @@ public class AzureStorageTaskHubBrowser
         if (string.IsNullOrWhiteSpace(taskHub))
             throw new ArgumentNullException(nameof(taskHub));
 
-        BlobServiceClient blobServiceClient;
-        QueueServiceClient queueServiceClient;
-
-        if (string.IsNullOrWhiteSpace(accountInfo.ConnectionString))
-        {
-            if (string.IsNullOrWhiteSpace(accountInfo.AccountName))
-                throw new ArgumentException(SR.Format(SR.MissingMemberFormat, nameof(accountInfo.AccountName)), nameof(accountInfo));
-
-            if (accountInfo.CloudEnvironment == CloudEnvironment.Unknown)
-                throw new ArgumentException(SR.Format(SR.MissingMemberFormat, nameof(accountInfo.CloudEnvironment)), nameof(accountInfo));
-
-            CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(accountInfo.CloudEnvironment);
-
-            Uri blobServiceUri = endpoints.GetStorageServiceUri(accountInfo.AccountName, AzureStorageService.Blob);
-            Uri queueServiceUri = endpoints.GetStorageServiceUri(accountInfo.AccountName, AzureStorageService.Queue);
-
-            if (string.Equals(accountInfo.Credential, Credential.ManagedIdentity, StringComparison.OrdinalIgnoreCase))
-            {
-                ManagedIdentityCredential credential = new ManagedIdentityCredential(
-                    accountInfo.ClientId,
-                    new TokenCredentialOptions { AuthorityHost = endpoints.AuthorityHost });
-
-                blobServiceClient = new BlobServiceClient(blobServiceUri, credential);
-                queueServiceClient = new QueueServiceClient(queueServiceUri, credential);
-            }
-            else
-            {
-                blobServiceClient = new BlobServiceClient(blobServiceUri);
-                queueServiceClient = new QueueServiceClient(queueServiceUri);
-            }
-        }
-        else
-        {
-            blobServiceClient = new BlobServiceClient(accountInfo.ConnectionString);
-            queueServiceClient = new QueueServiceClient(accountInfo.ConnectionString);
-        }
-
         // Fetch metadata about the Task Hub
-        BlobClient client = blobServiceClient
+        BlobClient client = _blobServiceClientFactory
+            .GetServiceClient(accountInfo)
             .GetBlobContainerClient(taskHub + "-leases")
             .GetBlobClient("taskhub.json");
 
@@ -108,7 +80,13 @@ public class AzureStorageTaskHubBrowser
             BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
             AzureStorageTaskHubInfo info = result.Content.ToObjectFromJson<AzureStorageTaskHubInfo>();
 
-            return new AzureStorageTaskHubMonitor(info, queueServiceClient, _logger);
+            _logger.LogInformation(
+                "Found Task Hub '{TaskHubName}' with {Partitions} partitions created at {CreatedTime:O}.",
+                info.TaskHubName,
+                info.PartitionCount,
+                info.CreatedAt);
+
+            return new TaskHubQueueMonitor(info, _queueServiceClientFactory.GetServiceClient(accountInfo), _logger);
         }
         catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
         {
@@ -118,7 +96,7 @@ public class AzureStorageTaskHubBrowser
                 client.Name,
                 client.BlobContainerName);
 
-            return NullTaskHubMonitor.Instance;
+            return NullTaskHubQueueMonitor.Instance;
         }
     }
 }

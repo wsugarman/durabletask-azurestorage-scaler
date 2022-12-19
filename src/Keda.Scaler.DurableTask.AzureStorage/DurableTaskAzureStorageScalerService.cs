@@ -19,12 +19,16 @@ namespace Keda.Scaler.DurableTask.AzureStorage;
 public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScalerBase
 {
     // Let R = the recommended number of workers
-    //     W = the number of work items
-    //     P = the number of active orchestration partitions (which has a maximum of the partition count)
+    //     A = the number of activity work items
+    //     O = the number of orchestration work items
     //     M = the user-specified maximum activity work item count per worker
-    //     O = 1 = the number of orchestration partitions per worker
+    //     N = the number of orchestration partitions per worker
+    //     P = P/1 = O/N = the optimal number of workers for the orchestrations
     //
-    // Then R = W/M + P/O = (W*O + P*M)/(M*O) = (W + P*M)/M
+    // Then R = A/M + O/N
+    //        = A/M + P/1
+    //        = (A*1 + P*M)/(M*1)
+    //        = (A + P*M)/M
     //
     // From the HPA definition, the computation of targetAverageValue uses the following formulua:
     // (See https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details)
@@ -33,13 +37,14 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     //     D = the desired number of workers
     //
     // Then D = ceil[V/T] = R
-    // Therefore V/T = (W + P*M)/M
-    // And in turn V = W + P*M
+    // Therefore V/T = (A + P*M)/M
+    // And in turn V = A + P*M
     //             T = M
 
     private readonly IServiceProvider _serviceProvider;
     private readonly AzureStorageTaskHubBrowser _taskHubBrowser;
     private readonly IProcessEnvironment _environment;
+    private readonly IOrchestrationAllocator _partitionAllocator;
 
     private const string MetricName = "TaskHubScale";
 
@@ -54,6 +59,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _taskHubBrowser = _serviceProvider.GetRequiredService<AzureStorageTaskHubBrowser>();
         _environment = _serviceProvider.GetRequiredService<IProcessEnvironment>();
+        _partitionAllocator = _serviceProvider.GetRequiredService<IOrchestrationAllocator>();
     }
 
     /// <summary>
@@ -86,13 +92,13 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
 
-        ITaskHubMonitor monitor = await _taskHubBrowser
+        ITaskHubQueueMonitor monitor = await _taskHubBrowser
             .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
             .ConfigureAwait(false);
 
-        TaskHubUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
+        TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
 
-        return new IsActiveResponse { Result = usage.ActiveWorkItemCount > 0 || usage.ActiveOrchestrationCount > 0 };
+        return new IsActiveResponse { Result = usage.HasActivity };
     }
 
     /// <summary>
@@ -129,7 +135,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
                     new MetricSpec
                     {
                         MetricName = MetricName,
-                        TargetSize = metadata.MaxWorkItemsPerWorker,
+                        TargetSize = metadata.MaxActivitiesPerWorker,
                     },
                 },
             });
@@ -164,11 +170,11 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
 
-        ITaskHubMonitor monitor = await _taskHubBrowser
+        ITaskHubQueueMonitor monitor = await _taskHubBrowser
             .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
             .ConfigureAwait(false);
 
-        TaskHubUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
+        TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
         return new GetMetricsResponse
         {
             MetricValues =
@@ -176,7 +182,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
                 new MetricValue
                 {
                     MetricName = MetricName,
-                    MetricValue_ = usage.ActiveWorkItemCount + usage.ActiveOrchestrationCount * metadata.MaxWorkItemsPerWorker,
+                    MetricValue_ = usage.WorkItemQueueMessages * metadata.MaxOrchestrationsPerWorker
+                        + _partitionAllocator.GetWorkerCount(usage.ControlQueueMessages, metadata.MaxOrchestrationsPerWorker),
                 },
             },
         };
