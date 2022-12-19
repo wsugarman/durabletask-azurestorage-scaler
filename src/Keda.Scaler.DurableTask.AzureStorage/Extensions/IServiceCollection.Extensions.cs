@@ -13,7 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 internal static class IServiceCollectionExtensions
 {
-    public static IServiceCollection AddScaler(this IServiceCollection services)
+    public static IServiceCollection AddDurableTaskScaler(this IServiceCollection services)
     {
         if (services is null)
             throw new ArgumentNullException(nameof(services));

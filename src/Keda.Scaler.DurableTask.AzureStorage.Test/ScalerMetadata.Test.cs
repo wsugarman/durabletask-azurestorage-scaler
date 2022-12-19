@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -55,14 +55,11 @@ public class ScalerMetadataTest
         // Default value is valid
         AssertValidation(new ScalerMetadata(), provider, 0);
 
-        // Negative MaxMessageLatencyMilliseconds
-        AssertValidation(new ScalerMetadata { MaxMessageLatencyMilliseconds = -1 }, provider, 1);
+        // Negative MaxActivitiesPerWorker
+        AssertValidation(new ScalerMetadata { MaxActivitiesPerWorker = -1 }, provider, 1);
 
-        // MaxMessageLatencyMilliseconds too large
-        AssertValidation(new ScalerMetadata { MaxMessageLatencyMilliseconds = 2000 }, provider, 1);
-
-        // Invalid ScaleIncrement
-        AssertValidation(new ScalerMetadata { ScaleIncrement = -1 }, provider, 1);
+        // Negative MaxOrchestrationsPerWorker
+        AssertValidation(new ScalerMetadata { MaxOrchestrationsPerWorker = -1 }, provider, 1);
 
         // Null or white space TaskHubName
         AssertValidation(new ScalerMetadata { TaskHubName = null! }, provider, 1);

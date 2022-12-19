@@ -13,7 +13,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services
-    .AddScaler()
+    .AddDurableTaskScaler()
     .AddGrpc(o =>
     {
         o.EnableDetailedErrors = true;

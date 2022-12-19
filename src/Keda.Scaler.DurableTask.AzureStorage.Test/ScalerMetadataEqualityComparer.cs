@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -22,8 +22,8 @@ internal sealed class ScalerMetadataEqualityComparer : IEqualityComparer<ScalerM
             && x.Cloud == y.Cloud
             && x.Connection == y.Connection
             && x.ConnectionFromEnv == y.ConnectionFromEnv
-            && x.MaxMessageLatencyMilliseconds == y.MaxMessageLatencyMilliseconds
-            && x.ScaleIncrement == y.ScaleIncrement
+            && x.MaxActivitiesPerWorker == y.MaxActivitiesPerWorker
+            && x.MaxOrchestrationsPerWorker == y.MaxOrchestrationsPerWorker
             && x.TaskHubName == y.TaskHubName
             && x.UseManagedIdentity == y.UseManagedIdentity;
     }
@@ -38,8 +38,8 @@ internal sealed class ScalerMetadataEqualityComparer : IEqualityComparer<ScalerM
             obj.Cloud,
             obj.Connection,
             obj.ConnectionFromEnv,
-            obj.MaxMessageLatencyMilliseconds,
-            obj.ScaleIncrement,
+            obj.MaxActivitiesPerWorker,
+            obj.MaxOrchestrationsPerWorker,
             obj.TaskHubName,
             obj.UseManagedIdentity);
     }

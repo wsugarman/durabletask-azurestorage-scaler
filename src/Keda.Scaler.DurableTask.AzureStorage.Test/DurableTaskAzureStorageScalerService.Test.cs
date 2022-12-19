@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -7,31 +7,43 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Kubernetes;
-using Keda.Scaler.DurableTask.AzureStorage.Services;
+using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Services;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 
 [TestClass]
-public class DurableTaskAzureStorageScalerServiceTest
+public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
 {
-    private const string MetricName = "TestMetric";
+    private const string TaskHubName = "TestTaskHub";
 
-    private readonly Mock<IDurableTaskAzureStorageScaler> _mockScaler = new Mock<IDurableTaskAzureStorageScaler>();
+    private readonly AzureStorageAccountInfo _accountInfo;
+    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new Mock<AzureStorageTaskHubBrowser>();
+    private readonly Mock<TaskHubQueueMonitor> _mockMonitor = new Mock<TaskHubQueueMonitor>();
+    private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
     private readonly IServiceProvider _serviceProvider;
 
     public DurableTaskAzureStorageScalerServiceTest()
     {
-        _mockScaler.Setup(s => s.MetricName).Returns(MetricName);
+        _accountInfo = new AzureStorageAccountInfo { AccountName = "UnitTest" };
 
-        ServiceCollection services = new ServiceCollection();
-        services.AddSingleton(_mockScaler.Object);
-        _serviceProvider = services.BuildServiceProvider();
+        _mockBrowser
+            .Setup(s => s.GetMonitorAsync(_accountInfo, TaskHubName, _tokenSource.Token))
+            .Returns(() => ValueTask.FromResult<ITaskHubQueueMonitor>(_mockMonitor.Object));
+
+        _serviceProvider = new ServiceCollection()
+            .AddSingleton(_mockBrowser.Object)
+            .AddSingleton<IProcessEnvironment>(new MockEnvironment())
+            .BuildServiceProvider();
     }
+
+    public void Dispose()
+        => _tokenSource.Dispose();
 
     [TestMethod]
     public void CtorExceptions()
