@@ -1,6 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using System;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -11,11 +12,18 @@ public class OptimalOrchestrationAllocatorTest
 {
     private readonly OptimalOrchestrationAllocator _allocator = new OptimalOrchestrationAllocator();
 
-    [DataTestMethod]
-    [DataRow(0, 3)]
-    [DataRow(0, 1, 0, 0, 0)]
-    [DataRow(2, 4, 3, 2, 1, 2)]
-    [DataRow(7, 1, 5, 5, 5, 5, 5, 5, 5)]
-    public void GetWorkerCount(int expected, int maxPerWorker, params int[] counts)
-        => Assert.AreEqual(expected, _allocator.GetWorkerCount(counts, maxPerWorker));
+    [TestMethod]
+    public void GetWorkerCount()
+    {
+        // Exceptions
+        Assert.ThrowsException<ArgumentNullException>(() => _allocator.GetWorkerCount(null!, 5));
+        Assert.ThrowsException<ArgumentOutOfRangeException>(() => _allocator.GetWorkerCount(Array.Empty<int>(), -3));
+
+        // Valid cases
+        Assert.AreEqual(0, _allocator.GetWorkerCount(Array.Empty<int>(), 3));
+        Assert.AreEqual(0, _allocator.GetWorkerCount(new int[] { 0, 0, 0 }, 1));
+        Assert.AreEqual(2, _allocator.GetWorkerCount(new int[] { 1, 2, 3, 4 }, 6));
+        Assert.AreEqual(2, _allocator.GetWorkerCount(new int[] { 3, 2, 1, 2 }, 4));
+        Assert.AreEqual(7, _allocator.GetWorkerCount(new int[] { 5, 5, 5, 5, 5, 5, 5 }, 1));
+    }
 }

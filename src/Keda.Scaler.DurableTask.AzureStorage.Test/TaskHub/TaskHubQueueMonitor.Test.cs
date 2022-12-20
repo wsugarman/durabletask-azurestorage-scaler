@@ -35,6 +35,15 @@ public sealed class TaskHubQueueMonitorTest
     }
 
     [TestMethod]
+    public void CtorExceptions()
+    {
+        Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(null!, _mockQueueServiceClient.Object, NullLogger.Instance));
+        Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, null!, NullLogger.Instance));
+        Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, _mockQueueServiceClient.Object, null!));
+        Assert.ThrowsException<ArgumentException>(() => new TaskHubQueueMonitor(new AzureStorageTaskHubInfo { PartitionCount = -1 }, _mockQueueServiceClient.Object, NullLogger.Instance));
+    }
+
+    [TestMethod]
     public async Task GetUsageAsync()
     {
         using CancellationTokenSource tokenSource = new CancellationTokenSource();

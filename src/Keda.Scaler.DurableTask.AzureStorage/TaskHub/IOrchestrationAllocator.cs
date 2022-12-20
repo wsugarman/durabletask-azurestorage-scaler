@@ -1,6 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
@@ -19,5 +20,9 @@ public interface IOrchestrationAllocator
     /// The maximum number of orchestration work items that a single worker may process at any time.
     /// </param>
     /// <returns>The appropriate number of worker instances.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="partitionWorkItems"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// <paramref name="maxOrchestrationWorkItems"/> is less than <c>1</c>.
+    /// </exception>
     int GetWorkerCount(IReadOnlyList<int> partitionWorkItems, int maxOrchestrationWorkItems);
 }

@@ -20,6 +20,10 @@ public class ScalerMetadataExtensionsTest
         MockEnvironment env = new MockEnvironment();
         env.SetEnvironmentVariable("Connection", "UseDevelopmentStorage=true");
 
+        // Errors
+        Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!, env));
+        Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(new ScalerMetadata(), null!));
+
         // No managed identity
         // Note: Typically you don't specify values for some of these members in combination,
         //       but in this test we will do so for the sake of simplicity

@@ -117,19 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="InvalidK8sResourceFormat" xml:space="preserve">
-    <value>'{0}.{1}/{2}' in namespace '{3}' is invalid: {4}</value>
-  </data>
   <data name="InvalidPartitionCountFormat" xml:space="preserve">
     <value>Partition count must be greater than 0 but found a count of {0}.</value>
   </data>
-  <data name="JsonParseFormat" xml:space="preserve">
-    <value>Unable to parse JSON document as type '{0}'.</value>
-  </data>
   <data name="MissingMemberFormat" xml:space="preserve">
     <value>Missing member '{0}'.</value>
-  </data>
-  <data name="UnknownScaleActionFormat" xml:space="preserve">
-    <value>Received unknown scale action '{0}' from performance monitor.</value>
   </data>
 </root>

@@ -96,6 +96,14 @@ public class AzureStorageTaskHubBrowserTest
             .Setup(f => f.GetServiceClient(accountInfo))
             .Returns(queueServiceClient.Object);
 
+        // Exceptions
+        await Assert
+            .ThrowsExceptionAsync<ArgumentNullException>(() => _browser.GetMonitorAsync(null!, TaskHubName).AsTask())
+            .ConfigureAwait(false);
+        await Assert
+            .ThrowsExceptionAsync<ArgumentNullException>(() => _browser.GetMonitorAsync(accountInfo, null!).AsTask())
+            .ConfigureAwait(false);
+
         // Test successful retrieval
         ITaskHubQueueMonitor monitor = await _browser.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token).ConfigureAwait(false);
         Assert.IsInstanceOfType<TaskHubQueueMonitor>(monitor);
