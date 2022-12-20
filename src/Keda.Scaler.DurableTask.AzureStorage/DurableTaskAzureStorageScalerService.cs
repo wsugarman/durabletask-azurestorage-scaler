@@ -46,7 +46,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     private readonly IProcessEnvironment _environment;
     private readonly IOrchestrationAllocator _partitionAllocator;
 
-    private const string MetricName = "TaskHubScale";
+    internal const string MetricName = "TaskHubScale";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DurableTaskAzureStorageScalerService"/> class
@@ -60,85 +60,6 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         _taskHubBrowser = _serviceProvider.GetRequiredService<AzureStorageTaskHubBrowser>();
         _environment = _serviceProvider.GetRequiredService<IProcessEnvironment>();
         _partitionAllocator = _serviceProvider.GetRequiredService<IOrchestrationAllocator>();
-    }
-
-    /// <summary>
-    /// Asynchronously indicates whether a subsequent call to <see cref="GetMetrics"/> is necessary based
-    /// on the state of the Durable Task storage provider.
-    /// </summary>
-    /// <param name="request">A KEDA <see cref="ScaledObjectRef"/>.</param>
-    /// <param name="context">The gRPC context.</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation. The value of its <see cref="Task{TResult}.Result"/>
-    /// property is <see langword="true"/> if <see cref="GetMetrics"/> should be invoked;
-    /// otherwise, it's <see langword="false"/>.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// <paramref name="request"/> or <paramref name="context"/> is <see langword="null"/>.
-    /// </exception>
-    public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
-    {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-
-        ScalerMetadata? metadata = request
-            .ScalerMetadata
-            .ToConfiguration()
-            .Get<ScalerMetadata>()!
-            .EnsureValidated(_serviceProvider);
-
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
-
-        ITaskHubQueueMonitor monitor = await _taskHubBrowser
-            .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
-            .ConfigureAwait(false);
-
-        TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
-
-        return new IsActiveResponse { Result = usage.HasActivity };
-    }
-
-    /// <summary>
-    /// Asynchronously returns the metric specification measured by the KEDA external scaler.
-    /// </summary>
-    /// <param name="request">A KEDA <see cref="ScaledObjectRef"/>.</param>
-    /// <param name="context">The gRPC context.</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation. The value of its <see cref="Task{TResult}.Result"/>
-    /// property contains the 1 or more metric specifications.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    /// <paramref name="request"/> or <paramref name="context"/> is <see langword="null"/>.
-    /// </exception>
-    public override Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
-    {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-
-        ScalerMetadata? metadata = request
-            .ScalerMetadata
-            .ToConfiguration()
-            .Get<ScalerMetadata>()!
-            .EnsureValidated(_serviceProvider);
-
-        return Task.FromResult(
-            new GetMetricSpecResponse
-            {
-                MetricSpecs =
-                {
-                    new MetricSpec
-                    {
-                        MetricName = MetricName,
-                        TargetSize = metadata.MaxActivitiesPerWorker,
-                    },
-                },
-            });
     }
 
     /// <summary>
@@ -187,5 +108,84 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
                 },
             },
         };
+    }
+
+    /// <summary>
+    /// Asynchronously returns the metric specification measured by the KEDA external scaler.
+    /// </summary>
+    /// <param name="request">A KEDA <see cref="ScaledObjectRef"/>.</param>
+    /// <param name="context">The gRPC context.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The value of its <see cref="Task{TResult}.Result"/>
+    /// property contains the 1 or more metric specifications.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="request"/> or <paramref name="context"/> is <see langword="null"/>.
+    /// </exception>
+    public override Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
+    {
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
+
+        if (context is null)
+            throw new ArgumentNullException(nameof(context));
+
+        ScalerMetadata? metadata = request
+            .ScalerMetadata
+            .ToConfiguration()
+            .Get<ScalerMetadata>()!
+            .EnsureValidated(_serviceProvider);
+
+        return Task.FromResult(
+            new GetMetricSpecResponse
+            {
+                MetricSpecs =
+                {
+                    new MetricSpec
+                    {
+                        MetricName = MetricName,
+                        TargetSize = metadata.MaxActivitiesPerWorker,
+                    },
+                },
+            });
+    }
+
+    /// <summary>
+    /// Asynchronously indicates whether a subsequent call to <see cref="GetMetrics"/> is necessary based
+    /// on the state of the Durable Task storage provider.
+    /// </summary>
+    /// <param name="request">A KEDA <see cref="ScaledObjectRef"/>.</param>
+    /// <param name="context">The gRPC context.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The value of its <see cref="Task{TResult}.Result"/>
+    /// property is <see langword="true"/> if <see cref="GetMetrics"/> should be invoked;
+    /// otherwise, it's <see langword="false"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="request"/> or <paramref name="context"/> is <see langword="null"/>.
+    /// </exception>
+    public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
+    {
+        if (request is null)
+            throw new ArgumentNullException(nameof(request));
+
+        if (context is null)
+            throw new ArgumentNullException(nameof(context));
+
+        ScalerMetadata? metadata = request
+            .ScalerMetadata
+            .ToConfiguration()
+            .Get<ScalerMetadata>()!
+            .EnsureValidated(_serviceProvider);
+
+        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
+
+        ITaskHubQueueMonitor monitor = await _taskHubBrowser
+            .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
+            .ConfigureAwait(false);
+
+        TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
+
+        return new IsActiveResponse { Result = usage.HasActivity };
     }
 }
