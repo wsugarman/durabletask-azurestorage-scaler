@@ -19,5 +19,5 @@ public interface IOrchestrationAllocator
     /// The maximum number of orchestration work items that a single worker may process at any time.
     /// </param>
     /// <returns>The appropriate number of worker instances.</returns>
-    int GetWorkerCount(IReadOnlyList<long> partitionWorkItems, int maxOrchestrationWorkItems);
+    int GetWorkerCount(IReadOnlyList<int> partitionWorkItems, int maxOrchestrationWorkItems);
 }

@@ -8,7 +8,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
 {
-    public int GetWorkerCount(IReadOnlyList<long> partitionWorkItems, int maxOrchestrationWorkItems)
+    public int GetWorkerCount(IReadOnlyList<int> partitionWorkItems, int maxOrchestrationWorkItems)
     {
         if (partitionWorkItems == null)
             throw new ArgumentNullException(nameof(partitionWorkItems));
@@ -30,7 +30,7 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
         return workers.Count;
     }
 
-    private static PartitionSet MaximizeWorkerPartitions(IReadOnlyList<long> partitionWorkItems, PartitionSet available, int maxOrchestrationWorkItems)
+    private static PartitionSet MaximizeWorkerPartitions(IReadOnlyList<int> partitionWorkItems, PartitionSet available, int maxOrchestrationWorkItems)
     {
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
         PartitionSet[,] maxWorkerPartitions = new PartitionSet[partitionWorkItems.Count + 1, maxOrchestrationWorkItems + 1];
@@ -42,7 +42,7 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
             for (int c = 0; c <= maxOrchestrationWorkItems; c++)
             {
                 PartitionSet exclude = maxWorkerPartitions[p, c];
-                int workItems = (int)Math.Min(partitionWorkItems[p], maxOrchestrationWorkItems);
+                int workItems = Math.Min(partitionWorkItems[p], maxOrchestrationWorkItems);
 
                 // Skip this partition if:
                 // (1) it was taken by another worker OR

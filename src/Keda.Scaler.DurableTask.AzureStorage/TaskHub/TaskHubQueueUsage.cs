@@ -20,7 +20,7 @@ public sealed class TaskHubQueueUsage
     /// The i-th element represents partition <c>i</c>.
     /// </remarks>
     /// <value>A list of the control queue message counts.</value>
-    public IReadOnlyList<long> ControlQueueMessages { get; }
+    public IReadOnlyList<int> ControlQueueMessages { get; }
 
     /// <summary>
     /// Gets a value indicating whether there is currently any activity for the Task Hub.
@@ -34,13 +34,13 @@ public sealed class TaskHubQueueUsage
     /// Gets the approximate number of messages in the work item queue.
     /// </summary>
     /// <value>The number of work item messages.</value>
-    public long WorkItemQueueMessages { get; }
+    public int WorkItemQueueMessages { get; }
 
     /// <summary>
     /// Gets a <see cref="TaskHubQueueUsage"/> object that represents no activity.
     /// </summary>
     /// <value>An object representing no activity.</value>
-    public static TaskHubQueueUsage None { get; } = new TaskHubQueueUsage(Array.Empty<long>(), 0);
+    public static TaskHubQueueUsage None { get; } = new TaskHubQueueUsage(Array.Empty<int>(), 0);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TaskHubQueueUsage"/> class.
@@ -49,7 +49,7 @@ public sealed class TaskHubQueueUsage
     /// <param name="workItemQueueMessages">The approximate number of messages in the work item queue.</param>
     /// <exception cref="ArgumentNullException"><paramref name="controlQueueMessages"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="workItemQueueMessages"/> is less than <c>0</c>.</exception>
-    public TaskHubQueueUsage(IReadOnlyList<long> controlQueueMessages, long workItemQueueMessages)
+    public TaskHubQueueUsage(IReadOnlyList<int> controlQueueMessages, int workItemQueueMessages)
     {
         ControlQueueMessages = controlQueueMessages ?? throw new ArgumentNullException(nameof(controlQueueMessages));
         WorkItemQueueMessages = workItemQueueMessages < 0

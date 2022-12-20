@@ -10,6 +10,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
+using Keda.Scaler.DurableTask.AzureStorage.Blobs;
 using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
@@ -72,8 +73,8 @@ public class AzureStorageTaskHubBrowser
         // Fetch metadata about the Task Hub
         BlobClient client = _blobServiceClientFactory
             .GetServiceClient(accountInfo)
-            .GetBlobContainerClient(taskHub + "-leases")
-            .GetBlobClient("taskhub.json");
+            .GetBlobContainerClient(LeasesContainer.GetName(taskHub))
+            .GetBlobClient(LeasesContainer.TaskHubBlobName);
 
         try
         {

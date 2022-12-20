@@ -31,8 +31,8 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
 
     public virtual async ValueTask<TaskHubQueueUsage> GetUsageAsync(CancellationToken cancellationToken = default)
     {
-        long workItemQueueMessages;
-        long[] controlQueueMessages = new long[_taskHubInfo.PartitionCount];
+        int workItemQueueMessages;
+        int[] controlQueueMessages = new int[_taskHubInfo.PartitionCount];
 
         // Look at the Control Queues to determine the number of active partitions
         for (int i = 0; i < _taskHubInfo.PartitionCount; i++)

@@ -23,8 +23,9 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
     private const string TaskHubName = "TestTaskHub";
 
     private readonly AzureStorageAccountInfo _accountInfo;
-    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new Mock<AzureStorageTaskHubBrowser>();
-    private readonly Mock<TaskHubQueueMonitor> _mockMonitor = new Mock<TaskHubQueueMonitor>();
+    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new Mock<AzureStorageTaskHubBrowser>(MockBehavior.Strict);
+    private readonly Mock<ITaskHubQueueMonitor> _mockMonitor = new Mock<ITaskHubQueueMonitor>(MockBehavior.Strict);
+    private readonly Mock<IOrchestrationAllocator> _mockAllocator = new Mock<IOrchestrationAllocator>(MockBehavior.Strict);
     private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
     private readonly IServiceProvider _serviceProvider;
 
@@ -38,7 +39,8 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
 
         _serviceProvider = new ServiceCollection()
             .AddSingleton(_mockBrowser.Object)
-            .AddSingleton<IProcessEnvironment>(new MockEnvironment())
+            .AddSingleton(_mockAllocator.Object)
+            .AddScoped<IProcessEnvironment, MockEnvironment>()
             .BuildServiceProvider();
     }
 
@@ -59,8 +61,6 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         {
             AccountName = "unitteststorage",
             Cloud = nameof(CloudEnvironment.AzurePublicCloud),
-            MaxMessageLatencyMilliseconds = 500,
-            ScaleIncrement = 2,
             TaskHubName = "UnitTestTaskHub",
             UseManagedIdentity = true,
         };
