@@ -83,6 +83,9 @@ public class ScalerMetadataTest
         // No AAD + Account
         AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", UseManagedIdentity = false }, provider, 1);
 
+        // No AAD + ClientId
+        AssertValidation(new ScalerMetadata { ClientId = "clientid", UseManagedIdentity = false }, provider, 1);
+
         // No AAD + Cloud
         AssertValidation(new ScalerMetadata { Cloud = "AzurePublicCloud", UseManagedIdentity = false }, provider, 1);
 
