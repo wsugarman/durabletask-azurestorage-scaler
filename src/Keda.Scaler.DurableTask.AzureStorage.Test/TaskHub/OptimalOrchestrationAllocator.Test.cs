@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
+[TestClass]
 public class OptimalOrchestrationAllocatorTest
 {
     private readonly OptimalOrchestrationAllocator _allocator = new OptimalOrchestrationAllocator();

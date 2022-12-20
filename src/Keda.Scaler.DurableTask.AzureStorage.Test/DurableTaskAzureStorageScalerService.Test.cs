@@ -6,6 +6,8 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
@@ -13,6 +15,7 @@ using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
@@ -22,7 +25,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 public class DurableTaskAzureStorageScalerServiceTest
 {
     private readonly MockEnvironment _environment = new MockEnvironment();
-    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new Mock<AzureStorageTaskHubBrowser>(MockBehavior.Strict);
+    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new Mock<AzureStorageTaskHubBrowser>(
+        MockBehavior.Strict,
+        new Mock<IStorageAccountClientFactory<BlobServiceClient>>(MockBehavior.Strict).Object,
+        new Mock<IStorageAccountClientFactory<QueueServiceClient>>(MockBehavior.Strict).Object,
+        NullLoggerFactory.Instance);
     private readonly Mock<ITaskHubQueueMonitor> _mockMonitor = new Mock<ITaskHubQueueMonitor>(MockBehavior.Strict);
     private readonly Mock<IOrchestrationAllocator> _mockAllocator = new Mock<IOrchestrationAllocator>(MockBehavior.Strict);
     private readonly IServiceProvider _serviceProvider;

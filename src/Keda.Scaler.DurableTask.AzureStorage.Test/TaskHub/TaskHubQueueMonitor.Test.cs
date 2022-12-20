@@ -18,6 +18,7 @@ using Moq;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
+[TestClass]
 public sealed class TaskHubQueueMonitorTest
 {
     private readonly AzureStorageTaskHubInfo _taskHubInfo;
@@ -42,17 +43,17 @@ public sealed class TaskHubQueueMonitorTest
         Mock<QueueClient>[] mockControlQueueClients = new Mock<QueueClient>[_taskHubInfo.PartitionCount];
         for (int i = 0; i < mockControlQueueClients.Length; i++)
         {
+            string name = ControlQueue.GetName(_taskHubInfo.TaskHubName, i);
             QueueProperties properties = new QueueProperties();
             SetApproximateMessagesCount(properties, i);
 
-            Mock<QueueClient> client = new Mock<QueueClient>(MockBehavior.Strict);
-            client
+            mockControlQueueClients[i] = new Mock<QueueClient>(MockBehavior.Strict);
+            mockControlQueueClients[i]
                 .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
                 .Returns(Task.FromResult(Response.FromValue(properties, null!)));
-
             _mockQueueServiceClient
-                .Setup(c => c.GetQueueClient(ControlQueue.GetName(_taskHubInfo.TaskHubName, i)))
-                .Returns(client.Object);
+                .Setup(c => c.GetQueueClient(name))
+                .Returns(mockControlQueueClients[i].Object);
         }
 
         QueueProperties workItemProperties = new QueueProperties();
@@ -62,6 +63,9 @@ public sealed class TaskHubQueueMonitorTest
         mockWorkItemsQueueClient
             .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
             .Returns(Task.FromResult(Response.FromValue(workItemProperties, null!)));
+        _mockQueueServiceClient
+            .Setup(c => c.GetQueueClient(WorkItemQueue.GetName(_taskHubInfo.TaskHubName)))
+            .Returns(mockWorkItemsQueueClient.Object);
 
         // Test successful measurement
         TaskHubQueueUsage actual = await _monitor.GetUsageAsync(tokenSource.Token).ConfigureAwait(false);
@@ -74,9 +78,12 @@ public sealed class TaskHubQueueMonitorTest
         mockWorkItemsQueueClient
             .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
             .Returns(Task.FromException<Response<QueueProperties>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found")));
+        mockWorkItemsQueueClient
+            .Setup(c => c.Name)
+            .Returns(WorkItemQueue.GetName(_taskHubInfo.TaskHubName));
 
         actual = await _monitor.GetUsageAsync(tokenSource.Token).ConfigureAwait(false);
-        Assert.IsTrue(actual.HasActivity);
+        Assert.IsFalse(actual.HasActivity);
         Assert.AreEqual(0, actual.ControlQueueMessages.Count);
         Assert.AreEqual(0, actual.WorkItemQueueMessages);
 
@@ -85,9 +92,12 @@ public sealed class TaskHubQueueMonitorTest
         mockControlQueueClients[^1]
             .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
             .Returns(Task.FromException<Response<QueueProperties>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found")));
+        mockControlQueueClients[^1]
+            .Setup(c => c.Name)
+            .Returns(ControlQueue.GetName(_taskHubInfo.TaskHubName, mockControlQueueClients.Length - 1));
 
         actual = await _monitor.GetUsageAsync(tokenSource.Token).ConfigureAwait(false);
-        Assert.IsTrue(actual.HasActivity);
+        Assert.IsFalse(actual.HasActivity);
         Assert.AreEqual(0, actual.ControlQueueMessages.Count);
         Assert.AreEqual(0, actual.WorkItemQueueMessages);
     }

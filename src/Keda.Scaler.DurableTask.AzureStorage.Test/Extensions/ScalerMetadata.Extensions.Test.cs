@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
 
+[TestClass]
 public class ScalerMetadataExtensionsTest
 {
     [TestMethod]

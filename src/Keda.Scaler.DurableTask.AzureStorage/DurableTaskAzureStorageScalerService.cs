@@ -96,6 +96,10 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .ConfigureAwait(false);
 
         TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
+        long metricValue = usage.WorkItemQueueMessages +
+            _partitionAllocator.GetWorkerCount(usage.ControlQueueMessages, metadata.MaxOrchestrationsPerWorker) *
+            metadata.MaxActivitiesPerWorker;
+
         return new GetMetricsResponse
         {
             MetricValues =
@@ -103,8 +107,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
                 new MetricValue
                 {
                     MetricName = MetricName,
-                    MetricValue_ = usage.WorkItemQueueMessages * metadata.MaxOrchestrationsPerWorker
-                        + _partitionAllocator.GetWorkerCount(usage.ControlQueueMessages, metadata.MaxOrchestrationsPerWorker),
+                    MetricValue_ = metricValue,
                 },
             },
         };

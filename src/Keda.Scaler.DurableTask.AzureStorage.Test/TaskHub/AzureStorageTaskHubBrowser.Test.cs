@@ -4,6 +4,7 @@
 using System;
 using System.Linq.Expressions;
 using System.Net;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,13 +23,14 @@ using Moq;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
+[TestClass]
 public class AzureStorageTaskHubBrowserTest
 {
     private readonly Mock<IStorageAccountClientFactory<BlobServiceClient>> _blobServiceClientFactory;
     private readonly Mock<IStorageAccountClientFactory<QueueServiceClient>> _queueServiceClientFactory;
     private readonly AzureStorageTaskHubBrowser _browser;
 
-    private static readonly Action<BlobDownloadResult, BinaryData> BinaryDataSetter = CreateSetter();
+    private static readonly Func<BinaryData, BlobDownloadResult> DownloadResultFactory = CreateFactory();
 
     public AzureStorageTaskHubBrowserTest()
     {
@@ -47,7 +49,7 @@ public class AzureStorageTaskHubBrowserTest
         Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, null!, NullLoggerFactory.Instance));
         Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, null!));
 
-        Mock<ILoggerFactory> mockFactory = new Mock<ILoggerFactory>();
+        Mock<ILoggerFactory> mockFactory = new Mock<ILoggerFactory>(MockBehavior.Strict);
         mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null);
         Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, mockFactory.Object));
     }
@@ -68,8 +70,7 @@ public class AzureStorageTaskHubBrowserTest
             TaskHubName = TaskHubName,
         };
 
-        BlobDownloadResult result = Activator.CreateInstance<BlobDownloadResult>();
-        BinaryDataSetter(result, new BinaryData(JsonSerializer.Serialize(taskHubInfo)));
+        BlobDownloadResult result = DownloadResultFactory(new BinaryData(JsonSerializer.Serialize(taskHubInfo)));
 
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
 
@@ -104,23 +105,32 @@ public class AzureStorageTaskHubBrowserTest
         blobClient
             .Setup(c => c.DownloadContentAsync(tokenSource.Token))
             .Returns(Task.FromException<Response<BlobDownloadResult>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Blob not found")));
+        blobClient.Setup(c => c.BlobContainerName).Returns(LeasesContainer.GetName(TaskHubName));
+        blobClient.Setup(c => c.Name).Returns(LeasesContainer.TaskHubBlobName);
 
         monitor = await _browser.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token).ConfigureAwait(false);
         Assert.IsInstanceOfType<NullTaskHubQueueMonitor>(monitor);
     }
 
-    private static Action<BlobDownloadResult, BinaryData> CreateSetter()
+    private static Func<BinaryData, BlobDownloadResult> CreateFactory()
     {
-        ParameterExpression resultsParam = Expression.Parameter(typeof(BlobDownloadResult), "properties");
-        ParameterExpression binaryParam = Expression.Parameter(typeof(BinaryData), "count");
+        ParameterExpression binaryParam = Expression.Parameter(typeof(BinaryData), "binaryData");
+        ParameterExpression resultsVar = Expression.Variable(typeof(BlobDownloadResult), "results");
 
         return Expression
-            .Lambda<Action<BlobDownloadResult, BinaryData>>(
-                Expression.Call(
-                    resultsParam,
-                    typeof(BlobDownloadResult).GetProperty(nameof(BlobDownloadResult.Content))!.SetMethod!,
-                    binaryParam),
-                resultsParam,
+            .Lambda<Func<BinaryData, BlobDownloadResult>>(
+                Expression.Block(
+                    typeof(BlobDownloadResult),
+                    new ParameterExpression[] { resultsVar },
+                    Expression.Assign(
+                        resultsVar,
+                        Expression.New(
+                            typeof(BlobDownloadResult).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, Type.EmptyTypes)!)),
+                    Expression.Call(
+                        resultsVar,
+                        typeof(BlobDownloadResult).GetProperty(nameof(BlobDownloadResult.Content))!.GetSetMethod(nonPublic: true)!,
+                        binaryParam),
+                    resultsVar),
                 binaryParam)
             .Compile();
     }

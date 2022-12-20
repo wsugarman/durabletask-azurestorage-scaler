@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Queues;
 
+[TestClass]
 public class ControlQueueTest
 {
     [TestMethod]

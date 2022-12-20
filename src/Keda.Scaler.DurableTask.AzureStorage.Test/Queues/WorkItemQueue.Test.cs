@@ -6,7 +6,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Queues;
 
-internal class WorkItemQueueTest
+[TestClass]
+public class WorkItemQueueTest
 {
     [TestMethod]
     public void GetName()

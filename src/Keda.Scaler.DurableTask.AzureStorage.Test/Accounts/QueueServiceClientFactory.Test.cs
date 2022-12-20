@@ -10,16 +10,17 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
+[TestClass]
 public class QueueServiceClientFactoryTest : AzureStorageAccountClientFactoryTest<QueueServiceClient>
 {
     protected override IStorageAccountClientFactory<QueueServiceClient> GetFactory()
         => new QueueServiceClientFactory();
 
     protected override void ValidateAccountName(QueueServiceClient actual, string accountName)
-        => Validate(actual, accountName, CloudEndpoints.Public.GetStorageServiceUri("accountName", AzureStorageService.Queue));
+        => Validate(actual, accountName, CloudEndpoints.Public.GetStorageServiceUri(accountName, AzureStorageService.Queue));
 
     protected override void ValidateEmulator(QueueServiceClient actual)
-        => Validate(actual, "devstoreaccount1", new Uri("http://127.0.0.1:10000/devstoreaccount1", UriKind.Absolute));
+        => Validate(actual, "devstoreaccount1", new Uri("http://127.0.0.1:10001/devstoreaccount1", UriKind.Absolute));
 
     private static void Validate(QueueServiceClient actual, string accountName, Uri serviceUrl)
     {

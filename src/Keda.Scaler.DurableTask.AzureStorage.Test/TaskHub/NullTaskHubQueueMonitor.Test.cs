@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
+[TestClass]
 public class NullTaskHubQueueMonitorTest
 {
     [TestMethod]
@@ -15,7 +16,7 @@ public class NullTaskHubQueueMonitorTest
         NullTaskHubQueueMonitor monitor = NullTaskHubQueueMonitor.Instance;
         TaskHubQueueUsage actual = await monitor.GetUsageAsync(default).ConfigureAwait(false);
 
-        Assert.IsTrue(actual.HasActivity);
+        Assert.IsFalse(actual.HasActivity);
         Assert.AreEqual(0, actual.ControlQueueMessages.Count);
         Assert.AreEqual(0, actual.WorkItemQueueMessages);
     }
