@@ -13,7 +13,7 @@ public class CurrentEnvironmentTest
     [TestMethod]
     public void GetEnvironmentVariable()
     {
-        IProcessEnvironment environment = CurrentEnvironment.Instance;
+        IProcessEnvironment environment = ProcessEnvironment.Current;
 
         // Setup environment
         string variable = Guid.NewGuid().ToString();

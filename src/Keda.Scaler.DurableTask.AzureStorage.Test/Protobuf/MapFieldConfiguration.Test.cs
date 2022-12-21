@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -21,8 +21,8 @@ public class MapFieldConfigurationTest
         IConfiguration config = new MapFieldConfiguration(
             new MapField<string, string>
             {
-                    { "one", "1" },
-                    { "two", "2" },
+                { "one", "1" },
+                { "two", "2" },
             });
 
         Assert.AreEqual(null, config["three"]);
@@ -35,8 +35,8 @@ public class MapFieldConfigurationTest
         IConfiguration config = new MapFieldConfiguration(
             new MapField<string, string>
             {
-                    { "one", "1" },
-                    { "two", "2" },
+                { "one", "1" },
+                { "two", "2" },
             });
 
         Assert.AreEqual("1", config["one"]);
@@ -63,9 +63,9 @@ public class MapFieldConfigurationTest
         IConfiguration config = new MapFieldConfiguration(
             new MapField<string, string>
             {
-                    { "one", "1" },
-                    { "two", "2" },
-                    { "three", "3" },
+                { "one", "1" },
+                { "two", "2" },
+                { "three", "3" },
             });
 
         Dictionary<string, string?> children = config.GetChildren().ToDictionary(x => x.Key, x => x.Value);
@@ -101,9 +101,9 @@ public class MapFieldConfigurationTest
         IConfiguration config = new MapFieldConfiguration(
             new MapField<string, string>
             {
-                    { "one", "1" },
-                    { "two", "2" },
-                    { "three", "3" },
+                { "one", "1" },
+                { "two", "2" },
+                { "three", "3" },
             });
 
         // Invalid key

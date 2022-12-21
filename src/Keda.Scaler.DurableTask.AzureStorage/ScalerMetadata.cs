@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Keda.Scaler.DurableTask.AzureStorage;
 
 /// <summary>
-/// Represents the metadata present in the KEDA ScaledObject resource specified to the
+/// Represents the metadata present in the KEDA ScaledObject resource that configures the
 /// Durable Task Azure Storage external scaler.
 /// </summary>
 public sealed class ScalerMetadata : IValidatableObject
@@ -29,6 +29,17 @@ public sealed class ScalerMetadata : IValidatableObject
     /// </remarks>
     /// <value>The name of the Azure Storage account if specified; otherwise, <see langword="null"/>.</value>
     public string? AccountName { get; init; }
+
+    /// <summary>
+    /// Gets the optional client id to be used when authenticating with managed identity.
+    /// </summary>
+    /// <remarks>
+    /// This value is only required if <see cref="UseManagedIdentity"/> is <see langword="true"/>.
+    /// If managed identity is specified, but the <see cref="ClientId"/> is left unspecified, then a default
+    /// identity is chosen. Be sure to specify a client id if there are multiple identities.
+    /// </remarks>
+    /// <value>The client id to be used with managed identity.</value>
+    public string? ClientId { get; init; }
 
     /// <summary>
     /// Gets the cloud environment that contains the Azure Storage account used by the Durable Task framework.
@@ -77,21 +88,16 @@ public sealed class ScalerMetadata : IValidatableObject
     public string? ConnectionFromEnv { get; init; }
 
     /// <summary>
-    /// Gets the ratio by which the replicas are increased or decreased.
+    /// Gets the maximum number of activity work items that a single worker may process at any time.
     /// </summary>
-    /// <remarks>
-    /// For example, if the value is <c>2</c>, then the replica count is doubled when scaling up
-    /// and halved when scaling down.
-    /// </remarks>
-    /// <value>The ratio by which the replica count is multiplied when scaling up and down.</value>
-    public double ScaleIncrement { get; init; } = 1.5;
+    /// <value>The positive number of work items.</value>
+    public int MaxActivitiesPerWorker { get; init; } = 10;
 
     /// <summary>
-    /// Gets the desired length of time in milliseconds orchestrations, activities, and actors take to receive messages.
+    /// Gets the maximum number of orchestration work items that a single worker may process at any time.
     /// </summary>
-    /// <remarks>Durable Task framework does not support a value larger than 1000 milliseconds or 1 second.</remarks>
-    /// <value>The desired length of time messages sit in their respective queues before being processed.</value>
-    public int MaxMessageLatencyMilliseconds { get; init; } = 1000;
+    /// <value>The positive number of work items.</value>
+    public int MaxOrchestrationsPerWorker { get; init; } = 5;
 
     /// <summary>
     /// Gets the name of the configured task hub present in Azure Storage.
@@ -101,21 +107,22 @@ public sealed class ScalerMetadata : IValidatableObject
     public string TaskHubName { get; init; } = "TestHubName";
 
     /// <summary>
-    /// Gets a value indicating whether AAD Pod identity should be used to authenticate the connection to Azure Storage.
+    /// Gets a value indicating whether a managed identity should be used to authenticate the connection to Azure Storage.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// External scalers do not yet support Trigger Authentication.
+    /// External scalers do not support Trigger Authentication, and either AAD Pod Identity or Workload Identity
+    /// must be installed in the Kubernetes cluster with the appropriate annotations, bindings, and/or labels.
     /// </para>
     /// <para>
     /// If <see langword="true"/> then <see cref="AccountName"/> must also be specified.
     /// </para>
     /// </remarks>
     /// <value>
-    /// <see langword="true"/> if AAD pod identity is present in the service pod and should be used to authenticate;
+    /// <see langword="true"/> if a managed identity is available in the service pod and should be used to authenticate;
     /// otherwise, <see langword="false"/>.
     /// </value>
-    public bool UseAAdPodIdentity { get; init; }
+    public bool UseManagedIdentity { get; init; }
 
     /// <summary>
     /// Gets the resolved connection string based on the <see cref="Connection"/> and <see cref="ConnectionFromEnv"/>.
@@ -147,19 +154,16 @@ public sealed class ScalerMetadata : IValidatableObject
         if (validationContext is null)
             throw new ArgumentNullException(nameof(validationContext));
 
-        if (MaxMessageLatencyMilliseconds < 0)
-            yield return new ValidationResult(SR.Format(SR.NegativeValueFormat, nameof(MaxMessageLatencyMilliseconds)));
-
-        if (MaxMessageLatencyMilliseconds > 1000)
-            yield return new ValidationResult(SR.Format(SR.ValueTooBigFormat, nameof(MaxMessageLatencyMilliseconds), 1000));
-
-        if (ScaleIncrement <= 1)
-            yield return new ValidationResult(SR.Format(SR.ValueTooSmallFormat, nameof(ScaleIncrement), 1));
-
         if (string.IsNullOrWhiteSpace(TaskHubName))
             yield return new ValidationResult(SR.Format(SR.RequiredBlankValueFormat, nameof(TaskHubName)));
 
-        if (UseAAdPodIdentity)
+        if (MaxActivitiesPerWorker < 1)
+            yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxActivitiesPerWorker)));
+
+        if (MaxOrchestrationsPerWorker < 1)
+            yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxOrchestrationsPerWorker)));
+
+        if (UseManagedIdentity)
         {
             if (AccountName is null)
                 yield return new ValidationResult(SR.Format(SR.AadRequiredFieldFormat, nameof(AccountName)));
@@ -180,6 +184,9 @@ public sealed class ScalerMetadata : IValidatableObject
         {
             if (AccountName is not null)
                 yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(AccountName)));
+
+            if (ClientId is not null)
+                yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(ClientId)));
 
             if (Cloud is not null)
                 yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(Cloud)));

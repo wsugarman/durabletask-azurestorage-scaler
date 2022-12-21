@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Moq;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Interceptors;
 
@@ -18,6 +20,16 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Interceptors;
 public class ExceptionInterceptorTest
 {
     private readonly ExceptionInterceptor _interceptor = new ExceptionInterceptor(NullLoggerFactory.Instance);
+
+    [TestMethod]
+    public void CtorExceptions()
+    {
+        Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(null!));
+
+        Mock<ILoggerFactory> mockFactory = new Mock<ILoggerFactory>(MockBehavior.Strict);
+        mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null);
+        Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(mockFactory.Object));
+    }
 
     [TestMethod]
     public async Task UnaryServerHandler()

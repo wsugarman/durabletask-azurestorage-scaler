@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -26,10 +26,10 @@ public class MapFieldExtensionsTest
                 { nameof(ScalerMetadata.Cloud), "AzureUSGovernmentCloud" }, // non-default
                 { nameof(ScalerMetadata.Connection), "foo=bar;hello=world" },
                 { nameof(ScalerMetadata.ConnectionFromEnv), "MY_CONNECTION_STRING" },
-                { nameof(ScalerMetadata.MaxMessageLatencyMilliseconds), "500" },
-                { nameof(ScalerMetadata.ScaleIncrement), "4" },
+                { nameof(ScalerMetadata.MaxActivitiesPerWorker), "10" },
+                { nameof(ScalerMetadata.MaxOrchestrationsPerWorker), "3" },
                 { nameof(ScalerMetadata.TaskHubName), "MyTaskHub" },
-                { nameof(ScalerMetadata.UseAAdPodIdentity), "true" },
+                { nameof(ScalerMetadata.UseManagedIdentity), "true" },
             };
 
         ScalerMetadata? actual = raw.ToConfiguration().Get<ScalerMetadata>()!;
@@ -38,9 +38,9 @@ public class MapFieldExtensionsTest
         Assert.AreEqual(nameof(CloudEnvironment.AzureUSGovernmentCloud), actual.Cloud);
         Assert.AreEqual("foo=bar;hello=world", actual.Connection);
         Assert.AreEqual("MY_CONNECTION_STRING", actual.ConnectionFromEnv);
-        Assert.AreEqual(500, actual.MaxMessageLatencyMilliseconds);
-        Assert.AreEqual(4, actual.ScaleIncrement);
+        Assert.AreEqual(10, actual.MaxActivitiesPerWorker);
+        Assert.AreEqual(3, actual.MaxOrchestrationsPerWorker);
         Assert.AreEqual("MyTaskHub", actual.TaskHubName);
-        Assert.IsTrue(actual.UseAAdPodIdentity);
+        Assert.IsTrue(actual.UseManagedIdentity);
     }
 }

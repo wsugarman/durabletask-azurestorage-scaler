@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -55,14 +55,11 @@ public class ScalerMetadataTest
         // Default value is valid
         AssertValidation(new ScalerMetadata(), provider, 0);
 
-        // Negative MaxMessageLatencyMilliseconds
-        AssertValidation(new ScalerMetadata { MaxMessageLatencyMilliseconds = -1 }, provider, 1);
+        // Negative MaxActivitiesPerWorker
+        AssertValidation(new ScalerMetadata { MaxActivitiesPerWorker = -1 }, provider, 1);
 
-        // MaxMessageLatencyMilliseconds too large
-        AssertValidation(new ScalerMetadata { MaxMessageLatencyMilliseconds = 2000 }, provider, 1);
-
-        // Invalid ScaleIncrement
-        AssertValidation(new ScalerMetadata { ScaleIncrement = -1 }, provider, 1);
+        // Negative MaxOrchestrationsPerWorker
+        AssertValidation(new ScalerMetadata { MaxOrchestrationsPerWorker = -1 }, provider, 1);
 
         // Null or white space TaskHubName
         AssertValidation(new ScalerMetadata { TaskHubName = null! }, provider, 1);
@@ -70,35 +67,38 @@ public class ScalerMetadataTest
         AssertValidation(new ScalerMetadata { TaskHubName = "\t" }, provider, 1);
 
         // AAD + No Account
-        AssertValidation(new ScalerMetadata { AccountName = null, UseAAdPodIdentity = true }, provider, 1);
-        AssertValidation(new ScalerMetadata { AccountName = "", UseAAdPodIdentity = true }, provider, 1);
-        AssertValidation(new ScalerMetadata { AccountName = "\t", UseAAdPodIdentity = true }, provider, 1);
+        AssertValidation(new ScalerMetadata { AccountName = null, UseManagedIdentity = true }, provider, 1);
+        AssertValidation(new ScalerMetadata { AccountName = "", UseManagedIdentity = true }, provider, 1);
+        AssertValidation(new ScalerMetadata { AccountName = "\t", UseManagedIdentity = true }, provider, 1);
 
         // AAD + Unknown Cloud
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Cloud = "foobar", UseAAdPodIdentity = true }, provider, 1);
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Cloud = "foobar", UseManagedIdentity = true }, provider, 1);
 
         // AAD + Connection
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Connection = "UseDevelopmentStorage=true", UseAAdPodIdentity = true }, provider, 1);
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Connection = "UseDevelopmentStorage=true", UseManagedIdentity = true }, provider, 1);
 
         // AAD + ConnectionFromEnv
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ConnectionFromEnv = "MY_CONNECTION", UseAAdPodIdentity = true }, provider, 1);
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ConnectionFromEnv = "MY_CONNECTION", UseManagedIdentity = true }, provider, 1);
 
         // No AAD + Account
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", UseAAdPodIdentity = false }, provider, 1);
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", UseManagedIdentity = false }, provider, 1);
+
+        // No AAD + ClientId
+        AssertValidation(new ScalerMetadata { ClientId = "clientid", UseManagedIdentity = false }, provider, 1);
 
         // No AAD + Cloud
-        AssertValidation(new ScalerMetadata { Cloud = "AzurePublicCloud", UseAAdPodIdentity = false }, provider, 1);
+        AssertValidation(new ScalerMetadata { Cloud = "AzurePublicCloud", UseManagedIdentity = false }, provider, 1);
 
         // No AAD + Invalid Connection
-        AssertValidation(new ScalerMetadata { Connection = "", UseAAdPodIdentity = false }, provider, 1);
-        AssertValidation(new ScalerMetadata { Connection = "\t", UseAAdPodIdentity = false }, provider, 1);
+        AssertValidation(new ScalerMetadata { Connection = "", UseManagedIdentity = false }, provider, 1);
+        AssertValidation(new ScalerMetadata { Connection = "\t", UseManagedIdentity = false }, provider, 1);
 
         // No AAD + Invalid ConnectionFromEnv
-        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "", UseAAdPodIdentity = false }, provider, 1);
-        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "\t", UseAAdPodIdentity = false }, provider, 1);
+        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "", UseManagedIdentity = false }, provider, 1);
+        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "\t", UseManagedIdentity = false }, provider, 1);
 
         // No AAD + Cannot resolve connection string
-        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "MY_CONNECTION", UseAAdPodIdentity = false }, provider, 1);
+        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "MY_CONNECTION", UseManagedIdentity = false }, provider, 1);
 
         // No AAD + Cannot resolve default connection string
         env.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, null);

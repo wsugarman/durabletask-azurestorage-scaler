@@ -4,6 +4,7 @@
 using System;
 using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
+using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Cloud;
