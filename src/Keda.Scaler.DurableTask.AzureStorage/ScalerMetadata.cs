@@ -91,13 +91,13 @@ public sealed class ScalerMetadata : IValidatableObject
     /// Gets the maximum number of activity work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
-    public int MaxActivitiesPerWorker { get; init; } = 1;
+    public int MaxActivitiesPerWorker { get; init; } = 10;
 
     /// <summary>
     /// Gets the maximum number of orchestration work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
-    public int MaxOrchestrationsPerWorker { get; init; } = 1;
+    public int MaxOrchestrationsPerWorker { get; init; } = 5;
 
     /// <summary>
     /// Gets the name of the configured task hub present in Azure Storage.
