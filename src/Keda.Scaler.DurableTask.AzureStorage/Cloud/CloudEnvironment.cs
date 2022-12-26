@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Cloud;
@@ -8,12 +8,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Cloud;
 /// </summary>
 public enum CloudEnvironment
 {
-    // TODO: Add 'Private' as well
-
     /// <summary>
     /// Specifies an unknown Azure cloud.
     /// </summary>
     Unknown,
+
+    /// <summary>
+    /// Specifies Azure Stack Hub or air-gapped clouds
+    /// </summary>
+    Private,
 
     /// <summary>
     /// Specifies the public Azure cloud.

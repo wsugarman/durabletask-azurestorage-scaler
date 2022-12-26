@@ -19,25 +19,25 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
         // Exceptions
         Assert.ThrowsException<ArgumentNullException>(() => factory.GetServiceClient(null!));
         Assert.ThrowsException<ArgumentException>(() => factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = null, ConnectionString = null }));
-        Assert.ThrowsException<ArgumentException>(() => factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "foo", CloudEnvironment = CloudEnvironment.Unknown }));
+        Assert.ThrowsException<ArgumentException>(() => factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "foo", Cloud = null }));
 
         // Connection String
         actual = factory.GetServiceClient(new AzureStorageAccountInfo { ConnectionString = "UseDevelopmentStorage=true" });
         ValidateEmulator(actual);
 
         // Service URI
-        actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", CloudEnvironment = CloudEnvironment.AzurePublicCloud });
-        ValidateAccountName(actual, "test");
+        actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = CloudEndpoints.Public });
+        ValidateAccountName(actual, "test", CloudEndpoints.Public);
 
         // Managed Identity
-        actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", CloudEnvironment = CloudEnvironment.AzurePublicCloud, Credential = Credential.ManagedIdentity });
-        ValidateAccountName(actual, "test"); // TODO: Better indication managed identity was successfully used than code coverage
+        actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = CloudEndpoints.Public, Credential = Credential.ManagedIdentity });
+        ValidateAccountName(actual, "test", CloudEndpoints.Public); // TODO: Better indication managed identity was successfully used than code coverage
     }
 
     // Note: We use a method here to avoid exposing the internal implementation classes
     protected abstract IStorageAccountClientFactory<TClient> GetFactory();
 
-    protected abstract void ValidateAccountName(TClient actual, string accountName);
+    protected abstract void ValidateAccountName(TClient actual, string accountName, CloudEndpoints cloud);
 
     protected abstract void ValidateEmulator(TClient actual);
 }

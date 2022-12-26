@@ -21,7 +21,8 @@ internal sealed class AzureStorageAccountInfoEqualityComparer : IEqualityCompare
 
         return x.AccountName == y.AccountName
             && x.ClientId == y.ClientId
-            && x.CloudEnvironment == y.CloudEnvironment
+            && x.Cloud?.AuthorityHost == y.Cloud?.AuthorityHost
+            && x.Cloud?.StorageSuffix == y.Cloud?.StorageSuffix
             && x.ConnectionString == y.ConnectionString
             && x.Credential == y.Credential;
     }
@@ -34,7 +35,7 @@ internal sealed class AzureStorageAccountInfoEqualityComparer : IEqualityCompare
         return HashCode.Combine(
             obj.AccountName,
             obj.ClientId,
-            obj.CloudEnvironment,
+            obj.Cloud is null ? 0 : HashCode.Combine(obj.Cloud.AuthorityHost, obj.Cloud.StorageSuffix),
             obj.ConnectionString,
             obj.Credential);
     }

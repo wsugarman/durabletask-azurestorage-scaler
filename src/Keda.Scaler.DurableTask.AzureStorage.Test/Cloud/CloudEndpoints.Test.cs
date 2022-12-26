@@ -1,10 +1,9 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
 using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Cloud;
@@ -14,10 +13,7 @@ public class CloudEndpointsTest
 {
     [TestMethod]
     public void Public()
-    {
-        AssertEndpoints(AzureAuthorityHosts.AzurePublicCloud, "core.windows.net", CloudEndpoints.Public);
-        AssertEndpoints(AzureAuthorityHosts.AzurePublicCloud, "core.windows.net", new CloudEndpoints());
-    }
+        => AssertEndpoints(AzureAuthorityHosts.AzurePublicCloud, "core.windows.net", CloudEndpoints.Public);
 
     [TestMethod]
     public void USGovernment()
@@ -30,6 +26,10 @@ public class CloudEndpointsTest
     [TestMethod]
     public void Germany()
         => AssertEndpoints(AzureAuthorityHosts.AzureGermany, "core.cloudapi.de", CloudEndpoints.Germany);
+
+    [TestMethod]
+    public void CtorExceptions()
+        => Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(new Uri("https://test"), null!));
 
     [TestMethod]
     public void ForEnvironment()

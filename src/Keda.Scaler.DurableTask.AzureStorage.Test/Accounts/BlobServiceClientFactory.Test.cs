@@ -16,8 +16,8 @@ public class BlobServiceClientFactoryTest : AzureStorageAccountClientFactoryTest
     protected override IStorageAccountClientFactory<BlobServiceClient> GetFactory()
         => new BlobServiceClientFactory();
 
-    protected override void ValidateAccountName(BlobServiceClient actual, string accountName)
-        => Validate(actual, accountName, CloudEndpoints.Public.GetStorageServiceUri(accountName, AzureStorageService.Blob));
+    protected override void ValidateAccountName(BlobServiceClient actual, string accountName, CloudEndpoints cloud)
+        => Validate(actual, accountName, cloud.GetStorageServiceUri(accountName, AzureStorageService.Blob));
 
     protected override void ValidateEmulator(BlobServiceClient actual)
         => Validate(actual, "devstoreaccount1", new Uri("http://127.0.0.1:10000/devstoreaccount1", UriKind.Absolute));
