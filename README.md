@@ -18,15 +18,18 @@ This specification describes the `external` trigger for applications that use th
 ```
 
 ### Parameter List
-- **`accountName`** - Optional name of the Azure Storage account used by the Durable Task Framework (DTFx). This value is only required by when `useManagedIdentity` is `true`
+- **`accountName`** - Optional name of the Azure Storage account used by the Durable Task Framework (DTFx). This value is only required when `useManagedIdentity` is `true`
+- **`activeDirectoryEndpoint`** - Optional host authority for Azure Active Directory (AAD). This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`clientId`** - Optional specifies the identity used when authenticating via managed identity. This value can only be specified when `useManagedIdentity` is `true`
-- **`cloud`** - Optional name of the cloud environment that contains the Azure Storage account. Must be a known Azure cloud environment (note that private clouds such as Azure Stack Hub or Air Gapped clouds are not yet supported). Defaults to the public cloud `AzurePublicCloud`. Possible values include:
+- **`cloud`** - Optional name of the cloud environment that contains the Azure Storage account. Must be a known Azure cloud environment, or `Private` for Azure Stack Hub or air-gapped clouds. If `Private` is specified, both `endpointSuffix` and `activeDirectoryEndpoint` must both be specified. Defaults to the public cloud `AzurePublicCloud`. Possible values include:
   - `AzurePublicCloud`
   - `AzureUSGovernmentCloud`
   - `AzureChinaCloud`
   - `AzureGermanCloud`
+  - `Private`
 - **`connection`** - Optional connection string for the Azure Storage account that may be used as an alternative to `connectionFromEnv`
 - **`connectionFromEnv`** - Optional name of the environment variable your deployment uses to get the connection string. Defaults to `AzureWebJobsStorage`
+- **`endpointSuffix`** - Optional suffix for the Azure Storage service URLs. This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`maxActivitiesPerWorker`** - Optional maximum number of activity work items that a single worker may process at any time. This is equivalent to `MaxConcurrentActivityFunctions`in Azure Durable Functions and `MaxConcurrentTaskActivityWorkItems` in the Durable Task Framework (DTFx). Must be greater than 0. Defaults to `10`
 - **`maxOrchestrationsPerWorker`** - Optional maximum number of orchestration work items that a single worker may process at any time. This is equivalent to `MaxConcurrentOrchestratorFunctions` in Azure Durable Functions and `MaxConcurrentTaskOrchestrationWorkItems` in the Durable Task Framework (DTFx). Must be greater than 0. Defaults to `5`
 - **`taskHubName`** - Optional name of the Durable Task Framework (DTFx) task hub. This name is used when determining the name of blob containers, tables, and queues related to the application. Defaults to `TestHubName`
