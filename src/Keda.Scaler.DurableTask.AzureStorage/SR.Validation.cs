@@ -20,6 +20,10 @@ internal static partial class SR
 
     public static string PositiveValueFormat => ValidationResourceManager.GetString(nameof(PositiveValueFormat), CultureInfo.CurrentUICulture)!;
 
+    public static string PrivateCloudOnlyFieldFormat => ValidationResourceManager.GetString(nameof(PrivateCloudOnlyFieldFormat), CultureInfo.CurrentUICulture)!;
+
+    public static string PrivateCloudRequiredFieldFormat => ValidationResourceManager.GetString(nameof(PrivateCloudRequiredFieldFormat), CultureInfo.CurrentUICulture)!;
+
     public static string RequiredBlankValueFormat => ValidationResourceManager.GetString(nameof(RequiredBlankValueFormat), CultureInfo.CurrentUICulture)!;
 
     public static string UnknownValueFormat => ValidationResourceManager.GetString(nameof(UnknownValueFormat), CultureInfo.CurrentUICulture)!;

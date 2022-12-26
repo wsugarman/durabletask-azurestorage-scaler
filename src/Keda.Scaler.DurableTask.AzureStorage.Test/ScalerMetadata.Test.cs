@@ -66,6 +66,21 @@ public class ScalerMetadataTest
         AssertValidation(new ScalerMetadata { TaskHubName = "" }, provider, 1);
         AssertValidation(new ScalerMetadata { TaskHubName = "\t" }, provider, 1);
 
+        // Private Cloud + No Suffix
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = new Uri("https://test.authority.com"), Cloud = "private", EndpointSuffix = null, UseManagedIdentity = true }, provider, 1);
+
+        // Private Cloud + Blank Suffix
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = new Uri("https://test.authority.com"), Cloud = "private", EndpointSuffix = "   ", UseManagedIdentity = true }, provider, 1);
+
+        // Private Cloud + No Authority
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = null, Cloud = "private", EndpointSuffix = "some.suffix", UseManagedIdentity = true }, provider, 1);
+
+        // Non-Private Cloud + Suffix
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Cloud = "AzurePublicCloud", EndpointSuffix = "some.suffix", UseManagedIdentity = true }, provider, 1);
+
+        // Non-Private Cloud + Authority
+        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = new Uri("https://test.authority.com"), Cloud = "AzurePublicCloud", UseManagedIdentity = true }, provider, 1);
+
         // AAD + No Account
         AssertValidation(new ScalerMetadata { AccountName = null, UseManagedIdentity = true }, provider, 1);
         AssertValidation(new ScalerMetadata { AccountName = "", UseManagedIdentity = true }, provider, 1);
@@ -108,6 +123,6 @@ public class ScalerMetadataTest
     private static void AssertValidation(ScalerMetadata metadata, IServiceProvider provider, int expectedErrors)
     {
         List<ValidationResult> errors = metadata.Validate(new ValidationContext(metadata, provider, null)).ToList();
-        Assert.AreEqual(expectedErrors, errors.Count, errors.FirstOrDefault()?.ErrorMessage);
+        Assert.AreEqual(expectedErrors, errors.Count, string.Join(Environment.NewLine, errors.Select(x => x.ErrorMessage)));
     }
 }

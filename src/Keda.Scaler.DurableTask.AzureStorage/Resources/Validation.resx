@@ -135,6 +135,12 @@
   <data name="PositiveValueFormat" xml:space="preserve">
     <value>{0} must be a positive number.</value>
   </data>
+  <data name="PrivateCloudOnlyFieldFormat" xml:space="preserve">
+    <value>{0} should only be specified if using a private cloud.</value>
+  </data>
+  <data name="PrivateCloudRequiredFieldFormat" xml:space="preserve">
+    <value>{0} must be specified if using a private cloud.</value>
+  </data>
   <data name="RequiredBlankValueFormat" xml:space="preserve">
     <value>{0} is required and cannot be empty or consist entirely of white space characters.</value>
   </data>

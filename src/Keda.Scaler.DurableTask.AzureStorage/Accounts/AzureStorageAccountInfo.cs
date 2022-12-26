@@ -31,13 +31,10 @@ public sealed class AzureStorageAccountInfo
     public string? ClientId { get; init; }
 
     /// <summary>
-    /// Gets the cloud environment that contains the Azure Storage account.
+    /// Gets the optional metadata for the Azure cloud that contains the Azure Storage account.
     /// </summary>
-    /// <value>
-    /// The Azure cloud environment containing the storage account, if a known value;
-    /// otherwise, <see cref="CloudEnvironment.Unknown"/>.
-    /// </value>
-    public CloudEnvironment CloudEnvironment { get; init; }
+    /// <value>The Azure cloud endpoints if a known cloud; otherwise, <see langword="null"/>.</value>
+    public CloudEndpoints? Cloud { get; init; }
 
     /// <summary>
     /// Gets the optional connection string for the Azure Storage account.

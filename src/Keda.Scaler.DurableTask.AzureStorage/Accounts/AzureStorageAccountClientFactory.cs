@@ -1,12 +1,11 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using Azure.Identity;
 using System;
-using Azure.Storage.Blobs;
-using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Azure.Core;
+using Azure.Identity;
+using Azure.Storage.Blobs;
+using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 
@@ -22,18 +21,17 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
             if (string.IsNullOrWhiteSpace(accountInfo.AccountName))
                 throw new ArgumentException(SR.Format(SR.MissingMemberFormat, nameof(accountInfo.AccountName)), nameof(accountInfo));
 
-            if (accountInfo.CloudEnvironment == CloudEnvironment.Unknown)
-                throw new ArgumentException(SR.Format(SR.MissingMemberFormat, nameof(accountInfo.CloudEnvironment)), nameof(accountInfo));
+            if (accountInfo.Cloud == null)
+                throw new ArgumentException(SR.Format(SR.MissingMemberFormat, nameof(accountInfo.Cloud)), nameof(accountInfo));
 
             AzureStorageService service = typeof(T) == typeof(BlobServiceClient) ? AzureStorageService.Blob : AzureStorageService.Queue;
-            CloudEndpoints endpoints = CloudEndpoints.ForEnvironment(accountInfo.CloudEnvironment);
-            Uri serviceUri = endpoints.GetStorageServiceUri(accountInfo.AccountName, service);
+            Uri serviceUri = accountInfo.Cloud.GetStorageServiceUri(accountInfo.AccountName, service);
 
             if (string.Equals(accountInfo.Credential, Credential.ManagedIdentity, StringComparison.OrdinalIgnoreCase))
             {
                 ManagedIdentityCredential credential = new ManagedIdentityCredential(
                     accountInfo.ClientId,
-                    new TokenCredentialOptions { AuthorityHost = endpoints.AuthorityHost });
+                    new TokenCredentialOptions { AuthorityHost = accountInfo.Cloud.AuthorityHost });
 
                 return CreateServiceClient(serviceUri, credential);
             }

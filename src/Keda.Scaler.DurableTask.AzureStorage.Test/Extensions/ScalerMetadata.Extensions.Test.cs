@@ -31,14 +31,14 @@ public class ScalerMetadataExtensionsTest
         {
             AccountName = "test",
             ClientId = Guid.NewGuid().ToString(),
-            Cloud = nameof(CloudEnvironment.AzurePublicCloud),
+            Cloud = "foo", // Unknown cloud
             ConnectionFromEnv = "Connection",
         };
 
         actual = metadata.GetAccountInfo(env);
         Assert.AreEqual("test", actual.AccountName);
         Assert.AreEqual(metadata.ClientId, actual.ClientId);
-        Assert.AreEqual(CloudEnvironment.AzurePublicCloud, actual.CloudEnvironment);
+        Assert.IsNull(actual.Cloud);
         Assert.AreEqual("UseDevelopmentStorage=true", actual.ConnectionString);
         Assert.AreEqual(null, actual.Credential);
 
@@ -55,8 +55,26 @@ public class ScalerMetadataExtensionsTest
         actual = metadata.GetAccountInfo(env);
         Assert.AreEqual("test2", actual.AccountName);
         Assert.AreEqual(metadata.ClientId, actual.ClientId);
-        Assert.AreEqual(CloudEnvironment.AzureUSGovernmentCloud, actual.CloudEnvironment);
+        Assert.AreSame(CloudEndpoints.USGovernment, actual.Cloud);
         Assert.AreEqual("UseDevelopmentStorage=true", actual.ConnectionString);
+        Assert.AreEqual(Credential.ManagedIdentity, actual.Credential);
+
+        // Private cloud
+        metadata = new ScalerMetadata
+        {
+            AccountName = "test3",
+            ActiveDirectoryEndpoint = new Uri("https://unit-test.authority", UriKind.Absolute),
+            ClientId = Guid.NewGuid().ToString(),
+            Cloud = nameof(CloudEnvironment.Private),
+            EndpointSuffix = "storage.unit-test",
+            UseManagedIdentity = true,
+        };
+
+        actual = metadata.GetAccountInfo(env);
+        Assert.AreEqual("test3", actual.AccountName);
+        Assert.AreEqual(metadata.ClientId, actual.ClientId);
+        Assert.AreEqual(new Uri("https://unit-test.authority", UriKind.Absolute), actual.Cloud!.AuthorityHost);
+        Assert.AreEqual("storage.unit-test", actual.Cloud.StorageSuffix);
         Assert.AreEqual(Credential.ManagedIdentity, actual.Credential);
     }
 }

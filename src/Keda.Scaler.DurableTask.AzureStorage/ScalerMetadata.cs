@@ -18,8 +18,6 @@ public sealed class ScalerMetadata : IValidatableObject
 {
     public const string DefaultConnectionEnvironmentVariable = "AzureWebJobsStorage";
 
-    // TODO: Add support for Private clouds with AAD Pod Identity
-
     /// <summary>
     /// Gets the optional name of the Azure Storage account used by the Durable Task framework.
     /// </summary>
@@ -29,6 +27,15 @@ public sealed class ScalerMetadata : IValidatableObject
     /// </remarks>
     /// <value>The name of the Azure Storage account if specified; otherwise, <see langword="null"/>.</value>
     public string? AccountName { get; init; }
+
+    /// <summary>
+    /// Gets the optional URL from which tokens may be requested for private clouds.
+    /// </summary>
+    /// <remarks>
+    /// This value may only be specified when the value of <see cref="Cloud"/> is <c>"private"</c>.
+    /// </remarks>
+    /// <value>The private cloud's host authority for Azure Active Directory (AAD).</value>
+    public Uri? ActiveDirectoryEndpoint { get; init; }
 
     /// <summary>
     /// Gets the optional client id to be used when authenticating with managed identity.
@@ -48,14 +55,25 @@ public sealed class ScalerMetadata : IValidatableObject
     /// The Azure cloud environment containing the storage account, if a known value;
     /// otherwise, <see cref="CloudEnvironment.Unknown"/>.
     /// </value>
-    public CloudEnvironment CloudEnvironment => Cloud switch
+    public CloudEnvironment CloudEnvironment
     {
-        nameof(CloudEnvironment.AzurePublicCloud) or null => CloudEnvironment.AzurePublicCloud,
-        nameof(CloudEnvironment.AzureUSGovernmentCloud) => CloudEnvironment.AzureUSGovernmentCloud,
-        nameof(CloudEnvironment.AzureChinaCloud) => CloudEnvironment.AzureChinaCloud,
-        nameof(CloudEnvironment.AzureGermanCloud) => CloudEnvironment.AzureGermanCloud,
-        _ => CloudEnvironment.Unknown,
-    };
+        get
+        {
+            // Note: Do not use Enum.TryParse as it will accept numeric values
+            if (Cloud is null || Cloud.Equals(nameof(CloudEnvironment.AzurePublicCloud), StringComparison.OrdinalIgnoreCase))
+                return CloudEnvironment.AzurePublicCloud;
+            else if (Cloud.Equals(nameof(CloudEnvironment.Private), StringComparison.OrdinalIgnoreCase))
+                return CloudEnvironment.Private;
+            else if (Cloud.Equals(nameof(CloudEnvironment.AzureUSGovernmentCloud), StringComparison.OrdinalIgnoreCase))
+                return CloudEnvironment.AzureUSGovernmentCloud;
+            else if (Cloud.Equals(nameof(CloudEnvironment.AzureChinaCloud), StringComparison.OrdinalIgnoreCase))
+                return CloudEnvironment.AzureChinaCloud;
+            else if (Cloud.Equals(nameof(CloudEnvironment.AzureGermanCloud), StringComparison.OrdinalIgnoreCase))
+                return CloudEnvironment.AzureGermanCloud;
+            else
+                return CloudEnvironment.Unknown;
+        }
+    }
 
     /// <summary>
     /// Gets the name of the cloud environment that contains the Azure Storage account used by the Durable Task framework.
@@ -86,6 +104,15 @@ public sealed class ScalerMetadata : IValidatableObject
     /// </remarks>
     /// <value>The name of an environment variable in the deployment if specified; otherwise, <see langword="null"/>.</value>
     public string? ConnectionFromEnv { get; init; }
+
+    /// <summary>
+    /// Gets the optional Azure Storage host suffix for private clouds.
+    /// </summary>
+    /// <remarks>
+    /// This value may only be specified when the value of <see cref="Cloud"/> is <c>"private"</c>.
+    /// </remarks>
+    /// <value>The private cloud's suffix for Azure Storage endpoints.</value>
+    public string? EndpointSuffix { get; init; }
 
     /// <summary>
     /// Gets the maximum number of activity work items that a single worker may process at any time.
@@ -154,6 +181,7 @@ public sealed class ScalerMetadata : IValidatableObject
         if (validationContext is null)
             throw new ArgumentNullException(nameof(validationContext));
 
+        // Validate common fields
         if (string.IsNullOrWhiteSpace(TaskHubName))
             yield return new ValidationResult(SR.Format(SR.RequiredBlankValueFormat, nameof(TaskHubName)));
 
@@ -163,6 +191,28 @@ public sealed class ScalerMetadata : IValidatableObject
         if (MaxOrchestrationsPerWorker < 1)
             yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxOrchestrationsPerWorker)));
 
+        // Validate private cloud fields
+        if (CloudEnvironment == CloudEnvironment.Private)
+        {
+            if (ActiveDirectoryEndpoint is null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(ActiveDirectoryEndpoint)));
+
+            if (EndpointSuffix is null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(EndpointSuffix)));
+
+            if (EndpointSuffix is not null && string.IsNullOrWhiteSpace(EndpointSuffix))
+                yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(EndpointSuffix)));
+        }
+        else
+        {
+            if (ActiveDirectoryEndpoint is not null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(ActiveDirectoryEndpoint)));
+
+            if (EndpointSuffix is not null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(EndpointSuffix)));
+        }
+
+        // Validate fields based on whether managed identity is used
         if (UseManagedIdentity)
         {
             if (AccountName is null)
