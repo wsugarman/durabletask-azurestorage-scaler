@@ -35,7 +35,7 @@ internal sealed class AzureStorageAccountInfoEqualityComparer : IEqualityCompare
         return HashCode.Combine(
             obj.AccountName,
             obj.ClientId,
-            obj.Cloud is null ? 0 : HashCode.Combine(obj.Cloud.AuthorityHost, obj.Cloud.StorageSuffix),
+            HashCode.Combine(obj.Cloud?.AuthorityHost, obj.Cloud?.StorageSuffix),
             obj.ConnectionString,
             obj.Credential);
     }

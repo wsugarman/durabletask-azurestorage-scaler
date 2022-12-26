@@ -14,7 +14,7 @@ public enum CloudEnvironment
     Unknown,
 
     /// <summary>
-    /// Specifies Azure Stack Hub or air-gapped clouds
+    /// Specifies Azure Stack Hub or an air-gapped cloud.
     /// </summary>
     Private,
 

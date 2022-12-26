@@ -29,7 +29,10 @@ public class CloudEndpointsTest
 
     [TestMethod]
     public void CtorExceptions()
-        => Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(new Uri("https://test"), null!));
+    {
+        Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(null!, "suffix"));
+        Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(new Uri("https://test"), null!));
+    }
 
     [TestMethod]
     public void ForEnvironment()

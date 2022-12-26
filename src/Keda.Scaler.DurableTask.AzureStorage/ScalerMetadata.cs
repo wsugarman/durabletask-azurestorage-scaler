@@ -59,6 +59,7 @@ public sealed class ScalerMetadata : IValidatableObject
     {
         get
         {
+            // Note: Do not use Enum.TryParse as it will accept numeric values
             if (Cloud is null || Cloud.Equals(nameof(CloudEnvironment.AzurePublicCloud), StringComparison.OrdinalIgnoreCase))
                 return CloudEnvironment.AzurePublicCloud;
             else if (Cloud.Equals(nameof(CloudEnvironment.Private), StringComparison.OrdinalIgnoreCase))

@@ -21,7 +21,7 @@ This specification describes the `external` trigger for applications that use th
 - **`accountName`** - Optional name of the Azure Storage account used by the Durable Task Framework (DTFx). This value is only required when `useManagedIdentity` is `true`
 - **`activeDirectoryEndpoint`** - Optional host authority for Azure Active Directory (AAD). This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`clientId`** - Optional specifies the identity used when authenticating via managed identity. This value can only be specified when `useManagedIdentity` is `true`
-- **`cloud`** - Optional name of the cloud environment that contains the Azure Storage account. Must be a known Azure cloud environment, or `Private` for Azure Stack Hub or air-gapped clouds. If `Private` is specified, both `endpointSuffix` and `activeDirectoryEndpoint` must both be specified. Defaults to the public cloud `AzurePublicCloud`. Possible values include:
+- **`cloud`** - Optional name of the cloud environment that contains the Azure Storage account. Must be a known Azure cloud environment, or `Private` for Azure Stack Hub or air-gapped clouds. If `Private` is specified, both `endpointSuffix` and `activeDirectoryEndpoint` must be specified. Defaults to the `AzurePublicCloud`. Possible values include:
   - `AzurePublicCloud`
   - `AzureUSGovernmentCloud`
   - `AzureChinaCloud`
