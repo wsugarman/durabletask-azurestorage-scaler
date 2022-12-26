@@ -9,7 +9,7 @@ additionalLabels: {}
 # Docker image metadata
 image:
   repository: ghcr.io/wsugarman/durabletask-azurestorage-external-scaler
-  tag: ""  # will default to the appVersion in Chart.yaml
+  tag: "" # will default to the appVersion in Chart.yaml
   pullPolicy: Always
   pullSecrets: []
 
@@ -24,12 +24,3 @@ resources:
   limits:
     cpu: 100m
     memory: 512Mi
-
-# Cluster RBAC settings
-rbac:
-  create: true
-
-# Service Account information for querying the scale
-serviceAccount:
-  create: true
-  name: # If not set and create is true, a name is generated using the fullname template
