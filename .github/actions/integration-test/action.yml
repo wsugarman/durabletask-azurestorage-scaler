@@ -1,0 +1,90 @@
+name: integration test
+description: Ensures the external scaler installation succeeds and can properly scale function apps
+inputs:
+  maxActivitiesPerWorker:
+    default: '3'
+    description: The maximum number of activities per worker.
+    required: false
+  testStatusPollingInterval:
+    default: 00:00:10
+    description: The polling interval when checking test conditions.
+    required: false
+  testTimeout:
+    default: 00:05:00
+    description: The timeout for each test case.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Setup dotnet
+      uses: actions/setup-dotnet@v3
+
+    - name: Install Kind
+      shell: bash
+      run: go install sigs.k8s.io/kind@latest
+
+    - name: Create Kind Cluster
+      shell: bash
+      run: |
+        kind create cluster --name integration
+        kubectl config use-context kind-integration
+
+    - name: Install KEDA
+      shell: bash
+      run: |
+        helm repo add kedacore https://kedacore.github.io/charts
+        helm repo update
+        kubectl create namespace keda
+        helm install keda kedacore/keda --namespace keda
+
+    - name: Install Scaler Helm Chart
+      shell: bash
+      run: helm install dtfx-scaler ./charts/durabletask-azurestorage-scaler
+
+    - name: Build Function App Image
+      shell: bash
+      run: |
+        docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ github.run_id }}" .
+        kind load docker-image "example-function-app:${{ github.run_id }}"
+
+    - name: Apply Function App
+      shell: bash
+      run: |
+
+
+    - name: Apply ScaledObject
+      shell: bash
+      run: |
+
+
+    - name: Set Test Options
+      shell: bash
+      run: |
+        echo "Function__Name=ExampleFunctionApp" >> $GITHUB_ENV
+        echo "Function__Namespace=test" >> $GITHUB_ENV
+        echo "Kubernetes__Context=kind-integration" >> $GITHUB_ENV
+        echo "Scaling__MaxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }}" >> $GITHUB_ENV
+        echo "Scaling__PollingInterval=${{ inputs.testStatusPollingInterval }}" >> $GITHUB_ENV
+        echo "Scaling__Timeout=${{ inputs.testTimeout }}" >> $GITHUB_ENV
+
+    - name: Test Scaler
+      shell: bash
+      run: |
+        dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
+          -c "${{ inputs.buildConfiguration }}" \
+          -p:ContinuousIntegrationBuild=true \
+          -warnaserror \
+          -v normal
+
+    - name: Delete Function App
+      shell: bash
+      run: |
+
+    - name: Uninstall Scaler Helm Chart
+      shell: bash
+      run: helm uninstall dtfx-scaler
+
+    - name: Delete Cluster
+      shell: bash
+      run: kind delete cluster --name integration

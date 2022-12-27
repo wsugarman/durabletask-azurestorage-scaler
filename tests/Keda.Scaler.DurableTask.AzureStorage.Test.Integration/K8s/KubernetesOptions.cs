@@ -9,8 +9,8 @@ internal sealed class KubernetesOptions
 {
     public const string DefaultSectionName = "Kubernetes";
 
-    [Required]
     public string? ConfigPath { get; set; }
 
+    [Required]
     public string? Context { get; set; }
 }

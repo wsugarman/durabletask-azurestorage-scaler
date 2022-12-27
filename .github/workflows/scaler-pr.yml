@@ -15,11 +15,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Test
+      - name: Unit Tests
         uses: ./.github/actions/dotnet-test
         with:
           solution: Scaler
           resultsDirectory: ${{ runner.temp }}/TestResults
+
+      # - name: Integration Tests
+      #   uses: ./.github/actions/integration-test
 
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage
