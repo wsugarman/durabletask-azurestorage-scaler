@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using k8s;
@@ -62,7 +63,7 @@ public sealed class ScaleTest : IDisposable
                     KubernetesOptions options = sp.GetRequiredService<IOptions<KubernetesOptions>>().Value;
                     return KubernetesClientConfiguration.BuildConfigFromConfigFile(
                         options.ConfigPath,
-                        options.ConfigPath);
+                        options.Context);
                 })
             .AddSingleton<IKubernetes>(sp => new Kubernetes(sp.GetRequiredService<KubernetesClientConfiguration>()))
             .AddDurableClientFactory()
@@ -78,18 +79,20 @@ public sealed class ScaleTest : IDisposable
     [TestMethod]
     public async Task Activities()
     {
+        int activityCount = 2 * _options.MaxActivitiesPerWorker;
+
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
         tokenSource.CancelAfter(_options.Timeout);
 
         await WaitForScaleDownAsync(tokenSource.Token).ConfigureAwait(false);
 
-        // Start orchestration with 5 activities
+        // Start 1 orchestration with the configured number of activities
         OrchestrationRuntimeStatus finalStatus;
-        string instanceId = await StartOrchestrationAsync(5, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+        string instanceId = await StartOrchestrationAsync(activityCount, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
         try
         {
-            // Assert scale
-            int expected = GetMinExpectedScale(5);
+            // Assert scale (should be 3 because we need 2 workers for the activities and 1 for the orchestration)
+            int expected = GetMinExpectedScale(activityCount);
             await WaitForScaleUpAsync(expected, t => EnsureRunningAsync(instanceId, t), tokenSource.Token).ConfigureAwait(false);
 
             // Assert completion
@@ -107,8 +110,45 @@ public sealed class ScaleTest : IDisposable
     }
 
     [TestMethod]
-    public void Orchestrations()
+    public async Task Orchestrations()
     {
+        const int OrchestrationCount = 3;
+
+        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        tokenSource.CancelAfter(_options.Timeout);
+
+        await WaitForScaleDownAsync(tokenSource.Token).ConfigureAwait(false);
+
+        // Start 3 orchestrations with the configured number of activities
+        OrchestrationRuntimeStatus[] finalStatuses;
+        string[] instanceIds = await Task
+            .WhenAll(Enumerable
+                .Repeat(_options, OrchestrationCount)
+                .Select(o => StartOrchestrationAsync(o.MaxActivitiesPerWorker, TimeSpan.FromMinutes(2))))
+            .ConfigureAwait(false);
+
+        try
+        {
+            // Assert scale (should be at least 4 because we need 3 workers for the activities and 1 for the orchestrations)
+            int expected = GetMinExpectedScale(OrchestrationCount * _options.MaxActivitiesPerWorker);
+            await WaitForScaleUpAsync(
+                expected,
+                t => Task.WhenAll(instanceIds.Select(id => EnsureRunningAsync(id, t))),
+                tokenSource.Token).ConfigureAwait(false);
+
+            // Assert completion
+            finalStatuses = await Task.WhenAll(instanceIds.Select(id => WaitForOrchestration(id, tokenSource.Token))).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            string reason = tokenSource.IsCancellationRequested ? "Test timed out." : "Encountered unhandled exception.";
+            await Task.WhenAll(instanceIds.Select(id => _durableClient.TerminateAsync(id, reason))).ConfigureAwait(false);
+            throw;
+        }
+
+        // Ensure it completed successfully
+        foreach (OrchestrationRuntimeStatus actual in finalStatuses)
+            Assert.AreEqual(OrchestrationRuntimeStatus.Completed, actual);
     }
 
     public void Dispose()
