@@ -1,9 +1,25 @@
 name: integration test
 description: Ensures the external scaler installation succeeds and can properly scale function apps
 inputs:
+  buildConfiguration:
+    default: Debug
+    description: The dotnet build configuration
+    required: false
+  functionAppName:
+    default: example-function-app
+    description: The Kubernetes namespace for the function app.
+    required: false
+  functionAppNamespace:
+    default: test
+    description: The Kubernetes namespace for the function app.
+    required: false
   maxActivitiesPerWorker:
     default: '3'
     description: The maximum number of activities per worker.
+    required: false
+  taskHubName:
+    default: ExampleTaskHub
+    description: The name of the Durable Task Hub.
     required: false
   testStatusPollingInterval:
     default: 00:00:10
@@ -45,24 +61,99 @@ runs:
     - name: Build Function App Image
       shell: bash
       run: |
-        docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ github.run_id }}" .
+        docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "functions:${{ github.run_id }}" .
         kind load docker-image "example-function-app:${{ github.run_id }}"
+
+    - name: Apply Azurite
+      shell: bash
+      run:
+        cat ./.github/actions/integration-test/kubernetes/azurite/yaml | kubectl apply -f -
+        echo "AzuriteConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" >> $GITHUB_ENV
 
     - name: Apply Function App
       shell: bash
       run: |
+        deploymentFile="deployment.yaml"
 
+        cat > $deploymentFile <<- EOM
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: ${{ inputs.functionAppName }}
+          namespace: ${{ inputs.functionAppNamespace }}
+        spec:
+          selector:
+            matchLabels:
+              component: functions
+          replicas: 0
+          template:
+            metadata:
+              labels:
+                component: functions
+            spec:
+              containers:
+              - name: functions
+                image: functions:${{ github.run_id }}
+                imagePullPolicy: IfNotPresent
+                env:
+                - name: AzureWebJobsStorage
+                  value: ${{ env.AzuriteConnectionString }}
+                - name: AzureFunctionsJobHost__Extensions__DurableTask__HubName
+                  value: ExampleTaskHub
+                resources:
+                  limits:
+                    cpu: "1"
+                    memory: 2G
+                  requests:
+                    cpu: 100m
+                    memory: 500M
+                startupProbe:
+                  failureThreshold: 30
+                  httpGet:
+                    path: /
+                    port: 8080
+                    scheme: HTTP
+                  periodSeconds: 10
+                  successThreshold: 1
+                  timeoutSeconds: 1
+        EOM
+
+        cat $deploymentFile | kubectl apply -f -
 
     - name: Apply ScaledObject
       shell: bash
       run: |
+        scaledObjectFile=scaledobject.yaml
 
+        cat > $deploymentFile <<- EOM
+        apiVersion: keda.sh/v1alpha1
+        kind: ScaledObject
+        metadata:
+          name: ${{ inputs.functionAppName }}-scaledobject
+          namespace: ${{ inputs.functionAppNamespace }}
+        spec:
+          scaleTargetRef:
+            name: ${{ inputs.functionAppName }}
+          cooldownPeriod: 30
+          pollingInterval: 5
+          triggers:
+            - type: external
+              metadata:
+                scalerAddress: durabletask-azurestorage-scaler.keda:4370
+                connection: ${{ env.AzuriteConnectionString }}
+                maxActivitiesPerWorker: ${{ inputs.maxActivitiesPerWorker }}
+                maxOrchestrationsPerWorker: 1
+                taskHubName: ${{ inputs.taskHubName }}
+        EOM
 
     - name: Set Test Options
       shell: bash
       run: |
-        echo "Function__Name=ExampleFunctionApp" >> $GITHUB_ENV
-        echo "Function__Namespace=test" >> $GITHUB_ENV
+        echo "DurableTask__ConnectionName=AzuriteConnectionString" >> $GITHUB_ENV
+        echo "DurableTask__IsExternalClient=true" >> $GITHUB_ENV
+        echo "DurableTask__TaskHub=${{ inputs.taskHubName }}" >> $GITHUB_ENV
+        echo "Function__Name=${{ inputs.functionAppName }}" >> $GITHUB_ENV
+        echo "Function__Namespace=${{ inputs.functionAppNamespace }}" >> $GITHUB_ENV
         echo "Kubernetes__Context=kind-integration" >> $GITHUB_ENV
         echo "Scaling__MaxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }}" >> $GITHUB_ENV
         echo "Scaling__PollingInterval=${{ inputs.testStatusPollingInterval }}" >> $GITHUB_ENV
