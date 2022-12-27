@@ -3,8 +3,8 @@
   <!-- Common Properties -->
   <PropertyGroup>
     <RootDirectory>$(MSBuildThisFileDirectory)</RootDirectory>
-    <SrcDirectory>$(RootDirectory)src</SrcDirectory>
-    <TestsDirectory>$(RootDirectory)tests</TestsDirectory>
+    <SrcDirectory>$(RootDirectory)src/</SrcDirectory>
+    <TestsDirectory>$(RootDirectory)tests/</TestsDirectory>
   </PropertyGroup>
 
   <!-- Assembly -->
