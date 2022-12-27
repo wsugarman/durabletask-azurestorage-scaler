@@ -1,0 +1,48 @@
+<Project>
+
+  <!-- Common Properties -->
+  <PropertyGroup>
+    <RootDirectory>$(MSBuildThisFileDirectory)</RootDirectory>
+    <SrcDirectory>$(RootDirectory)src</SrcDirectory>
+    <TestsDirectory>$(RootDirectory)tests</TestsDirectory>
+  </PropertyGroup>
+
+  <!-- Assembly -->
+  <PropertyGroup>
+    <Copyright>Copyright © 2022 William Sugarman.</Copyright>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <Product>DurableTask KEDA External Scaler</Product>
+  </PropertyGroup>
+
+  <!-- Build -->
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <LangVersion>latest</LangVersion>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <Nullable>enable</Nullable>
+    <TargetFramework>net7.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+
+  <!-- Code Analyzers -->
+  <PropertyGroup>
+    <AnalysisLevel>latest-All</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <SkipDefaultEditorConfigAsAdditionalFile>true</SkipDefaultEditorConfigAsAdditionalFile>
+  </PropertyGroup>
+
+  <!-- Dynamic Assembly Info -->
+  <ItemGroup>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>false</_Parameter1>
+      <_Parameter1_TypeName>System.Boolean</_Parameter1_TypeName>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Resources.NeutralResourcesLanguage">
+      <_Parameter1>en</_Parameter1>
+      <_Parameter1_TypeName>System.String</_Parameter1_TypeName>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>

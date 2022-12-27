@@ -1,50 +1,18 @@
 <Project>
 
-  <!-- Common Properties -->
-  <PropertyGroup>
-    <SrcDirectory>$(MSBuildThisFileDirectory)</SrcDirectory>
-    <SharedDirectory>$(SrcDirectory)Shared\</SharedDirectory>
-  </PropertyGroup>
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Assembly -->
+  <!-- Code Coverage -->
   <PropertyGroup>
-    <Copyright>Copyright © 2022 William Sugarman.</Copyright>
-    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
-    <Product>DurableTask KEDA External Scaler</Product>
-  </PropertyGroup>
-
-  <!-- Build -->
-  <PropertyGroup>
-    <Deterministic>true</Deterministic>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <LangVersion>latest</LangVersion>
-    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    <Nullable>enable</Nullable>
     <RunSettingsFilePath>$(SrcDirectory)CodeCoverage.runsettings</RunSettingsFilePath>
-    <TargetFramework>net7.0</TargetFramework>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsAsErrors />
   </PropertyGroup>
-
-  <!-- Code Analyzers -->
-  <PropertyGroup>
-    <AnalysisLevel>latest-All</AnalysisLevel>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <SkipDefaultEditorConfigAsAdditionalFile>true</SkipDefaultEditorConfigAsAdditionalFile>
-  </PropertyGroup>
-
-  <!-- Common Files -->
-  <ItemGroup>
-    <Compile Include="$(SharedDirectory)AssemblyInfo.cs">
-      <Link>Properties\AssemblyInfo.cs</Link>
-    </Compile>
-  </ItemGroup>
 
   <!-- Tools -->
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
   </ItemGroup>
 
+  <!-- Test Properties, Packages, etc -->
   <Choose>
     <When Condition="$(MSBuildProjectName.EndsWith('.Test'))">
 
@@ -69,6 +37,9 @@
     <Otherwise>
 
       <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+          <_Parameter1>DynamicProxyGenAssembly2</_Parameter1>
+        </AssemblyAttribute>
         <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
           <_Parameter1>$(MSBuildProjectName).Test</_Parameter1>
         </AssemblyAttribute>

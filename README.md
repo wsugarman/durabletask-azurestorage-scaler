@@ -10,7 +10,7 @@ This specification describes the `external` trigger for applications that use th
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4050
+        scalerAddress: durabletask-azurestorage-scaler.keda:4370
         connectionFromEnv: STORAGE_CONNECTIONSTRING_ENV_NAME
         maxActivitiesPerWorker: 5
         maxOrchestrationsPerWorker: 2
@@ -45,7 +45,7 @@ Connection strings may be specified using an environment variable exposed to the
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4050 # Required. Address of the external scaler service
+        scalerAddress: durabletask-azurestorage-scaler.keda:4370 # Required. Address of the external scaler service
         connectionFromEnv: <variable> # Optional. By default 'AzureWebJobsStorage'
 ```
 
@@ -55,7 +55,7 @@ Connection strings may also be specified directly via the `connection` parameter
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4050 # Required. Address of the external scaler service
+        scalerAddress: durabletask-azurestorage-scaler.keda:4370 # Required. Address of the external scaler service
         connection: <connection> # Optional. Defaults to connectionFromEnv
 ```
 
@@ -68,7 +68,7 @@ An example specification that uses an identity-based connection can be seen belo
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4050 # Required. Address of the external scaler service
+        scalerAddress: durabletask-azurestorage-scaler.keda:4370 # Required. Address of the external scaler service
         accountName: <name>      # Optional. Required for pod identity
         clientId: <client-id>    # Optional. Recommended if there are multiple identities
         cloud: <cloud>           # Optional. Defaults to AzurePublicCloud
