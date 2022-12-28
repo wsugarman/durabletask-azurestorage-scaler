@@ -1,26 +1,36 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+FROM mcr.microsoft.com/dotnet/sdk:7.0.101-cbl-mariner2.0-amd64@sha256:df9c5c480801d49e7f9558566766622178e552d534f4a6a8fafe241d8dab0860 AS build
+ARG BUILD_CONFIGURATION=Release
+ARG CONTINUOUS_INTEGRATION_BUILD=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:6.0.6-alpine3.14@sha256:cde5d41b0cd6d9ca27151fb5d35f67267cdc0d465a4e92081dd0d00bbe195156 AS base
-RUN set -x && \
-    addgroup nonroot && \
-    adduser -S -D -H -s /sbin/nologin -G nonroot -g nonroot nonroot
-USER nonroot
-WORKDIR /app
-EXPOSE 80
-EXPOSE 443
-
-FROM mcr.microsoft.com/dotnet/sdk:6.0.301-alpine3.14@sha256:f7bcb4614e83e3da501bbd9733f74219d871c2e6d73765feaed0d3197c28f4c6 AS build
-WORKDIR /src
-COPY ["Keda.Scaler.DurableTask.AzureStorage.csproj", "."]
-RUN dotnet restore "./Keda.Scaler.DurableTask.AzureStorage.csproj"
-COPY . .
-WORKDIR "/src/."
-RUN dotnet build "Keda.Scaler.DurableTask.AzureStorage.csproj" -c Release -o /app/build
+COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/scaler/"]
+COPY ["./src/Directory.Build.props", "./src/Keda.Scaler.DurableTask.AzureStorage/", "/scaler/src/"]
+WORKDIR /scaler/src
+RUN dotnet restore "Keda.Scaler.DurableTask.AzureStorage.csproj"
+RUN dotnet build "Keda.Scaler.DurableTask.AzureStorage.csproj" -c $BUILD_CONFIGURATION -p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD -warnaserror -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" -c Release -o /app/publish
+ARG BUILD_CONFIGURATION=Release
+ARG CONTINUOUS_INTEGRATION_BUILD=false
+RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" -c $BUILD_CONFIGURATION -p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD -warnaserror -o /app/publish
 
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/sdk:7.0.101-cbl-mariner2.0-amd64@sha256:df9c5c480801d49e7f9558566766622178e552d534f4a6a8fafe241d8dab0860 AS users
+RUN tdnf install shadow-utils -y && \
+    tdnf clean all
+RUN groupadd nonroot && \
+    useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot
+
+FROM scratch AS nonroot
+COPY --from=users /etc/group /etc/group
+COPY --from=users /etc/passwd /etc/passwd
+
+FROM mcr.microsoft.com/dotnet/aspnet:7.0.1-cbl-mariner2.0-distroless-amd64@sha256:6229a3f4d29a2f64486d6d85c9fec74cc010da7900839a7056b59960454dd300 AS runtime
+COPY --from=nonroot / /
+ENV ASPNETCORE_URLS=http://+:8080
+USER nonroot
+EXPOSE 8080
+
+FROM runtime AS web
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=publish ["/app/publish", "./"]
 ENTRYPOINT ["dotnet", "Keda.Scaler.DurableTask.AzureStorage.dll"]

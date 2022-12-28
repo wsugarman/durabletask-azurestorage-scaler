@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerFastModeProjectMountDirectory>/home/site/wwwroot</DockerFastModeProjectMountDirectory>
     <DockerfileContext>$(RootDirectory)</DockerfileContext>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 

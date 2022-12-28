@@ -7,11 +7,6 @@
     <RunSettingsFilePath>$(SrcDirectory)CodeCoverage.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
-  <!-- Tools -->
-  <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
-  </ItemGroup>
-
   <!-- Test Properties, Packages, etc -->
   <Choose>
     <When Condition="$(MSBuildProjectName.EndsWith('.Test'))">

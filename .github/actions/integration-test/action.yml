@@ -70,7 +70,7 @@ runs:
         cat ./.github/actions/integration-test/kubernetes/azurite/yaml | kubectl apply -f -
         echo "AzuriteConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" >> $GITHUB_ENV
 
-    - name: Apply Function App
+    - name: Apply Function App Deployment
       shell: bash
       run: |
         deploymentFile="deployment.yaml"
@@ -146,6 +146,8 @@ runs:
                 taskHubName: ${{ inputs.taskHubName }}
         EOM
 
+        cat $scaledObjectFile | kubectl apply -f -
+
     - name: Set Test Options
       shell: bash
       run: |
@@ -168,9 +170,13 @@ runs:
           -warnaserror \
           -v normal
 
-    - name: Delete Function App
+    - name: Delete ScaledObject
       shell: bash
-      run: |
+      run: kubectl delete scaledobject ${{ inputs.functionAppName }}-scaledobject --namespace ${{ inputs.functionAppNamespace }}
+
+    - name: Delete Function App Deployment
+      shell: bash
+      run: kubectl delete deployment ${{ inputs.functionAppName }} --namespace ${{ inputs.functionAppNamespace }}
 
     - name: Uninstall Scaler Helm Chart
       shell: bash
