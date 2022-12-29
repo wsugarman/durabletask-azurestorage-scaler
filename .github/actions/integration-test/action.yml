@@ -54,17 +54,23 @@ runs:
         kubectl create namespace keda
         helm install keda kedacore/keda --namespace keda
 
+    - name: Build Scaler Image
+      shell: bash
+      run: |
+        docker build -f "./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile" -t "durabletask-azurestorage-scaler:${{ github.run_id }}" .
+        kind load docker-image "durabletask-azurestorage-scaler:${{ github.run_id }}"
+
     - name: Install Scaler Helm Chart
       shell: bash
-      run: helm install dtfx-scaler ./charts/durabletask-azurestorage-scaler
+      run: helm install --set image.repository=durabletask-azurestorage-scaler --set image.tag=${{ github.run_id }} dtfx-scaler ./charts/durabletask-azurestorage-scaler
 
     - name: Build Function App Image
       shell: bash
       run: |
         docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "functions:${{ github.run_id }}" .
-        kind load docker-image "example-function-app:${{ github.run_id }}"
+        kind load docker-image "functions:${{ github.run_id }}"
 
-    - name: Apply Azurite
+    - name: Apply Azurite Objects
       shell: bash
       run:
         cat ./.github/actions/integration-test/kubernetes/azurite/yaml | kubectl apply -f -
@@ -84,12 +90,12 @@ runs:
         spec:
           selector:
             matchLabels:
-              component: functions
+              app: functions
           replicas: 0
           template:
             metadata:
               labels:
-                component: functions
+                app: functions
             spec:
               containers:
               - name: functions

@@ -1,13 +1,16 @@
+# Note: Version corresponds to the chart version and should be updated every time
+# the chart is changed. AppVersion on the other hand should be updated every time
+# the web app is changed.
 apiVersion: v2
 appVersion: 1.0.0-alpha.1
 description: A KEDA external scaler for the Durable Task Azure Storage backend
-home: https://github.com/wsugarman/durabletask-azurestorage-external-scaler
-icon: https://raw.githubusercontent.com/wsugarman/durabletask-azurestorage-external-scaler/main/img/storm-icon.png
+home: https://github.com/wsugarman/durabletask-azurestorage-scaler
+icon: https://raw.githubusercontent.com/wsugarman/durabletask-azurestorage-scaler/main/img/storm-icon.png
 maintainers:
   - name: Will Sugarman
     email: will.sugarman@microsoft.com
-name: durabletask-azurestorage-external-scaler
+name: durabletask-azurestorage-scaler
 sources:
-  - https://github.com/wsugarman/durabletask-azurestorage-external-scaler
+  - https://github.com/wsugarman/durabletask-azurestorage-scaler
 type: application
 version: 1.0.0-alpha.1

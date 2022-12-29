@@ -1,20 +1,35 @@
 # Default names are derived from the name of the chart
-nameOverride:
+name:
 fullnameOverride:
 
 # Optional additional labels for each Kubernetes resource
 additionalLabels: {}
-#  name: <value>
+  # key: value
+
+# Optional additional annotations for each Kubernetes resource
+additionalAnnotations: {}
+  # key: value
 
 # Docker image metadata
 image:
-  repository: ghcr.io/wsugarman/durabletask-azurestorage-external-scaler
+  repository: ghcr.io/wsugarman/durabletask-azurestorage-scaler
   tag: "" # will default to the appVersion in Chart.yaml
   pullPolicy: Always
   pullSecrets: []
 
 # gRPC port
 port: 4370
+
+# Scaler replicas
+# TODO: Enable auto-scaling
+replicaCount: 1
+
+# Optional upgrade strategy for > 1 replicas
+upgradeStrategy: {}
+  # type: RollingUpdate
+  # rollingUpdate:
+  #   maxUnavailable: 1
+  #   maxSurge: 1
 
 # Container resource requests and limits
 resources:
@@ -24,3 +39,49 @@ resources:
   limits:
     cpu: 100m
     memory: 512Mi
+
+# Optional node selector for scaler pods
+nodeSelector: {}
+
+# Optional topology spread constraints when replicas > 1
+topologySpreadConstraints: {}
+
+# Optional scaler pod priority class
+priorityClassName: ""
+
+# Optional labels for only the scaler pods
+podLabels: {}
+  # key: value
+
+# Optional annotations for only the scaler pods
+podAnnotations: {}
+  # key: value
+
+# Optional service account for Azure Workload Identity
+serviceAccount:
+  create: false
+  name: ""
+  automountServiceAccountToken: true
+  annotations: {}
+    # key: value
+
+# Optional values for configuring the identity for the scaler pods
+# Note: Names are meant to parallel the KEDA helm chart
+podIdentity:
+  activeDirectory:
+    identity: ""
+  azureWorkload:
+    enabled: false
+    clientId: ""
+    tenantId: ""
+    tokenExpiration: 3600
+
+# Security context for scaler pods
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault
