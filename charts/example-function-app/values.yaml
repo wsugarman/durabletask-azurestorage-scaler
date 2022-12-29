@@ -1,0 +1,48 @@
+# Default names are derived from the name of the chart
+name: ""
+fullnameOverride: ""
+
+taskHub:
+  name: "TestTaskHub"
+  connectionString: ""
+  maxActivitiesPerWorker: 2
+  maxOrchestrationsPerWorker: 1
+
+# Docker image metadata
+image:
+  repository: example-function-app
+  tag: ""
+  pullPolicy: Always
+
+# Scaler replicas
+scaledObject:
+  pollingInterval: 5
+  cooldownPeriod: 30
+  minReplicaCount: 0
+  maxReplicaCount: 100
+
+# Optional upgrade strategy
+upgradeStrategy: {}
+  # type: RollingUpdate
+  # rollingUpdate:
+  #   maxUnavailable: 1
+  #   maxSurge: 1
+
+# Container resource requests and limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 256M
+  limits:
+    cpu: '1'
+    memory: 1G
+
+# Security context for scaler pods
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault

@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "example-function-app.fullname" . }}
+    name: {{ template "example-function-app.fullname" . }}
+    app.kubernetes.io/component: functionapp
+    app.kubernetes.io/name: {{ template "example-function-app.fullname" . }}
+    {{- include "example-function-app.labels" . | indent 4 }}
+  name: {{ template "example-function-app.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "example-function-app.fullname" . }}
+  replicas: {{ .Values.scaledObject.minReplicaCount }}
+  {{- with .Values.upgradeStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "example-function-app.fullname" . }}
+        name: {{ template "example-function-app.fullname" . }}
+        app.kubernetes.io/component: functionapp
+        app.kubernetes.io/name: {{ template "example-function-app.fullname" . }}
+        {{- include "example-function-app.labels" . | indent 8 }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.podSecurityContext }}
+            securityContext:
+              {{- toYaml | nindent 12 }}
+            {{- end }}
+          env:
+          - name: AzureWebJobsStorage
+            value: {{ .Values.taskHub.connectionString }}
+          - name: AzureFunctionsJobHost__Extensions__DurableTask__HubName
+            value: {{ .Values.taskHub.name }}
+          - name: AzureFunctionsJobHost__Extensions__DurableTask__MaxConcurrentActivityFunctions
+            value: {{ .Values.taskHub.maxActivitiesPerWorker }}
+          - name: AzureFunctionsJobHost__Extensions__DurableTask__MaxConcurrentOrchestratorFunctions
+            value: {{ .Values.taskHub.maxOrchestrationsPerWorker }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml | nindent 12 }}
+          {{- end }}
+          startupProbe:
+            failureThreshold: 30
+            httpGet:
+              path: /
+              port: 8080
+              scheme: HTTP
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
