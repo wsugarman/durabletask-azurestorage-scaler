@@ -14,7 +14,7 @@ inputs:
     description: The Kubernetes namespace for the function app.
     required: false
   maxActivitiesPerWorker:
-    default: '3'
+    default: '2'
     description: The maximum number of activities per worker.
     required: false
   taskHubName:
@@ -46,23 +46,11 @@ runs:
         kind create cluster --name integration
         kubectl config use-context kind-integration
 
-    - name: Install KEDA
-      shell: bash
-      run: |
-        helm repo add kedacore https://kedacore.github.io/charts
-        helm repo update
-        kubectl create namespace keda
-        helm install keda kedacore/keda --namespace keda
-
     - name: Build Scaler Image
       shell: bash
       run: |
         docker build -f "./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile" -t "durabletask-azurestorage-scaler:${{ github.run_id }}" .
         kind load docker-image "durabletask-azurestorage-scaler:${{ github.run_id }}"
-
-    - name: Install Scaler Helm Chart
-      shell: bash
-      run: helm install --set image.repository=durabletask-azurestorage-scaler --set image.tag=${{ github.run_id }} dtfx-scaler ./charts/durabletask-azurestorage-scaler
 
     - name: Build Function App Image
       shell: bash
@@ -70,11 +58,22 @@ runs:
         docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "functions:${{ github.run_id }}" .
         kind load docker-image "functions:${{ github.run_id }}"
 
-    - name: Apply Azurite Objects
+    - name: Install KEDA
       shell: bash
-      run:
-        cat ./.github/actions/integration-test/kubernetes/azurite/yaml | kubectl apply -f -
+      run: |
+        helm repo add kedacore https://kedacore.github.io/charts
+        helm repo update
+        helm install -n keda --create-namespace keda kedacore/keda --namespace keda
+
+    - name: Install Azurite Chart
+      shell: bash
+      run: |
+        helm install -n azure --create-namespace azurite ./charts/azurite
         echo "AzuriteConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" >> $GITHUB_ENV
+
+    - name: Install Scaler Helm Chart
+      shell: bash
+      run: helm install -n ${{ inputs.functionAppNamespace }} --create-namespace --set image.repository=durabletask-azurestorage-scaler --set image.tag=${{ github.run_id }} dtfx-scaler ./charts/durabletask-azurestorage-scaler
 
     - name: Apply Function App Deployment
       shell: bash
@@ -186,7 +185,11 @@ runs:
 
     - name: Uninstall Scaler Helm Chart
       shell: bash
-      run: helm uninstall dtfx-scaler
+      run: helm uninstall -n ${{ inputs.functionAppNamespace }} dtfx-scaler
+
+    - name: Uninstall Azurite Helm Chart
+      shell: bash
+      run: helm uninstall -n ${{ inputs.functionAppNamespace }} azurite
 
     - name: Delete Cluster
       shell: bash

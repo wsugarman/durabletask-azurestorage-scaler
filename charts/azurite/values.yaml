@@ -1,0 +1,38 @@
+# Default names are derived from the name of the chart
+name: ""
+fullnameOverride: ""
+
+# Docker image metadata
+image:
+  repository: mcr.microsoft.com/azure-storage/azurite
+  tag: latest
+  pullPolicy: Always
+
+# Emulator replicas
+replicaCount: 1
+
+# Optional upgrade strategy for > 1 replicas
+upgradeStrategy: {}
+  # type: RollingUpdate
+  # rollingUpdate:
+  #   maxUnavailable: 1
+  #   maxSurge: 1
+
+# Container resource requests and limits
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Security context for scaler pods
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  seccompProfile:
+    type: RuntimeDefault
