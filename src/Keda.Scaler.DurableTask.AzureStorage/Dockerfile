@@ -26,7 +26,8 @@ COPY --from=users /etc/passwd /etc/passwd
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0.1-cbl-mariner2.0-distroless-amd64@sha256:6229a3f4d29a2f64486d6d85c9fec74cc010da7900839a7056b59960454dd300 AS runtime
 COPY --from=nonroot / /
-ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_URLS=http://+:8080 \
+    DOTNET_EnableDiagnostics=0
 USER nonroot
 EXPOSE 8080
 
