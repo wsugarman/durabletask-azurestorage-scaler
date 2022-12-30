@@ -12,7 +12,7 @@ taskHub:
 image:
   repository: example-function-app
   tag: ""
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
 # Scaler replicas
 scaledObject:

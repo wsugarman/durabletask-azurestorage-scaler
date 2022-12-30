@@ -14,7 +14,7 @@ additionalAnnotations: {}
 image:
   repository: ghcr.io/wsugarman/durabletask-azurestorage-scaler
   tag: "" # will default to the appVersion in Chart.yaml
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
   pullSecrets: []
 
 # gRPC port
@@ -37,7 +37,7 @@ resources:
     cpu: 50m
     memory: 256M
   limits:
-    cpu: '1'
+    cpu: "1"
     memory: 1G
 
 # Optional node selector for scaler pods
@@ -59,7 +59,7 @@ podAnnotations: {}
 
 # Optional service account for Azure Workload Identity
 serviceAccount:
-  create: false
+  create: true
   name: ""
   automountServiceAccountToken: true
   annotations: {}
@@ -76,7 +76,12 @@ podIdentity:
     tenantId: ""
     tokenExpiration: 3600
 
-# Security context for scaler pods
+## Additional environment variables that will be passed into the scaler pods
+env:
+# - name: ENV_NAME
+#   value: 'ENV-VALUE'
+
+# Security context for the scaler container
 securityContext:
   capabilities:
     drop:
@@ -85,3 +90,10 @@ securityContext:
   readOnlyRootFilesystem: true
   seccompProfile:
     type: RuntimeDefault
+
+# Security context for all containers in the scaler pods
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  # runAsGroup: 2000
+  # fsGroup: 2000

@@ -13,11 +13,7 @@ spec:
   selector:
     matchLabels:
       app: {{ template "azurite.fullname" . }}
-  replicas: {{ .Values.replicaCount }}
-  {{- with .Values.upgradeStrategy }}
-  strategy:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+  replicas: 1
   template:
     metadata:
       labels:
@@ -29,15 +25,15 @@ spec:
     spec:
       {{- with .Values.podSecurityContext }}
       securityContext:
-        {{- toYaml | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.podSecurityContext }}
+          {{- with .Values.securityContext }}
           securityContext:
-            {{- toYaml | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           command:
             - azurite
@@ -49,15 +45,14 @@ spec:
             - "0.0.0.0"
             - --tableHost
             - "0.0.0.0"
-            - --loose
           {{- with .Values.resources }}
           resources:
-            {{- toYaml | nindent 12 }}
+            {{- toYaml  .| nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: data
               mountPath: /data
       volumes:
         - name: data
-          hostPath:
-            path: $PWD/.data/azurite
+          emptyDir:
+            sizeLimit: {{ .Values.storage.limit }}

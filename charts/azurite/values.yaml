@@ -6,28 +6,22 @@ fullnameOverride: ""
 image:
   repository: mcr.microsoft.com/azure-storage/azurite
   tag: latest
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
 
-# Emulator replicas
-replicaCount: 1
-
-# Optional upgrade strategy for > 1 replicas
-upgradeStrategy: {}
-  # type: RollingUpdate
-  # rollingUpdate:
-  #   maxUnavailable: 1
-  #   maxSurge: 1
+# Maximum size of the storage volume
+storage:
+  limit: 256M
 
 # Container resource requests and limits
 resources:
   requests:
     cpu: 100m
-    memory: 128Mi
+    memory: 128M
   limits:
     cpu: 500m
-    memory: 512Mi
+    memory: 512M
 
-# Security context for scaler pods
+# Security context for the azurite container
 securityContext:
   capabilities:
     drop:
@@ -36,3 +30,10 @@ securityContext:
   readOnlyRootFilesystem: true
   seccompProfile:
     type: RuntimeDefault
+
+# Security context for all containers in the azurite pods
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  # runAsGroup: 1000
+  # fsGroup: 1000

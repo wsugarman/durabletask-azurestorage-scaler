@@ -17,8 +17,8 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" -c $BUILD_CONFI
 FROM mcr.microsoft.com/dotnet/sdk:7.0.101-cbl-mariner2.0-amd64@sha256:df9c5c480801d49e7f9558566766622178e552d534f4a6a8fafe241d8dab0860 AS users
 RUN tdnf install shadow-utils -y && \
     tdnf clean all
-RUN groupadd nonroot && \
-    useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot
+RUN groupadd nonroot -g 2000 && \
+    useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 1000
 
 FROM scratch AS nonroot
 COPY --from=users /etc/group /etc/group

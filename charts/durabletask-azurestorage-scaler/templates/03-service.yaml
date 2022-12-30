@@ -4,7 +4,7 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ template "durabletask-azurestorage-scaler.fullname" . }}
     {{- include "durabletask-azurestorage-scaler.labels" . | indent 4 }}
-  name: {{ template "durabletask-azurestorage-external-scaler.fullname" . }}
+  name: {{ template "durabletask-azurestorage-scaler.fullname" . }}
   namespace: {{ .Release.Namespace }}
 spec:
   ports:

@@ -5,8 +5,6 @@ ARG BUILD_CONFIGURATION=Release
 
 # Azure Functions v4 targets .NET 6
 RUN set -x && \
-    apk update && \
-    apk add --no-cache bash && \
     curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin -Channel 6.0 -InstallDir /usr/share/dotnet
 
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/example/"]
