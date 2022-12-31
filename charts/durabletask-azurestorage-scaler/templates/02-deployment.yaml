@@ -76,7 +76,7 @@ spec:
           {{- end }}
           ports:
           - name: grpc
-            containerPort: {{ .Values.port }}
+            containerPort: 8080
             protocol: TCP
           {{- with .Values.resources }}
           resources:

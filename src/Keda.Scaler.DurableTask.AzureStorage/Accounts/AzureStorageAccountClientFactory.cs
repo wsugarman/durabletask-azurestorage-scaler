@@ -21,7 +21,7 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
             if (string.IsNullOrWhiteSpace(accountInfo.AccountName))
                 throw new ArgumentException(SR.Format(SR.MissingMemberFormat, nameof(accountInfo.AccountName)), nameof(accountInfo));
 
-            if (accountInfo.Cloud == null)
+            if (accountInfo.Cloud is null)
                 throw new ArgumentException(SR.Format(SR.MissingMemberFormat, nameof(accountInfo.Cloud)), nameof(accountInfo));
 
             AzureStorageService service = typeof(T) == typeof(BlobServiceClient) ? AzureStorageService.Blob : AzureStorageService.Queue;

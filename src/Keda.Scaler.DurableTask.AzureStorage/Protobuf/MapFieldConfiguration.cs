@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -12,7 +12,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 
 internal sealed class MapFieldConfiguration : IConfiguration
 {
-    private readonly MapField<string, string> _mapField;
+    private readonly Dictionary<string, string> _mapField;
 
     public string? this[string key]
     {
@@ -27,7 +27,15 @@ internal sealed class MapFieldConfiguration : IConfiguration
     }
 
     public MapFieldConfiguration(MapField<string, string> mapField)
-        => _mapField = mapField ?? throw new ArgumentNullException(nameof(mapField));
+    {
+        if (mapField is null)
+            throw new ArgumentNullException(nameof(mapField));
+
+        // MapField<TKey, TValue> uses StringComparer.Ordinal and cannot be changed.
+        // However, IConfiguration object use case-insensitive keys, so the values must be copied
+        // into a different data structure so they can be properly queried.
+        _mapField = new Dictionary<string, string>(mapField, StringComparer.OrdinalIgnoreCase);
+    }
 
     public IEnumerable<IConfigurationSection> GetChildren()
         => _mapField.Keys.Select(k => new MapFieldConfigurationSection(k, this));
@@ -71,7 +79,7 @@ internal sealed class MapFieldConfiguration : IConfiguration
             => NullChangeToken.Instance;
 
         public IConfigurationSection GetSection(string key)
-            => new NullConfigurationSection(key, Key);
+            => new NullConfigurationSection(Path, key);
     }
 
     private sealed class NullConfigurationSection : IConfigurationSection
@@ -92,10 +100,10 @@ internal sealed class MapFieldConfiguration : IConfiguration
             set => throw new NotSupportedException();
         }
 
-        public NullConfigurationSection(string key, string parentPath)
+        public NullConfigurationSection(string parentPath, string key)
         {
             Key = key ?? throw new ArgumentNullException(nameof(key));
-            Path = Key + ':' + parentPath;
+            Path = parentPath + ':' + key;
         }
 
         public IEnumerable<IConfigurationSection> GetChildren()
@@ -105,12 +113,12 @@ internal sealed class MapFieldConfiguration : IConfiguration
             => NullChangeToken.Instance;
 
         public IConfigurationSection GetSection(string key)
-            => new NullConfigurationSection(key, Path);
+            => new NullConfigurationSection(Path, key);
     }
 
     private sealed class NullChangeToken : IChangeToken
     {
-        public static IChangeToken Instance { get; } = new NullChangeToken();
+        public static NullChangeToken Instance { get; } = new NullChangeToken();
 
         public bool ActiveChangeCallbacks => true;
 
@@ -125,7 +133,7 @@ internal sealed class MapFieldConfiguration : IConfiguration
 
     private sealed class NullDisposable : IDisposable
     {
-        public static IDisposable Instance { get; } = new NullDisposable();
+        public static NullDisposable Instance { get; } = new NullDisposable();
 
         private NullDisposable()
         { }

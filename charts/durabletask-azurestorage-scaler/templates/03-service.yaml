@@ -10,6 +10,6 @@ spec:
   ports:
   - name: scaler
     port: {{ .Values.port }}
-    targetPort: {{ .Values.port }}
+    targetPort: 8080
   selector:
     app: {{ template "durabletask-azurestorage-scaler.fullname" . }}

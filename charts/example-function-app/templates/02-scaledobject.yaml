@@ -17,7 +17,7 @@ spec:
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4370
+        scalerAddress: "{{ .Values.externalScaler.serviceName }}.{{ .Values.externalScaler.namespace }}:{{ .Values.externalScaler.port }}"
         connection: {{ .Values.taskHub.connectionString }}
         maxActivitiesPerWorker: {{ .Values.taskHub.maxActivitiesPerWorker | quote }}
         maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}

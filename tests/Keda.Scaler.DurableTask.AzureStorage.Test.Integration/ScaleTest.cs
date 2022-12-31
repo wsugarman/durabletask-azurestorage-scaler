@@ -10,6 +10,7 @@ using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Test.Integration.K8s;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask.ContextImplementations;
+using Microsoft.Azure.WebJobs.Extensions.DurableTask.Options;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,7 +38,7 @@ public sealed class ScaleTest : IDisposable
             .AddSingleton(Configuration);
 
         services
-            .AddOptions<DurableTaskOptions>()
+            .AddOptions<DurableClientOptions>()
             .Bind(Configuration.GetSection("DurableTask"));
 
         services
@@ -88,7 +89,7 @@ public sealed class ScaleTest : IDisposable
 
         // Start 1 orchestration with the configured number of activities
         OrchestrationRuntimeStatus finalStatus;
-        string instanceId = await StartOrchestrationAsync(activityCount, TimeSpan.FromMinutes(2)).ConfigureAwait(false);
+        string instanceId = await StartOrchestrationAsync(activityCount).ConfigureAwait(false);
         try
         {
             // Assert scale (should be 3 because we need 2 workers for the activities and 1 for the orchestration)
@@ -124,7 +125,7 @@ public sealed class ScaleTest : IDisposable
         string[] instanceIds = await Task
             .WhenAll(Enumerable
                 .Repeat(_options, OrchestrationCount)
-                .Select(o => StartOrchestrationAsync(o.MaxActivitiesPerWorker, TimeSpan.FromMinutes(2))))
+                .Select(o => StartOrchestrationAsync(o.MaxActivitiesPerWorker)))
             .ConfigureAwait(false);
 
         try
@@ -154,8 +155,12 @@ public sealed class ScaleTest : IDisposable
     public void Dispose()
         => _kubernetes.Dispose();
 
-    private Task<string> StartOrchestrationAsync(int activities, TimeSpan duration)
-        => _durableClient.StartNewAsync("RunAsync", new { ActivityCount = activities, ActivityTime = duration });
+    private async Task<string> StartOrchestrationAsync(int activities)
+    {
+        string instanceId = await _durableClient.StartNewAsync("RunAsync", new { ActivityCount = activities, ActivityTime = _options.ActivityDuration }).ConfigureAwait(false);
+        _logger.LogInformation("Started 'RunAsync' instance '{InstanceId}'.", instanceId);
+        return instanceId;
+    }
 
     private async Task EnsureRunningAsync(string instanceId, CancellationToken cancellationToken)
     {
@@ -194,7 +199,7 @@ public sealed class ScaleTest : IDisposable
     {
         V1Scale scale;
 
-        _logger.LogInformation("Waiting for scale down.");
+        _logger.LogInformation("Waiting for scale down to {Target} replicas.", _options.MinReplicas);
 
         do
         {
@@ -210,7 +215,7 @@ public sealed class ScaleTest : IDisposable
                 _deployment.Namespace,
                 scale.Status.Replicas,
                 scale.Spec.Replicas);
-        } while (scale.Status.Replicas != 0 || scale.Spec.Replicas != 0);
+        } while (scale.Status.Replicas != _options.MinReplicas || scale.Spec.Replicas != _options.MinReplicas);
     }
 
     private async Task WaitForScaleUpAsync(int min, Func<CancellationToken, Task> onPollAsync, CancellationToken cancellationToken = default)

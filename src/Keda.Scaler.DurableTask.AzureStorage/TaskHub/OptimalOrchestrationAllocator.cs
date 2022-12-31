@@ -12,7 +12,7 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
 {
     public int GetWorkerCount(IReadOnlyList<int> partitionWorkItems, int maxOrchestrationWorkItems)
     {
-        if (partitionWorkItems == null)
+        if (partitionWorkItems is null)
             throw new ArgumentNullException(nameof(partitionWorkItems));
 
         if (maxOrchestrationWorkItems < 1)

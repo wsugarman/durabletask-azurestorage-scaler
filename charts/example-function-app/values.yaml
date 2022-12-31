@@ -14,12 +14,18 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
-# Scaler replicas
+# Metadata concerning how to scale
 scaledObject:
   pollingInterval: 5
   cooldownPeriod: 30
   minReplicaCount: 1
   maxReplicaCount: 100
+
+# External scaler information
+externalScaler:
+  serviceName: durabletask-azurestorage-scaler
+  namespace: keda
+  port: 4370
 
 # Optional upgrade strategy
 upgradeStrategy: {}

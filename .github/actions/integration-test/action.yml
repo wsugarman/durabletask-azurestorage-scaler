@@ -65,14 +65,10 @@ runs:
         keda \
         kedacore/keda
 
-    - name: Install Azurite Helm Chart
-      shell: bash
-      run: helm install -n azure --create-namespace --wait --timeout 30s azurite ./charts/azurite
-
     - name: Install Scaler Helm Chart
       shell: bash
       run: helm install \
-        -n ${{ inputs.functionAppNamespace }} \
+        -n keda \
         --create-namespace \
         --set image.repository=durabletask-azurestorage-scaler \
         --set image.tag=${{ github.run_id }} \
@@ -81,11 +77,16 @@ runs:
         dtfx-scaler \
         ./charts/durabletask-azurestorage-scaler
 
+    - name: Install Azurite Helm Chart
+      shell: bash
+      run: helm install -n azure --create-namespace --wait --timeout 30s azurite ./charts/azurite
+
     - name: Install Function App Helm Chart
       shell: bash
       run: helm install \
         -n ${{ inputs.functionAppNamespace }} \
         --create-namespace \
+        --set externalScaler.serviceName=dtfx-scaler \
         --set image.repository=example-function-app \
         --set image.tag=${{ github.run_id }} \
         --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
@@ -121,15 +122,19 @@ runs:
 
     - name: Uninstall Function App Helm Chart
       shell: bash
-      run: helm uninstall -n ${{ inputs.functionAppNamespace }} ${{ inputs.functionAppName }}
-
-    - name: Uninstall Scaler Helm Chart
-      shell: bash
-      run: helm uninstall -n ${{ inputs.functionAppNamespace }} dtfx-scaler
+      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 1m ${{ inputs.functionAppName }}
 
     - name: Uninstall Azurite Helm Chart
       shell: bash
-      run: helm uninstall -n ${{ inputs.functionAppNamespace }} azurite
+      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 1m azurite
+
+    - name: Uninstall Scaler Helm Chart
+      shell: bash
+      run: helm uninstall -n keda --wait -timeout 1m dtfx-scaler
+
+    - name: Uninstall Keda Helm Chart
+      shell: bash
+      run: helm uninstall -n keda --wait -timeout 1m keda
 
     - name: Delete Cluster
       shell: bash

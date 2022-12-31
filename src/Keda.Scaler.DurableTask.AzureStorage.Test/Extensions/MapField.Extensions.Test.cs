@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using Google.Protobuf.Collections;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
@@ -14,6 +15,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
 public class MapFieldExtensionsTest
 {
     [TestMethod]
+    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Validating case-insensitivity")]
     public void ToConfiguration()
     {
         Assert.ThrowsException<ArgumentNullException>(() => MapFieldExtensions.ToConfiguration(null!));
@@ -23,12 +25,12 @@ public class MapFieldExtensionsTest
         MapField<string, string> raw = new MapField<string, string>
             {
                 { nameof(ScalerMetadata.AccountName), "unittest" },
-                { nameof(ScalerMetadata.Cloud), "AzureUSGovernmentCloud" }, // non-default
+                { nameof(ScalerMetadata.Cloud).ToUpperInvariant(), "AzureUSGovernmentCloud" }, // non-default
                 { nameof(ScalerMetadata.Connection), "foo=bar;hello=world" },
                 { nameof(ScalerMetadata.ConnectionFromEnv), "MY_CONNECTION_STRING" },
-                { nameof(ScalerMetadata.MaxActivitiesPerWorker), "10" },
+                { nameof(ScalerMetadata.MaxActivitiesPerWorker).ToLowerInvariant(), "10" },
                 { nameof(ScalerMetadata.MaxOrchestrationsPerWorker), "3" },
-                { nameof(ScalerMetadata.TaskHubName), "MyTaskHub" },
+                { "TaSkHubNaMe", "MyTaskHub" },
                 { nameof(ScalerMetadata.UseManagedIdentity), "true" },
             };
 

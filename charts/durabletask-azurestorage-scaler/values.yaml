@@ -78,8 +78,8 @@ podIdentity:
 
 ## Additional environment variables that will be passed into the scaler pods
 env:
-# - name: ENV_NAME
-#   value: 'ENV-VALUE'
+- name: ASPNETCORE_ENVIRONMENT
+  value: 'Development'
 
 # Security context for the scaler container
 securityContext:
