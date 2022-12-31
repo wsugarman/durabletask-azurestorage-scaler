@@ -29,35 +29,43 @@ spec:
     spec:
       {{- with .Values.podSecurityContext }}
       securityContext:
-        {{- toYaml | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.podSecurityContext }}
-            securityContext:
-              {{- toYaml | nindent 12 }}
-            {{- end }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
           - name: AzureWebJobsStorage
             value: {{ .Values.taskHub.connectionString }}
           - name: AzureFunctionsJobHost__Extensions__DurableTask__HubName
             value: {{ .Values.taskHub.name }}
           - name: AzureFunctionsJobHost__Extensions__DurableTask__MaxConcurrentActivityFunctions
-            value: {{ .Values.taskHub.maxActivitiesPerWorker }}
+            value: {{ .Values.taskHub.maxActivitiesPerWorker | quote }}
           - name: AzureFunctionsJobHost__Extensions__DurableTask__MaxConcurrentOrchestratorFunctions
-            value: {{ .Values.taskHub.maxOrchestrationsPerWorker }}
+            value: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
+          - name: FUNCTIONS_LOG_PATH
+            value: /logs
           {{- with .Values.resources }}
           resources:
-            {{- toYaml | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           startupProbe:
-            failureThreshold: 30
+            failureThreshold: 3
             httpGet:
-              path: /
+              path: /api/healthz
               port: 8080
               scheme: HTTP
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 1
+            timeoutSeconds: 5
+          volumeMounts:
+            - name: logs
+              mountPath: /logs
+      volumes:
+        - name: logs
+          emptyDir: {}

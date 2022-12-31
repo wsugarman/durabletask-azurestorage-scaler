@@ -18,12 +18,18 @@ ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Keda.Scaler.WebJobs.DurableFunctions.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/azure-functions/dotnet:4 AS runtime
-RUN groupadd nonroot && \
-    useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot && \
+RUN groupadd nonroot -g 2000 && \
+    useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 1000 && \
     chown -R nonroot:nonroot /azure-functions-host
 ENV ASPNETCORE_URLS=http://+:8080 \
+    AzureFunctionsJobHost__FileWatchingEnabled=false \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
-    AzureWebJobsScriptRoot=/home/site/wwwroot
+    AzureFunctionsJobHost__Logging__FileLoggingMode=Never \
+    AzureWebJobsScriptRoot=/home/site/wwwroot \
+    DOTNET_EnableDiagnostics=0 \
+    FUNCTIONS_WORKER_RUNTIME=dotnet \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
 USER nonroot
 EXPOSE 8080
 

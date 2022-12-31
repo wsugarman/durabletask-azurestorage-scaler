@@ -67,9 +67,7 @@ runs:
 
     - name: Install Azurite Helm Chart
       shell: bash
-      run: |
-        helm install -n azure --create-namespace --wait --timeout 30s azurite ./charts/azurite
-        echo "AzuriteConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" >> $GITHUB_ENV
+      run: helm install -n azure --create-namespace --wait --timeout 30s azurite ./charts/azurite
 
     - name: Install Scaler Helm Chart
       shell: bash
@@ -90,15 +88,19 @@ runs:
         --create-namespace \
         --set image.repository=example-function-app \
         --set image.tag=${{ github.run_id }} \
+        --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
         --set taskHub.name=${{ inputs.taskHubName }} \
         --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \
+        --wait \
+        --timeout 30s \
         ${{ inputs.functionAppName }} \
         ./charts/example-function-app
 
     - name: Set Test Options
       shell: bash
       run: |
-        echo "DurableTask__ConnectionName=AzuriteConnectionString" >> $GITHUB_ENV
+        echo "DurableTask__ConnectionName=DurableTask__ConnectionString" >> $GITHUB_ENV
+        echo "DurableTask__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;" >> $GITHUB_ENV
         echo "DurableTask__IsExternalClient=true" >> $GITHUB_ENV
         echo "DurableTask__TaskHub=${{ inputs.taskHubName }}" >> $GITHUB_ENV
         echo "Function__Name=${{ inputs.functionAppName }}" >> $GITHUB_ENV

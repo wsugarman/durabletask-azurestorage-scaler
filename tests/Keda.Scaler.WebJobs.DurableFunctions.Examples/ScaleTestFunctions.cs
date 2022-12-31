@@ -4,8 +4,11 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.DurableTask;
+using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.WebJobs.DurableFunctions.Examples;
@@ -50,4 +53,45 @@ public static class ScaleTestFunctions
     [FunctionName(nameof(WaitAsync))]
     public static Task WaitAsync([ActivityTrigger] TimeSpan delay)
         => Task.Delay(delay);
+
+    /// <summary>
+    /// Asynchronously checks the health of the function app.
+    /// </summary>
+    /// <param name="req">An HTTP GET request.</param>
+    /// <param name="client">A durable client.</param>
+    /// <returns>
+    /// A task representing the asynchronous orchestration. The value of its <see cref="Task{TResult}.Result"/>
+    /// property is an <see cref="OkResult"/> if successful.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="req"/> or <paramref name="client"/> is <see langword="null"/>.
+    /// </exception>
+    [FunctionName(nameof(IsHealthyAsync))]
+    public static async Task<IActionResult> IsHealthyAsync(
+        [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "healthz")] HttpRequest req,
+        [DurableClient] IDurableOrchestrationClient client)
+    {
+        if (req is null)
+            throw new ArgumentNullException(nameof(req));
+
+        if (client is null)
+            throw new ArgumentNullException(nameof(client));
+
+        // Run a query for all running instances to ensure the connection to the TaskHub is working correctly
+        var conditions = new OrchestrationStatusQueryCondition
+        {
+            CreatedTimeFrom = DateTime.MinValue,
+            CreatedTimeTo = DateTime.MaxValue,
+            PageSize = 1,
+            RuntimeStatus = new OrchestrationRuntimeStatus[]
+            {
+                OrchestrationRuntimeStatus.Pending,
+                OrchestrationRuntimeStatus.Running,
+            },
+            ShowInput = false,
+        };
+
+        await client.ListInstancesAsync(conditions, req.HttpContext.RequestAborted).ConfigureAwait(false);
+        return new OkResult();
+    }
 }

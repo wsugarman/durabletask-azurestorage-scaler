@@ -10,7 +10,11 @@ image:
 
 # Maximum size of the storage volume
 storage:
-  limit: 256M
+  limit: ""
+
+# Optional values for debugging storage requests
+debug:
+  enable: false
 
 # Container resource requests and limits
 resources:

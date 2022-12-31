@@ -18,7 +18,7 @@ image:
 scaledObject:
   pollingInterval: 5
   cooldownPeriod: 30
-  minReplicaCount: 0
+  minReplicaCount: 1
   maxReplicaCount: 100
 
 # Optional upgrade strategy
@@ -37,7 +37,7 @@ resources:
     cpu: '1'
     memory: 1G
 
-# Security context for scaler pods
+# Security context for the scaler container
 securityContext:
   capabilities:
     drop:
@@ -46,3 +46,10 @@ securityContext:
   readOnlyRootFilesystem: true
   seccompProfile:
     type: RuntimeDefault
+
+# Security context for all containers in the scaler pods
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  # runAsGroup: 2000
+  # fsGroup: 2000

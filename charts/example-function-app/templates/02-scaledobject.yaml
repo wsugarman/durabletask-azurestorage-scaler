@@ -19,6 +19,6 @@ spec:
       metadata:
         scalerAddress: durabletask-azurestorage-scaler.keda:4370
         connection: {{ .Values.taskHub.connectionString }}
-        maxActivitiesPerWorker: {{ .Values.taskHub.maxActivitiesPerWorker }}
-        maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker }}
+        maxActivitiesPerWorker: {{ .Values.taskHub.maxActivitiesPerWorker | quote }}
+        maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
         taskHubName: {{ .Values.taskHub.name }}
