@@ -128,8 +128,7 @@ runs:
         dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \
-          -warnaserror \
-          -v normal
+          -warnaserror
 
     - name: Uninstall Function App Helm Chart
       shell: bash
