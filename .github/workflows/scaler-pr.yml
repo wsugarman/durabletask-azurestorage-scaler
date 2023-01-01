@@ -21,8 +21,11 @@ jobs:
           solution: Scaler
           resultsDirectory: ${{ runner.temp }}/TestResults
 
-      # - name: Integration Tests
-      #   uses: ./.github/actions/integration-test
+      - name: Integration Tests
+        uses: ./.github/actions/integration-test
+        with:
+          buildConfiguration: Release
+          localTag: ${{ github.run_id }}
 
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage

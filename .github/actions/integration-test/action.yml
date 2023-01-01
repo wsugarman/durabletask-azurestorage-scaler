@@ -13,6 +13,9 @@ inputs:
     default: test
     description: The Kubernetes namespace for the function app.
     required: false
+  localTag:
+    description: The tag to use for the images.
+    required: true
   maxActivitiesPerWorker:
     default: '2'
     description: The maximum number of activities per worker.
@@ -42,18 +45,18 @@ runs:
 
     - name: Build Scaler Image
       shell: bash
-      run: docker build -f "./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile" -t "durabletask-azurestorage-scaler:${{ github.run_id }}" .
+      run: docker build -f "./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile" -t "durabletask-azurestorage-scaler:${{ inputs.localTag }}" .
 
     - name: Build Function App Image
       shell: bash
-      run: docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ github.run_id }}" .
+      run: docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ inputs.localTag }}" .
 
     - name: Create Kind Cluster
       shell: bash
       run: |
         go install sigs.k8s.io/kind@latest
         kind create cluster --name integration
-        kind load docker-image "durabletask-azurestorage-scaler:${{ github.run_id }}" "example-function-app:${{ github.run_id }}" --name integration
+        kind load docker-image "durabletask-azurestorage-scaler:${{ inputs.localTag }}" "example-function-app:${{ inputs.localTag }}" --name integration
         kubectl config use-context kind-integration
 
     - name: Install KEDA
@@ -75,7 +78,7 @@ runs:
         -n keda \
         --create-namespace \
         --set image.repository=durabletask-azurestorage-scaler \
-        --set image.tag=${{ github.run_id }} \
+        --set image.tag=${{ inputs.localTag }} \
         --wait \
         --timeout 30s \
         dtfx-scaler \
@@ -92,7 +95,7 @@ runs:
         --create-namespace \
         --set externalScaler.serviceName=dtfx-scaler \
         --set image.repository=example-function-app \
-        --set image.tag=${{ github.run_id }} \
+        --set image.tag=${{ inputs.localTag }} \
         --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
         --set taskHub.name=${{ inputs.taskHubName }} \
         --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \
@@ -119,6 +122,7 @@ runs:
     - name: Test Scaler
       shell: bash
       run: |
+        kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 >/dev/null &
         dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \
@@ -139,7 +143,7 @@ runs:
 
     - name: Uninstall Keda Helm Chart
       shell: bash
-      run: helm uninstall -n keda --wait -timeout 30s keda
+      run: helm uninstall -n keda --wait -timeout 1m keda
 
     - name: Delete Cluster
       shell: bash
