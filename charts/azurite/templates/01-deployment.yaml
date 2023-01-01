@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ template "azurite.fullname" . }}
+    name: {{ template "azurite.fullname" . }}
+    app.kubernetes.io/component: storage
+    app.kubernetes.io/name: {{ template "azurite.fullname" . }}
+    {{- include "azurite.labels" . | indent 4 }}
+  name: {{ template "azurite.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "azurite.fullname" . }}
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "azurite.fullname" . }}
+        name: {{ template "azurite.fullname" . }}
+        app.kubernetes.io/component: storage
+        app.kubernetes.io/name: {{ template "azurite.fullname" . }}
+        {{- include "azurite.labels" . | indent 8 }}
+    spec:
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - azurite
+            - -l
+            - /data
+            - --blobHost
+            - "0.0.0.0"
+            - --queueHost
+            - "0.0.0.0"
+            - --tableHost
+            - "0.0.0.0"
+            - --loose
+            - --disableProductStyleUrl
+            {{- if .Values.debug.enable }}
+            - --debug
+            - /data/debug.log
+            {{- end }}
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml  .| nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir:
+            {{- if .Values.storage.limit }}
+            sizeLimit: {{ .Values.storage.limit }}
+            {{- end }}

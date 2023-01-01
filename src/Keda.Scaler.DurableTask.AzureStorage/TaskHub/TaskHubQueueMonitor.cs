@@ -65,6 +65,10 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
             return TaskHubQueueUsage.None;
         }
 
+        _logger.LogDebug(
+            "Found {WorkItemCount} work item messages and the following control queue message counts [{ControlCounts}].",
+            workItemQueueMessages,
+            string.Join(", ", controlQueueMessages));
         return new TaskHubQueueUsage(controlQueueMessages, workItemQueueMessages);
     }
 }

@@ -1,0 +1,5 @@
+apiVersion: v2
+description: An example function app used for integration testing.
+name: example-function-app
+type: application
+version: '1.0.0'

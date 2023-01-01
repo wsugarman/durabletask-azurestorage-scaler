@@ -1,0 +1,24 @@
+kind: Service
+apiVersion: v1
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ template "azurite.fullname" . }}
+    {{- include "azurite.labels" . | indent 4 }}
+  name: {{ template "azurite.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app: {{ template "azurite.fullname" . }}
+  ports:
+    - name: blob
+      protocol: TCP
+      port: 10000
+      targetPort: 10000
+    - name: queue
+      protocol: TCP
+      port: 10001
+      targetPort: 10001
+    - name: table
+      protocol: TCP
+      port: 10002
+      targetPort: 10002

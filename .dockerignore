@@ -11,11 +11,13 @@
 **/*.*proj.user
 **/*.dbmdl
 **/*.jfm
+**/appsettings.Development.json
 **/azds.yaml
 **/bin
 **/charts
 **/docker-compose*
 **/Dockerfile*
+**/local.settings.json
 **/node_modules
 **/npm-debug.log
 **/obj

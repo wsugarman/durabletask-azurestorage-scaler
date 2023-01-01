@@ -31,7 +31,9 @@ jobs:
       uses: actions/setup-dotnet@v3
 
     - name: Build
-      run: dotnet build ./src/Scaler.sln -c Release -p:ContinuousIntegrationBuild=true -warnaserror
+      run: |
+        dotnet build ./src/Scaler.sln -c Release -p:ContinuousIntegrationBuild=true -warnaserror
+        dotnet build ./tests/ScaleTests.sln -c Release -p:ContinuousIntegrationBuild=true -warnaserror
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v2

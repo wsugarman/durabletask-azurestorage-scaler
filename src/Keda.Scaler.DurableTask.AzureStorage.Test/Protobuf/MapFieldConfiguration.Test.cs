@@ -26,7 +26,7 @@ public class MapFieldConfigurationTest
             });
 
         Assert.AreEqual(null, config["three"]);
-        Assert.AreEqual("1", config["one"]);
+        Assert.AreEqual("1", config["One"]);
     }
 
     [TestMethod]
@@ -40,15 +40,15 @@ public class MapFieldConfigurationTest
             });
 
         Assert.AreEqual("1", config["one"]);
-        Assert.AreEqual("2", config["two"]);
+        Assert.AreEqual("2", config["tWO"]);
 
         config["one"] = "un";
         config["three"] = "trois";
         config["two"] = null;
         config["four"] = null;
 
-        Assert.AreEqual("un", config["one"]);
-        Assert.AreEqual("trois", config["three"]);
+        Assert.AreEqual("un", config["onE"]);
+        Assert.AreEqual("trois", config["thRee"]);
         Assert.AreEqual(null, config["two"]);
         Assert.AreEqual(null, config["four"]);
     }
@@ -119,18 +119,18 @@ public class MapFieldConfigurationTest
         Assert.IsNull(missing["any key"]);
 
         // Found
-        IConfigurationSection section = config.GetSection("two");
-        Assert.AreEqual("two", section.Key);
-        Assert.AreEqual("two", section.Path);
+        IConfigurationSection section = config.GetSection("TWo");
+        Assert.AreEqual("TWo", section.Key);
+        Assert.AreEqual("TWo", section.Path);
         Assert.AreEqual("2", section.Value);
         Assert.AreEqual(0, section.GetChildren().Count());
         Assert.IsNotNull(section.GetReloadToken());
         Assert.IsNull(section["any key"]);
 
         // Nested
-        IConfigurationSection nested = section.GetSection("two");
-        Assert.AreEqual("two", nested.Key);
-        Assert.AreEqual("two:two", nested.Path);
+        IConfigurationSection nested = section.GetSection("TWO");
+        Assert.AreEqual("TWO", nested.Key);
+        Assert.AreEqual("TWo:TWO", nested.Path);
         Assert.AreEqual(null, nested.Value);
         Assert.AreEqual(0, nested.GetChildren().Count());
         Assert.IsNotNull(nested.GetReloadToken());
@@ -155,7 +155,7 @@ public class MapFieldConfigurationTest
         // Nested-Nested
         IConfigurationSection subNested = nested.GetSection("two");
         Assert.AreEqual("two", subNested.Key);
-        Assert.AreEqual("two:two:two", subNested.Path);
+        Assert.AreEqual("TWo:TWO:two", subNested.Path);
         Assert.AreEqual(null, subNested.Value);
         Assert.AreEqual(0, subNested.GetChildren().Count());
         Assert.IsNotNull(subNested.GetReloadToken());

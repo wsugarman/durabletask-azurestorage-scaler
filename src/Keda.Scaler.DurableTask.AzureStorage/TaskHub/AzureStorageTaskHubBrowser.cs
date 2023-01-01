@@ -81,7 +81,7 @@ public class AzureStorageTaskHubBrowser
             BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
             AzureStorageTaskHubInfo info = result.Content.ToObjectFromJson<AzureStorageTaskHubInfo>();
 
-            _logger.LogInformation(
+            _logger.LogDebug(
                 "Found Task Hub '{TaskHubName}' with {Partitions} partitions created at {CreatedTime:O}.",
                 info.TaskHubName,
                 info.PartitionCount,

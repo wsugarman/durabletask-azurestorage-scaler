@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Test
+      - name: Unit Tests
         uses: ./.github/actions/dotnet-test
         with:
           solution: Scaler
@@ -25,6 +25,12 @@ jobs:
         uses: ./.github/actions/code-coverage
         with:
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
+
+      - name: Integration Tests
+        uses: ./.github/actions/integration-test
+        with:
+          buildConfiguration: Release
+          localTag: ${{ github.run_id }}
 
   publish:
     name: Publish

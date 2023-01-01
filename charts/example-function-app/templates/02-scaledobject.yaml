@@ -1,0 +1,24 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ template "example-function-app.fullname" . }}
+    {{- include "example-function-app.labels" . | indent 4 }}
+  name: {{ template "example-function-app.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  scaleTargetRef:
+    name: {{ template "example-function-app.fullname" . }}
+    kind: Deployment
+  cooldownPeriod: {{ .Values.scaledObject.cooldownPeriod }}
+  pollingInterval: {{ .Values.scaledObject.pollingInterval }}
+  minReplicaCount: {{ .Values.scaledObject.minReplicaCount }}
+  maxReplicaCount: {{ .Values.scaledObject.maxReplicaCount }}
+  triggers:
+    - type: external
+      metadata:
+        scalerAddress: "{{ .Values.externalScaler.serviceName }}.{{ .Values.externalScaler.namespace }}:{{ .Values.externalScaler.port }}"
+        connection: {{ .Values.taskHub.connectionString }}
+        maxActivitiesPerWorker: {{ .Values.taskHub.maxActivitiesPerWorker | quote }}
+        maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
+        taskHubName: {{ .Values.taskHub.name }}

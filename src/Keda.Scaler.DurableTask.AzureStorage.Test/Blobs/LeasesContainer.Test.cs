@@ -14,5 +14,6 @@ public class LeasesContainerTest
     {
         Assert.AreEqual("-leases", LeasesContainer.GetName(null));
         Assert.AreEqual("foo-leases", LeasesContainer.GetName("foo"));
+        Assert.AreEqual("bar-baz-leases", LeasesContainer.GetName("BaR-bAz"));
     }
 }
