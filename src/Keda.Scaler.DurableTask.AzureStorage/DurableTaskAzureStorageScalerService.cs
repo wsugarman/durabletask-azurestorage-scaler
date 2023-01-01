@@ -10,6 +10,7 @@ using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage;
 
@@ -45,6 +46,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     private readonly AzureStorageTaskHubBrowser _taskHubBrowser;
     private readonly IProcessEnvironment _environment;
     private readonly IOrchestrationAllocator _partitionAllocator;
+    private readonly ILogger<DurableTaskAzureStorageScalerService> _logger;
 
     internal const string MetricName = "TaskHubScale";
 
@@ -60,6 +62,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         _taskHubBrowser = _serviceProvider.GetRequiredService<AzureStorageTaskHubBrowser>();
         _environment = _serviceProvider.GetRequiredService<IProcessEnvironment>();
         _partitionAllocator = _serviceProvider.GetRequiredService<IOrchestrationAllocator>();
+        _logger = _serviceProvider.GetRequiredService<ILogger<DurableTaskAzureStorageScalerService>>();
     }
 
     /// <summary>
@@ -100,6 +103,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             _partitionAllocator.GetWorkerCount(usage.ControlQueueMessages, metadata.MaxOrchestrationsPerWorker) *
             metadata.MaxActivitiesPerWorker;
 
+        _logger.LogInformation("Metric value for Task Hub '{TaskHub}' is {MetricValue}.", metadata.TaskHubName, metricValue);
         return new GetMetricsResponse
         {
             MetricValues =
@@ -139,6 +143,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .Get<ScalerMetadata>()!
             .EnsureValidated(_serviceProvider);
 
+        _logger.LogInformation("Metric target for Task Hub '{TaskHub}' is {MetricTarget}.", metadata.TaskHubName, metadata.MaxActivitiesPerWorker);
         return Task.FromResult(
             new GetMetricSpecResponse
             {
@@ -189,6 +194,15 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
 
         TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
 
-        return new IsActiveResponse { Result = usage.HasActivity };
+        if (usage.HasActivity)
+        {
+            _logger.LogInformation("Task Hub '{TaskHub}' is currently active.", metadata.TaskHubName);
+            return new IsActiveResponse { Result = true };
+        }
+        else
+        {
+            _logger.LogInformation("Task Hub '{TaskHub}' is not currently active.", metadata.TaskHubName);
+            return new IsActiveResponse { Result = false };
+        }
     }
 }

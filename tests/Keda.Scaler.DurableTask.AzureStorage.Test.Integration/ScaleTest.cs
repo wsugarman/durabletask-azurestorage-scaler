@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,7 +58,15 @@ public sealed class ScaleTest : IDisposable
             .ValidateDataAnnotations();
 
         IServiceProvider provider = services
-            .AddLogging(b => b.AddConsole())
+            .AddLogging(b => b
+                .AddSimpleConsole(
+                    o =>
+                    {
+                        o.IncludeScopes = true;
+                        o.SingleLine = false;
+                        o.TimestampFormat = "O";
+                        o.UseUtcTimestamp = true;
+                    }))
             .AddSingleton(
                 sp =>
                 {
@@ -80,7 +89,8 @@ public sealed class ScaleTest : IDisposable
     [TestMethod]
     public async Task Activities()
     {
-        int activityCount = 2 * _options.MaxActivitiesPerWorker;
+        const int ExpectedActivityWorkers = 3;
+        int activityCount = ExpectedActivityWorkers * _options.MaxActivitiesPerWorker;
 
         using CancellationTokenSource tokenSource = new CancellationTokenSource();
         tokenSource.CancelAfter(_options.Timeout);
@@ -92,9 +102,8 @@ public sealed class ScaleTest : IDisposable
         string instanceId = await StartOrchestrationAsync(activityCount).ConfigureAwait(false);
         try
         {
-            // Assert scale (should be 3 because we need 2 workers for the activities and 1 for the orchestration)
-            int expected = GetMinExpectedScale(activityCount);
-            await WaitForScaleUpAsync(expected, t => EnsureRunningAsync(instanceId, t), tokenSource.Token).ConfigureAwait(false);
+            // Assert scale (needs at least 3 workers for the activities)
+            await WaitForScaleUpAsync(ExpectedActivityWorkers, t => EnsureRunningAsync(instanceId, t), tokenSource.Token).ConfigureAwait(false);
 
             // Assert completion
             finalStatus = await WaitForOrchestration(instanceId, tokenSource.Token).ConfigureAwait(false);
@@ -102,7 +111,7 @@ public sealed class ScaleTest : IDisposable
         catch (Exception)
         {
             string reason = tokenSource.IsCancellationRequested ? "Test timed out." : "Encountered unhandled exception.";
-            await _durableClient.TerminateAsync(instanceId, reason).ConfigureAwait(false);
+            await TryTerminateAsync(instanceId, reason).ConfigureAwait(false);
             throw;
         }
 
@@ -130,20 +139,19 @@ public sealed class ScaleTest : IDisposable
 
         try
         {
-            // Assert scale (should be at least 4 because we need 3 workers for the activities and 1 for the orchestrations)
-            int expected = GetMinExpectedScale(OrchestrationCount * _options.MaxActivitiesPerWorker);
+            // Assert scale (needs at least 3 workers as each orchestration will spawn the max number of activities per worker)
             await WaitForScaleUpAsync(
-                expected,
+                OrchestrationCount,
                 t => Task.WhenAll(instanceIds.Select(id => EnsureRunningAsync(id, t))),
                 tokenSource.Token).ConfigureAwait(false);
 
             // Assert completion
             finalStatuses = await Task.WhenAll(instanceIds.Select(id => WaitForOrchestration(id, tokenSource.Token))).ConfigureAwait(false);
         }
-        catch (Exception)
+        catch (Exception e) when (e is not AssertFailedException)
         {
             string reason = tokenSource.IsCancellationRequested ? "Test timed out." : "Encountered unhandled exception.";
-            await Task.WhenAll(instanceIds.Select(id => _durableClient.TerminateAsync(id, reason))).ConfigureAwait(false);
+            await Task.WhenAll(instanceIds.Select(id => TryTerminateAsync(id, reason))).ConfigureAwait(false);
             throw;
         }
 
@@ -214,8 +222,8 @@ public sealed class ScaleTest : IDisposable
                 _deployment.Name,
                 _deployment.Namespace,
                 scale.Status.Replicas,
-                scale.Spec.Replicas);
-        } while (scale.Status.Replicas != _options.MinReplicas || scale.Spec.Replicas != _options.MinReplicas);
+                scale.Spec.Replicas.GetValueOrDefault());
+        } while (scale.Status.Replicas != _options.MinReplicas || scale.Spec.Replicas.GetValueOrDefault() != _options.MinReplicas);
     }
 
     private async Task WaitForScaleUpAsync(int min, Func<CancellationToken, Task> onPollAsync, CancellationToken cancellationToken = default)
@@ -240,17 +248,26 @@ public sealed class ScaleTest : IDisposable
                 _deployment.Name,
                 _deployment.Namespace,
                 scale.Status.Replicas,
-                scale.Spec.Replicas);
-        } while (scale.Status.Replicas < min || scale.Spec.Replicas < min);
+                scale.Spec.Replicas.GetValueOrDefault());
+        } while (scale.Status.Replicas < min || scale.Spec.Replicas.GetValueOrDefault() < min);
     }
 
-    private int GetMinExpectedScale(int activities)
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Ignore errors as this is a test clean up.")]
+    private async Task<bool> TryTerminateAsync(string instanceId, string reason)
     {
-        // Note: We don't want to take too firm of a dependency on how the orchestrations are distributed
-        //       between the partitions, so we'll instead simply assert a "minimum scale" based on the
-        //       number of activity work items in the queue
-
-        // Min = (Activities + MinOrchestrations*MaxActivitiesPerWorker)/MaxActivitiesPerWorker
-        return (activities + _options.MaxActivitiesPerWorker) / _options.MaxActivitiesPerWorker;
+        try
+        {
+            await _durableClient.TerminateAsync(instanceId, reason).ConfigureAwait(false);
+            return true;
+        }
+        catch (InvalidOperationException) // Cannot cancel orchestration with terminal status
+        {
+            return false;
+        }
+        catch (Exception e)
+        {
+            _logger.LogWarning(e, "Error encountered when terminating instance '{InstanceId}.'", instanceId);
+            return false;
+        }
     }
 }

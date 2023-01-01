@@ -14,5 +14,6 @@ public class WorkItemQueueTest
     {
         Assert.AreEqual("-workitems", WorkItemQueue.GetName(null));
         Assert.AreEqual("foo-workitems", WorkItemQueue.GetName("foo"));
+        Assert.AreEqual("bar-baz-workitems", WorkItemQueue.GetName("BaR-bAz"));
     }
 }

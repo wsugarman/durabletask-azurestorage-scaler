@@ -38,6 +38,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     public DurableTaskAzureStorageScalerServiceTest()
     {
         _serviceProvider = new ServiceCollection()
+            .AddLogging()
             .AddSingleton(_mockBrowser.Object)
             .AddSingleton(_mockAllocator.Object)
             .AddSingleton<IProcessEnvironment>(_environment)
@@ -167,9 +168,22 @@ public class DurableTaskAzureStorageScalerServiceTest
             .Setup(a => a.GetWorkerCount(usage.ControlQueueMessages, 3))
             .Returns(2);
 
-        // Run test
+        // Run test (with activity)
         IsActiveResponse response = await _service.IsActive(scaledObjectRef, context).ConfigureAwait(false);
         Assert.IsTrue(response.Result);
+
+        // Run test (without activity)
+        _mockMonitor.Reset();
+        _mockAllocator.Reset();
+        _mockMonitor
+            .Setup(m => m.GetUsageAsync(tokenSource.Token))
+            .Returns(() => ValueTask.FromResult(new TaskHubQueueUsage(Array.Empty<int>(), 0)));
+        _mockAllocator
+            .Setup(a => a.GetWorkerCount(Array.Empty<int>(), 3))
+            .Returns(0);
+
+        response = await _service.IsActive(scaledObjectRef, context).ConfigureAwait(false);
+        Assert.IsFalse(response.Result);
     }
 
     private static GetMetricsRequest CreateGetMetricsRequest(ScalerMetadata metadata)

@@ -21,12 +21,16 @@ inputs:
     default: ExampleTaskHub
     description: The name of the Durable Task Hub.
     required: false
+  testActivityDuration:
+    default: 00:00:30
+    description: The duration of each activity.
+    required: false
   testStatusPollingInterval:
-    default: 00:00:10
+    default: 00:00:05
     description: The polling interval when checking test conditions.
     required: false
   testTimeout:
-    default: 00:05:00
+    default: 00:10:00
     description: The timeout for each test case.
     required: false
 
@@ -107,6 +111,7 @@ runs:
         echo "Function__Name=${{ inputs.functionAppName }}" >> $GITHUB_ENV
         echo "Function__Namespace=${{ inputs.functionAppNamespace }}" >> $GITHUB_ENV
         echo "Kubernetes__Context=kind-integration" >> $GITHUB_ENV
+        echo "Scaling__ActivityDuration=${{ inputs.testActivityDuration }}" >> $GITHUB_ENV
         echo "Scaling__MaxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }}" >> $GITHUB_ENV
         echo "Scaling__PollingInterval=${{ inputs.testStatusPollingInterval }}" >> $GITHUB_ENV
         echo "Scaling__Timeout=${{ inputs.testTimeout }}" >> $GITHUB_ENV
@@ -122,19 +127,19 @@ runs:
 
     - name: Uninstall Function App Helm Chart
       shell: bash
-      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 1m ${{ inputs.functionAppName }}
+      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 30s ${{ inputs.functionAppName }}
 
     - name: Uninstall Azurite Helm Chart
       shell: bash
-      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 1m azurite
+      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 30s azurite
 
     - name: Uninstall Scaler Helm Chart
       shell: bash
-      run: helm uninstall -n keda --wait -timeout 1m dtfx-scaler
+      run: helm uninstall -n keda --wait -timeout 30s dtfx-scaler
 
     - name: Uninstall Keda Helm Chart
       shell: bash
-      run: helm uninstall -n keda --wait -timeout 1m keda
+      run: helm uninstall -n keda --wait -timeout 30s keda
 
     - name: Delete Cluster
       shell: bash

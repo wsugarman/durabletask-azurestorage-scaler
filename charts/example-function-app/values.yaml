@@ -17,8 +17,8 @@ image:
 # Metadata concerning how to scale
 scaledObject:
   pollingInterval: 5
-  cooldownPeriod: 30
-  minReplicaCount: 1
+  cooldownPeriod: 15
+  minReplicaCount: 0
   maxReplicaCount: 100
 
 # External scaler information

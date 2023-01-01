@@ -42,7 +42,7 @@ public static class ScaleTestFunctions
         ScaleTestInput input = context.GetInput<ScaleTestInput>();
 
         logger = context.CreateReplaySafeLogger(logger);
-        logger.LogInformation("Starting {Count} activities with duration '{Timeout}'", input.ActivityCount, input.ActivityTime);
+        logger.LogInformation("Starting {Count} activities with duration '{Timeout}'.", input.ActivityCount, input.ActivityTime);
 
         return Task.WhenAll(Enumerable
             .Repeat((Context: context, Delay: input.ActivityTime), input.ActivityCount)

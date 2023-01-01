@@ -20,5 +20,6 @@ public class ControlQueueTest
         Assert.AreEqual("foo-control-00", ControlQueue.GetName("foo", 0));
         Assert.AreEqual("bar-control-03", ControlQueue.GetName("bar", 3));
         Assert.AreEqual("baz-control-12", ControlQueue.GetName("baz", 12));
+        Assert.AreEqual("an-other-control-15", ControlQueue.GetName("an-OTHer", 15));
     }
 }
