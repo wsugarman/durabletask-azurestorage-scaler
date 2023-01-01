@@ -109,7 +109,7 @@ runs:
     - name: Set Test Options
       shell: bash
       run: |
-        echo "DurableTask__ConnectionName=DurableTask__ConnectionString" >> $GITHUB_ENV
+        echo "DurableTask__ConnectionName=DurableTask:ConnectionString" >> $GITHUB_ENV
         echo "DurableTask__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;" >> $GITHUB_ENV
         echo "DurableTask__IsExternalClient=true" >> $GITHUB_ENV
         echo "DurableTask__TaskHub=${{ inputs.taskHubName }}" >> $GITHUB_ENV
