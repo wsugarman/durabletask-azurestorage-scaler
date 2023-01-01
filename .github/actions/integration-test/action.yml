@@ -133,19 +133,19 @@ runs:
 
     - name: Uninstall Function App Helm Chart
       shell: bash
-      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 30s ${{ inputs.functionAppName }}
+      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait --timeout 30s ${{ inputs.functionAppName }}
 
     - name: Uninstall Azurite Helm Chart
       shell: bash
-      run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait -timeout 30s azurite
+      run: helm uninstall -n azure --wait --timeout 30s azurite
 
     - name: Uninstall Scaler Helm Chart
       shell: bash
-      run: helm uninstall -n keda --wait -timeout 30s dtfx-scaler
+      run: helm uninstall -n keda --wait --timeout 30s dtfx-scaler
 
     - name: Uninstall Keda Helm Chart
       shell: bash
-      run: helm uninstall -n keda --wait -timeout 1m keda
+      run: helm uninstall -n keda --wait --timeout 1m keda
 
     - name: Delete Cluster
       shell: bash
