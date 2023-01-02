@@ -1,9 +1,9 @@
 name: parse chart
 description: Retrieves chart metadata from the chart.yaml file
 inputs:
-  pullRequestNumber:
+  workflowRunId:
     default: ''
-    description: The optional pull request number
+    description: The optional workflow run id for Pull Requests
     required: false
 outputs:
   assemblyFileVersion:
@@ -28,4 +28,4 @@ runs:
     - name: Parse Chart.yaml
       id: parse
       shell: pwsh
-      run: ./.github/actions/parse-chart/scripts/ParseVersions.ps1 -PullRequestNumber '${{ inputs.pullRequestNumber }}'
+      run: ./.github/actions/parse-chart/scripts/ParseVersions.ps1 -WorkflowRunId '${{ inputs.workflowRunId }}'

@@ -19,7 +19,7 @@ jobs:
         id: chart
         uses: ./.github/actions/parse-chart
         with:
-          pullRequestNumber: ${{ github.run_id }}
+          workflowRunId: ${{ github.run_id }}
 
       - name: Run Unit Tests
         uses: ./.github/actions/dotnet-test

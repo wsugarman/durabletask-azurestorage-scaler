@@ -7,8 +7,8 @@ param
     $ChartPath = (Join-Path $PSScriptRoot '..' '..' '..' 'charts' 'durabletask-azurestorage-scaler' 'Chart.yaml'),
 
     [Parameter(Mandatory=$False)]
-    [Nullable[int]]
-    $PullRequestNumber = $null
+    [string]
+    $WorkflowRunId = $null
 )
 
 # Turn off trace and stop on any error
@@ -44,13 +44,13 @@ if (-Not $isValid) {
 
 $versionMatches = $Matches
 
-# Adjust the version for Pull Requests to differentiate them from official builds
-if ($PullRequestNumber) {
-    $assemblyFileVersion = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch).$PullRequestNumber"
+# Adjust the version for Pull Requests (by passing the workflow run id) to differentiate them from official builds
+if ($WorkflowRunId) {
+    $assemblyFileVersion = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch).$WorkflowRunId"
     $helmPrerelease = $True
-    $helmVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)-pr.$PullRequestNumber"
+    $helmVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)-pr.$WorkflowRunId"
     $imagePrerelease = $True
-    $imageTag = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch)-pr.$PullRequestNumber"
+    $imageTag = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch)-pr.$WorkflowRunId"
 }
 else {
     $assemblyFileVersion = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch).0"
