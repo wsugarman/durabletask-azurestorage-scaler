@@ -9,6 +9,9 @@ outputs:
   assemblyFileVersion:
     description: The assembly file version for the scaler assembly
     value: ${{ steps.parse.outputs.assemblyFileVersion }}
+  assemblyVersion:
+    description: The assembly version for the scaler assembly
+    value: ${{ steps.parse.outputs.assemblyVersion }}
   helmPrerelease:
     description: Indicates whether the Helm chart is a prerelease version
     value: ${{ steps.parse.outputs.helmPrerelease }}

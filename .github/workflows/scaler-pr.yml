@@ -24,7 +24,7 @@ jobs:
       - name: Run Unit Tests
         uses: ./.github/actions/dotnet-test
         with:
-          assemblyVersion: ${{ steps.chart.outputs.imageTag }}
+          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
           buildConfiguration: Release
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           resultsDirectory: ${{ runner.temp }}/TestResults
@@ -37,7 +37,7 @@ jobs:
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
-          assemblyVersion: ${{ steps.chart.outputs.imageTag }}
+          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
           buildConfiguration: Release
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           imageRepository: durabletask-azurestorage-scaler

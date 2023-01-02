@@ -47,6 +47,7 @@ $versionMatches = $Matches
 # Each version number for .NET is restricted to 16-bit numbers, so we'll only preserve the run id for the tag
 # See here for details: https://learn.microsoft.com/en-us/windows/win32/menurc/versioninfo-resource
 $assemblyFileVersion = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch).0"
+$assemblyVersion = "$($appVersionMatches.Major).0.0.0"
 
 # Adjust the version for Pull Requests (by passing the workflow run id) to differentiate them from official builds
 if ($WorkflowRunId) {
@@ -64,6 +65,7 @@ else {
 
 # Create output variables
 "assemblyFileVersion=$assemblyFileVersion" >> $env:GITHUB_OUTPUT
+"assemblyVersion=$assemblyVersion" >> $env:GITHUB_OUTPUT
 "helmPrerelease=$helmPrerelease" >> $env:GITHUB_OUTPUT
 "helmVersion=$helmVersion" >> $env:GITHUB_OUTPUT
 "imageTag=$imageTag" >> $env:GITHUB_OUTPUT
