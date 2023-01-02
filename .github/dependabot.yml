@@ -33,7 +33,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
-    directory: "/actions/dotnet-publish"
+    directory: "/actions/docker-build"
     schedule:
       interval: "daily"
       time: "09:00"
@@ -49,7 +49,15 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
-    directory: "/actions/integration-test"
+    directory: "/actions/helm-test"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/actions/parse-chart"
     schedule:
       interval: "daily"
       time: "09:00"

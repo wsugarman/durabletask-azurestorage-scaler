@@ -1,4 +1,4 @@
-name: integration test
+name: helm test
 description: Ensures the external scaler installation succeeds and can properly scale function apps
 inputs:
   buildConfiguration:
@@ -13,12 +13,16 @@ inputs:
     default: test
     description: The Kubernetes namespace for the function app.
     required: false
-  localTag:
+  imageTag:
     description: The tag to use for the images.
     required: true
   maxActivitiesPerWorker:
-    default: '2'
+    default: '3'
     description: The maximum number of activities per worker.
+    required: false
+  scalerImageRepository:
+    default: durabletask-azurestorage-scaler
+    description: The repository used for the scaler image
     required: false
   taskHubName:
     default: ExampleTaskHub
@@ -43,20 +47,25 @@ runs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Build Scaler Image
+    - name: Lint Helm Chart
       shell: bash
-      run: docker build -f "./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile" -t "durabletask-azurestorage-scaler:${{ inputs.localTag }}" .
+      run: |
+        helm lint \
+          -n keda \
+          --set image.repository=${{ inputs.scalerImageRepository }} \
+          --set image.tag=${{ inputs.imageTag }} \
+          ./charts/durabletask-azurestorage-scaler
 
     - name: Build Function App Image
       shell: bash
-      run: docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ inputs.localTag }}" .
+      run: docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ inputs.imageTag }}" .
 
     - name: Create Kind Cluster
       shell: bash
       run: |
         go install sigs.k8s.io/kind@latest
         kind create cluster --name integration
-        kind load docker-image "durabletask-azurestorage-scaler:${{ inputs.localTag }}" "example-function-app:${{ inputs.localTag }}" --name integration
+        kind load docker-image "${{ inputs.scalerImageRepository }}:${{ inputs.imageTag }}" "example-function-app:${{ inputs.imageTag }}" --name integration
         kubectl config use-context kind-integration
 
     - name: Install KEDA
@@ -78,8 +87,8 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
-          --set image.repository=durabletask-azurestorage-scaler \
-          --set image.tag=${{ inputs.localTag }} \
+          --set image.repository=${{ inputs.scalerImageRepository }} \
+          --set image.tag=${{ inputs.imageTag }} \
           --wait \
           --timeout 30s \
           dtfx-scaler \
@@ -97,7 +106,7 @@ runs:
           --create-namespace \
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
-          --set image.tag=${{ inputs.localTag }} \
+          --set image.tag=${{ inputs.imageTag }} \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \
@@ -106,25 +115,23 @@ runs:
           ${{ inputs.functionAppName }} \
           ./charts/example-function-app
 
-    - name: Set Test Options
-      shell: bash
-      run: |
-        echo "DurableTask__ConnectionName=DurableTask:ConnectionString" >> $GITHUB_ENV
-        echo "DurableTask__ConnectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;" >> $GITHUB_ENV
-        echo "DurableTask__IsExternalClient=true" >> $GITHUB_ENV
-        echo "DurableTask__TaskHub=${{ inputs.taskHubName }}" >> $GITHUB_ENV
-        echo "Function__Name=${{ inputs.functionAppName }}" >> $GITHUB_ENV
-        echo "Function__Namespace=${{ inputs.functionAppNamespace }}" >> $GITHUB_ENV
-        echo "Kubernetes__Context=kind-integration" >> $GITHUB_ENV
-        echo "Scaling__ActivityDuration=${{ inputs.testActivityDuration }}" >> $GITHUB_ENV
-        echo "Scaling__MaxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }}" >> $GITHUB_ENV
-        echo "Scaling__PollingInterval=${{ inputs.testStatusPollingInterval }}" >> $GITHUB_ENV
-        echo "Scaling__Timeout=${{ inputs.testTimeout }}" >> $GITHUB_ENV
-
     - name: Test Scaler
       shell: bash
       run: |
         kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 >/dev/null &
+
+        DurableTask__ConnectionName="DurableTask:ConnectionString"
+        DurableTask__ConnectionString="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
+        DurableTask__IsExternalClient="true"
+        DurableTask__TaskHub="${{ inputs.taskHubName }}"
+        Function__Name="${{ inputs.functionAppName }}"
+        Function__Namespace="${{ inputs.functionAppNamespace }}"
+        Kubernetes__Context="kind-integration"
+        Scaling__ActivityDuration="${{ inputs.testActivityDuration }}"
+        Scaling__MaxActivitiesPerWorker="${{ inputs.maxActivitiesPerWorker }}"
+        Scaling__PollingInterval="${{ inputs.testStatusPollingInterval }}"
+        Scaling__Timeout="${{ inputs.testTimeout }}"
+
         dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \
@@ -149,3 +156,9 @@ runs:
     - name: Delete Cluster
       shell: bash
       run: kind delete cluster --name integration
+
+    - name: Upload Chart
+      uses: actions/upload-artifact@v3
+      with:
+        name: chart
+        path: ./charts/durabletask-azurestorage-scaler

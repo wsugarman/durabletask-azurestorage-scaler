@@ -7,36 +7,43 @@ on:
     - README.md
 
 jobs:
-  test:
-    name: test
+  validate:
+    name: validate
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Test
+      - name: Read Versions
+        id: chart
+        uses: ./.github/actions/parse-chart
+
+      - name: Run Unit Tests
         uses: ./.github/actions/dotnet-test
         with:
-          solution: Scaler
+          assemblyVersion: ${{ steps.chart.outputs.imageTag }}
+          buildConfiguration: Release
+          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           resultsDirectory: ${{ runner.temp }}/TestResults
+
+      - name: Build Docker Image
+        uses: ./.github/actions/docker-build
+        with:
+          assemblyVersion: ${{ steps.chart.outputs.imageTag }}
+          buildConfiguration: Release
+          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
+          imageRepository: durabletask-azurestorage-scaler
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+
+      - name: Validate Helm Chart
+        uses: ./.github/actions/helm-test
+        with:
+          buildConfiguration: Release
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+          scalerImageRepository: durabletask-azurestorage-scaler
 
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage
         with:
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
-
-  publish:
-    name: Publish
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Publish
-        uses: ./.github/actions/dotnet-publish
-        with:
-          project: Keda.Scaler.DurableTask.AzureStorage
-          buildConfiguration: Release

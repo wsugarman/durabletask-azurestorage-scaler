@@ -2,17 +2,31 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0.101-cbl-mariner2.0-amd64@sha256:df9c5c480801d49e7f9558566766622178e552d534f4a6a8fafe241d8dab0860 AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
+ARG ASSEMBLY_VERSION=1.0.0
+ARG FILE_VERSION=1.0.0.0
 
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/scaler/"]
 COPY ["./src/Directory.Build.props", "./src/Keda.Scaler.DurableTask.AzureStorage/", "/scaler/src/"]
 WORKDIR /scaler/src
 RUN dotnet restore "Keda.Scaler.DurableTask.AzureStorage.csproj"
-RUN dotnet build "Keda.Scaler.DurableTask.AzureStorage.csproj" -c $BUILD_CONFIGURATION -p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD -warnaserror -o /app/build
+RUN dotnet build "Keda.Scaler.DurableTask.AzureStorage.csproj" \
+  -c $BUILD_CONFIGURATION \
+  "-p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD;AssemblyVersion=$ASSEMBLY_VERSION;FileVersion=$FILE_VERSION;InformationalVersion=$FILE_VERSION" \
+  -warnaserror \
+  -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
-RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" -c $BUILD_CONFIGURATION -p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD -warnaserror -o /app/publish
+ARG ASSEMBLY_VERSION=1.0.0
+ARG FILE_VERSION=1.0.0.0
+
+RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
+  -c $BUILD_CONFIGURATION \
+  "-p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD;AssemblyVersion=$ASSEMBLY_VERSION;FileVersion=$FILE_VERSION;InformationalVersion=$FILE_VERSION" \
+  -p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD \
+  -warnaserror \
+  -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0.101-cbl-mariner2.0-amd64@sha256:df9c5c480801d49e7f9558566766622178e552d534f4a6a8fafe241d8dab0860 AS users
 RUN groupadd nonroot -g 2000 && \
