@@ -16,7 +16,7 @@ runs:
     - name: Upload Code Coverage Report
       uses: actions/upload-artifact@v3
       with:
-        name: Coverage
+        name: coverage
         path: ${{ runner.temp }}/codecoverage
 
     - name: Codecov Upload
