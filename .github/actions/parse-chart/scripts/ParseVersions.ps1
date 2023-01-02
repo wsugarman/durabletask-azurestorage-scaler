@@ -4,7 +4,7 @@ param
     [Parameter(Mandatory=$False)]
     [ValidateNotNullOrEmpty()]
     [string]
-    $ChartPath = (Join-Path $PSScriptRoot '..' '..' '..' 'charts' 'durabletask-azurestorage-scaler' 'Chart.yaml'),
+    $ChartPath = (Join-Path $PSScriptRoot '..' '..' '..' '..' 'charts' 'durabletask-azurestorage-scaler' 'Chart.yaml'),
 
     [Parameter(Mandatory=$False)]
     [string]
