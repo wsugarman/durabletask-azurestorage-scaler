@@ -35,11 +35,19 @@ runs:
           .
 
     - name: Save Image
+      id: save
       shell: bash
-      run: docker save -o ${{ runner.temp }}/docker/scaler.tar ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
+      run: |
+        repository="${{ inputs.imageRepository }}"
+        name=${repository#*/}
+        output="${{ runner.temp }}/docker/$name-${{ inputs.imageTag }}.tar"
+
+        mkdir -p $(dirname $output)
+        docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
+        echo "path=$output" >> $GITHUB_OUTPUT
 
     - name: Upload Image
       uses: actions/upload-artifact@v3
       with:
         name: image
-        path: ${{ runner.temp }}/docker/scaler.tar
+        path: ${{ steps.save.outputs.path }}
