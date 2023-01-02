@@ -29,11 +29,11 @@ inputs:
     description: The name of the Durable Task Hub.
     required: false
   testActivityDuration:
-    default: 00:00:30
+    default: 00:00:15
     description: The duration of each activity.
     required: false
   testStatusPollingInterval:
-    default: 00:00:05
+    default: 00:00:03
     description: The polling interval when checking test conditions.
     required: false
   testTimeout:
@@ -107,6 +107,7 @@ runs:
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
           --set image.tag=${{ inputs.imageTag }} \
+          --set scaledObject.pollingInterval=3 \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \

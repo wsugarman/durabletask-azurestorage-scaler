@@ -189,7 +189,7 @@ public sealed class ScaleTest : IDisposable
 
         _logger.LogInformation("Waiting for instance '{InstanceId}' to complete.", instanceId);
 
-        do
+        while (true)
         {
             await Task.Delay(_options.PollingInterval, cancellationToken).ConfigureAwait(false);
 
@@ -197,9 +197,13 @@ public sealed class ScaleTest : IDisposable
                 .GetStatusAsync(instanceId, showHistory: false, showHistoryOutput: false, showInput: false)
                 .ConfigureAwait(false);
 
-            _logger.LogInformation("Current status of instance '{InstanceId}' is '{Status}'.", instanceId, status.RuntimeStatus);
-        } while (!status.RuntimeStatus.IsTerminal());
+            if (status.RuntimeStatus.IsTerminal())
+                break;
+            else
+                _logger.LogInformation("Current status of instance '{InstanceId}' is '{Status}'.", instanceId, status.RuntimeStatus);
+        }
 
+        _logger.LogInformation("Instance '{InstanceId}' reached terminal status '{Status}'.", instanceId, status.RuntimeStatus);
         return status.RuntimeStatus;
     }
 
