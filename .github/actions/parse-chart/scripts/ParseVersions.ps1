@@ -44,16 +44,18 @@ if (-Not $isValid) {
 
 $versionMatches = $Matches
 
+# Each version number for .NET is restricted to 16-bit numbers, so we'll only preserve the run id for the tag
+# See here for details: https://learn.microsoft.com/en-us/windows/win32/menurc/versioninfo-resource
+$assemblyFileVersion = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch).0"
+
 # Adjust the version for Pull Requests (by passing the workflow run id) to differentiate them from official builds
 if ($WorkflowRunId) {
-    $assemblyFileVersion = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch).$WorkflowRunId"
     $helmPrerelease = $True
     $helmVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)-pr.$WorkflowRunId"
     $imagePrerelease = $True
     $imageTag = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch)-pr.$WorkflowRunId"
 }
 else {
-    $assemblyFileVersion = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch).0"
     $helmPrerelease = -Not [string]::IsNullOrEmpty($versionMatches.Suffix)
     $helmVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)$($versionMatches.Suffix)"
     $imagePrerelease = -Not [string]::IsNullOrEmpty($appVersionMatches.Suffix)
