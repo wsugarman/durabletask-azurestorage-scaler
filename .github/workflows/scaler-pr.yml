@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: validate
+    name: Validate
     runs-on: ubuntu-latest
 
     steps:
@@ -29,6 +29,11 @@ jobs:
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           resultsDirectory: ${{ runner.temp }}/TestResults
 
+      - name: Upload Code Coverage
+        uses: ./.github/actions/code-coverage
+        with:
+          reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
+
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
@@ -44,8 +49,3 @@ jobs:
           buildConfiguration: Release
           imageTag: ${{ steps.chart.outputs.imageTag }}
           scalerImageRepository: durabletask-azurestorage-scaler
-
-      - name: Upload Code Coverage
-        uses: ./.github/actions/code-coverage
-        with:
-          reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
