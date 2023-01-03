@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths-ignore:
-    - README.md
+      - '**.md'
 
 jobs:
   validate:
@@ -40,7 +40,7 @@ jobs:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
           buildConfiguration: Release
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
-          imageRepository: durabletask-azurestorage-scaler
+          imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ steps.chart.outputs.imageTag }}
 
       - name: Validate Helm Chart
@@ -48,4 +48,37 @@ jobs:
         with:
           buildConfiguration: Release
           imageTag: ${{ steps.chart.outputs.imageTag }}
-          scalerImageRepository: durabletask-azurestorage-scaler
+          scalerImageRepository: ghcr.io/${{ github.repository }}
+
+  publishImage:
+    name: Publish Image
+    runs-on: ubuntu-latest
+    needs: validate
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Download Image
+        uses: actions/download-artifact@v3
+        with:
+          name: image
+          path: ${{ runner.temp }}/image
+
+      - name: Push Docker Image
+        id: push
+        uses: ./.github/actions/docker-push
+        with:
+          imageArchive: ${{ runner.temp }}/image/durabletask-azurestorage-scaler.tar
+          imageRepository: ghcr.io/${{ github.repository }}
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+
+      - name: Create Image Release
+        uses: ./.github/actions/github-release
+        if: ${{ steps.push.outputs.success }}
+        with:
+          asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler.tar
+          name: 'Durable Task KEDA External Scaler Image'
+          prerelease: ${{ steps.chart.outputs.imagePrerelease }}
+          tag: 'Image_${{ steps.chart.outputs.imageTag }}'
+          version: ${{ steps.chart.outputs.imageTag }}

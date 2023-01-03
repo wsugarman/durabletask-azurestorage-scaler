@@ -1,0 +1,42 @@
+name: docker push
+description: Loads and pushes the docker image if it does not already exist in the registry
+inputs:
+  imageArchive:
+    description: The TAR archive containing the docker image
+    required: true
+  imageRepository:
+    description: The repository used for the scaler image
+    required: true
+  imageTag:
+    description: The tag to use for the images
+    required: true
+outputs:
+  success:
+    description: Indicates whether the image was successfully pushed
+    value: ${{ steps.push.outputs.success }}
+
+runs:
+  using: composite
+  steps:
+    - name: Load Docker Image
+      shell: bash
+      run: docker load --input ${{ inputs.imageArchive }}
+
+    - name: Login to ghcr.io
+      uses: docker/login-action@v2
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push Docker Image
+      id: push
+      shell: bash
+      run: |
+        if DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} >/dev/null; then
+          docker push ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
+          echo "success=true" >> $GITHUB_OUTPUT
+        else
+          echo "Docker tag already exists."
+          echo "success=false" >> $GITHUB_OUTPUT
+        fi

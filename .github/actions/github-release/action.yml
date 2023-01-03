@@ -1,0 +1,38 @@
+name: github release
+description: Creates a GitHub release for a NuGet package
+inputs:
+  asset:
+    description: The path to the file or folder containing the release assets
+    required: true
+  name:
+    description: The name of the component
+    required: true
+  prerelease:
+    description: Indicates whether the GitHub release is a prerelease version
+    required: true
+  tag:
+    description: The Git tag to create and associate with the release
+    required: true
+  version:
+    description: The version of the GitHub release
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create Release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { default: createRelease } = await import('${{ github.workspace }}/.github/actions/github-release/scripts/CreateRelease.mjs');
+          await createRelease({
+              github: github,
+              context: context,
+              release: {
+                asset: '${{ inputs.asset }}',
+                name: '${{ inputs.name }}',
+                prerelease: ${{ inputs.prerelease }},
+                tag: '${{ inputs.tag }}',
+                version: '${{ inputs.version }}',
+              }
+            });

@@ -199,8 +199,8 @@ public sealed class ScaleTest : IDisposable
 
             if (status.RuntimeStatus.IsTerminal())
                 break;
-            else
-                _logger.LogInformation("Current status of instance '{InstanceId}' is '{Status}'.", instanceId, status.RuntimeStatus);
+
+            _logger.LogInformation("Current status of instance '{InstanceId}' is '{Status}'.", instanceId, status.RuntimeStatus);
         }
 
         _logger.LogInformation("Instance '{InstanceId}' reached terminal status '{Status}'.", instanceId, status.RuntimeStatus);

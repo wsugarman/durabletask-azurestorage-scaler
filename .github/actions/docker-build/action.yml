@@ -22,25 +22,35 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Generate OCI Labels
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ inputs.imageRepository }}
+        tags: |
+          type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
+
     - name: Build Scaler Image
-      shell: bash
-      run: |
-        docker build \
-          --build-arg BUILD_CONFIGURATION=${{ inputs.buildConfiguration }} \
-          --build-arg CONTINUOUS_INTEGRATION_BUILD=true \
-          --build-arg ASSEMBLY_VERSION=${{ inputs.assemblyVersion }} \
-          --build-arg FILE_VERSION=${{ inputs.fileVersion }} \
-          -f ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile \
-          -t ${{ inputs.imageRepository }}:${{ inputs.imageTag }} \
-          .
+      uses: docker/build-push-action@v3
+      with:
+        build-args: |
+          ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
+          BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
+          CONTINUOUS_INTEGRATION_BUILD=true
+          FILE_VERSION=${{ inputs.fileVersion }}
+        context: .
+        file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
+        labels: ${{ steps.meta.outputs.labels }}
+        push: false
+        tags: ${{ steps.meta.outputs.tags }}
 
     - name: Save Image
       id: save
       shell: bash
       run: |
         repository="${{ inputs.imageRepository }}"
-        name=${repository#*/}
-        output="${{ runner.temp }}/docker/$name-${{ inputs.imageTag }}.tar"
+        name=${repository##*/}
+        output="${{ runner.temp }}/docker/$name.tar"
 
         mkdir -p $(dirname $output)
         docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
