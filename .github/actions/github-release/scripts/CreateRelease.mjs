@@ -63,7 +63,7 @@ export default async function createRelease({ github, context, release }) {
     const file = path.basename(release.asset);
     const directory = path.dirname(release.asset);
     assetContentType = 'application/gzip';
-    assetArchivePath = path.join(directory, `${file}.gzip`);
+    assetArchivePath = path.join(directory, `${file}.gz`);
 
     const gzipOutput = cp.execSync(`gzip -9 ${file}`, { cwd: directory, encoding: 'utf8' });
     process.stdout.write(gzipOutput);
