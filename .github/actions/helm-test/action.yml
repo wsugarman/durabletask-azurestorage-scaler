@@ -47,12 +47,17 @@ runs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
+    - name: Copy Scaler Image
+      if: ${{ inputs.scalerImageRepository != 'durabletask-azurestorage-scaler' }}
+      shell: bash
+      run: docker tag ${{ inputs.scalerImageRepository }}:${{ inputs.imageTag }} durabletask-azurestorage-scaler:${{ inputs.imageTag }}
+
     - name: Lint Helm Chart
       shell: bash
       run: |
         helm lint \
           -n keda \
-          --set image.repository=${{ inputs.scalerImageRepository }} \
+          --set image.repository=durabletask-azurestorage-scaler \
           --set image.tag=${{ inputs.imageTag }} \
           ./charts/durabletask-azurestorage-scaler
 
@@ -65,7 +70,7 @@ runs:
       run: |
         go install sigs.k8s.io/kind@latest
         kind create cluster --name integration
-        kind load docker-image "${{ inputs.scalerImageRepository }}:${{ inputs.imageTag }}" "example-function-app:${{ inputs.imageTag }}" --name integration
+        kind load docker-image "durabletask-azurestorage-scaler:${{ inputs.imageTag }}" "example-function-app:${{ inputs.imageTag }}" --name integration
         kubectl config use-context kind-integration
 
     - name: Install KEDA
@@ -87,7 +92,7 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
-          --set image.repository=${{ inputs.scalerImageRepository }} \
+          --set image.repository=durabletask-azurestorage-scaler \
           --set image.tag=${{ inputs.imageTag }} \
           --wait \
           --timeout 30s \

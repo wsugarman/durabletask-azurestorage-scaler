@@ -10,6 +10,10 @@ inputs:
   imageTag:
     description: The tag to use for the images
     required: true
+  pushLatest:
+    default: 'false'
+    description: Indicates whether the image should also be pushed with the latest tag
+    required: false
 outputs:
   success:
     description: Indicates whether the image was successfully pushed
@@ -40,3 +44,10 @@ runs:
           echo "Docker tag already exists."
           echo "success=false" >> $GITHUB_OUTPUT
         fi
+
+    - name: Push Latest Docker Image
+      if: ${{ steps.push.outputs.success && inputs.pushLatest }}
+      shell: bash
+      run: |
+        docker tag ${{ inputs.imageRepository }}:${{ inputs.imageTag }} ${{ inputs.imageRepository }}:latest
+        docker push ${{ inputs.imageRepository }}:latest

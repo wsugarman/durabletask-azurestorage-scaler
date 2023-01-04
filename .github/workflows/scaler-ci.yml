@@ -63,6 +63,9 @@ jobs:
       packages: write
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
       - name: Download Image
         uses: actions/download-artifact@v3
         with:
@@ -77,15 +80,16 @@ jobs:
         id: push
         uses: ./.github/actions/docker-push
         with:
-          imageArchive: ${{ runner.temp }}/image/durabletask-azurestorage-scaler.tar
+          imageArchive: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
           imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ steps.chart.outputs.imageTag }}
+          pushLatest: ${{ !steps.chart.outputs.imagePrerelease }}
 
       - name: Create Image Release
         uses: ./.github/actions/github-release
         if: ${{ steps.push.outputs.success }}
         with:
-          asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler.tar
+          asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
           name: 'Durable Task KEDA External Scaler Image'
           prerelease: ${{ steps.chart.outputs.imagePrerelease }}
           tag: 'Image_${{ steps.chart.outputs.imageTag }}'

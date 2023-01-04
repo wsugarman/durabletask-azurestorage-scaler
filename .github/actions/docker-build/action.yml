@@ -26,7 +26,10 @@ runs:
       id: meta
       uses: docker/metadata-action@v4
       with:
-        images: ${{ inputs.imageRepository }}
+        images: |
+          ${{ inputs.imageRepository }}
+        labels: |
+          com.docker.desktop.extension.icon=https://github.com/wsugarman/durabletask-azurestorage-scaler/blob/${{ github.sha }}/img/storm-icon.png
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
@@ -45,19 +48,15 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
 
     - name: Save Image
-      id: save
       shell: bash
       run: |
-        repository="${{ inputs.imageRepository }}"
-        name=${repository##*/}
-        output="${{ runner.temp }}/docker/$name.tar"
+        output="${{ runner.temp }}/docker/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar"
 
         mkdir -p $(dirname $output)
         docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
-        echo "path=$output" >> $GITHUB_OUTPUT
 
     - name: Upload Image
       uses: actions/upload-artifact@v3
       with:
         name: image
-        path: ${{ steps.save.outputs.path }}
+        path: ${{ runner.temp }}/docker/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar
