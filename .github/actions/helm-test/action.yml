@@ -17,7 +17,7 @@ inputs:
     description: The tag to use for the images.
     required: true
   maxActivitiesPerWorker:
-    default: '2'
+    default: '3'
     description: The maximum number of activities per worker.
     required: false
   scalerImageRepository:
@@ -29,11 +29,11 @@ inputs:
     description: The name of the Durable Task Hub.
     required: false
   testActivityDuration:
-    default: 00:00:15
+    default: 00:00:12
     description: The duration of each activity.
     required: false
   testStatusPollingInterval:
-    default: 00:00:03
+    default: 00:00:02
     description: The polling interval when checking test conditions.
     required: false
   testTimeout:
@@ -107,7 +107,7 @@ runs:
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
           --set image.tag=${{ inputs.imageTag }} \
-          --set scaledObject.pollingInterval=3 \
+          --set scaledObject.pollingInterval=2 \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \

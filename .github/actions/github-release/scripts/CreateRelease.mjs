@@ -11,13 +11,13 @@ export default async function createRelease({ github, context, release }) {
       ref: `tags/${release.tag}`
     });
 
-    console.log(`Tag ${release.tag} already exists`);
+    console.log(`Tag ${release.tag} already exists.`);
     return;
   }
   catch (httpError) {
     // A missing tag will throw a 404
     if (httpError.status == 404) {
-      console.log(`Tag ${release.tag} does not exist`);
+      console.log(`Tag ${release.tag} does not yet exist.`);
     } else {
       throw httpError;
     }
@@ -40,6 +40,8 @@ export default async function createRelease({ github, context, release }) {
     tagger: commit.author
   });
 
+  console.log(`Created tag ${release.tag}.`);
+
   await github.rest.git.createRef({
     owner: context.repo.owner,
     repo: context.repo.repo,
@@ -58,6 +60,8 @@ export default async function createRelease({ github, context, release }) {
 
     const zipOutput = cp.execSync(`zip -r ../${folderName}.zip .`, { cwd: release.asset, encoding: 'utf8' });
     process.stdout.write(zipOutput);
+
+    console.log(`Created zip archive ${path.basename(assetArchivePath)}.`);
   } else {
     // Use gzip for single files
     const file = path.basename(release.asset);
@@ -67,6 +71,8 @@ export default async function createRelease({ github, context, release }) {
 
     const gzipOutput = cp.execSync(`gzip -9 ${file}`, { cwd: directory, encoding: 'utf8' });
     process.stdout.write(gzipOutput);
+
+    console.log(`Created gzip archive ${path.basename(assetArchivePath)}.`);
   }
 
   // Create the release
@@ -79,6 +85,8 @@ export default async function createRelease({ github, context, release }) {
     draft: true
   });
 
+  console.log(`Created new release for version ${release.version}.`);
+
   await github.rest.repos.uploadReleaseAsset({
     owner: context.repo.owner,
     repo: context.repo.repo,
@@ -90,4 +98,6 @@ export default async function createRelease({ github, context, release }) {
       'content-length': fs.statSync(assetArchivePath).size,
     }
   });
+
+  console.log(`Uploaded release asset ${path.basename(assetArchivePath)}.`);
 }

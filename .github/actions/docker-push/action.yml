@@ -5,7 +5,7 @@ inputs:
     description: The GitHub access token from the secret context
     required: true
   imageArchive:
-    description: The TAR archive containing the docker image
+    description: The tarball containing the docker image
     required: true
   imageRepository:
     description: The repository used for the scaler image
