@@ -44,17 +44,25 @@ runs:
           try {
             // Check for the package version
             const repository = '${{ inputs.imageRepository }}';
+            const packageName = repository.includes('/') ? repository.substring(repository.lastIndexOf('/') + 1) : repository;
             const versions = await github.rest.packages.getAllPackageVersionsForPackageOwnedByUser({
               package_type: 'container',
-              package_name: repository.includes('/') ? repository.substring(repository.lastIndexOf('/') + 1) : repository,
+              package_name: packageName,
               username: '${{ github.repository_owner }}'
             });
 
-            return versions.data.find(v => v.metadata.container.tags.find(t => t == '${{ inputs.imageTag }}')) ? 'true' : 'false'
+            if (versions.data.find(v => v.metadata.container.tags.find(t => t == '${{ inputs.imageTag }}'))) {
+              console.log(`Docker tag '${{ inputs.imageTag }}' already exists.`);
+              return 'true';
+            } else {
+              console.log(`Docker tag '${{ inputs.imageTag }}' does not yet exist.`);
+              return 'false';
+            }
           }
           catch (httpError) {
             // No package versions is the same as missing
             if (httpError.status == 404) {
+              console.log(`Container package '${packageName}' does not yet exist.`);
               return 'false'
             } else {
               throw httpError;

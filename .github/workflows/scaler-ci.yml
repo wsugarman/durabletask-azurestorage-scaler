@@ -1,16 +1,10 @@
 name: Scaler
 
 on:
-  pull_request:
+  push:
     branches: [ main ]
     paths-ignore:
       - '**.md'
-
-#on:
-#  push:
-#    branches: [ main ]
-#    paths-ignore:
-#      - '**.md'
 
 jobs:
   validate:
