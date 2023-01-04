@@ -44,17 +44,16 @@ runs:
           try {
             // Check for the package version
             const repository = '${{ inputs.imageRepository }}';
-            const pkg = await github.rest.packages.getPackageVersionForUser({
+            const pkgs = await github.rest.packages.getAllPackageVersionsForPackageOwnedByUser({
               package_type: 'container',
               package_name: repository.includes('/') ? repository.substring(repository.lastIndexOf('/') + 1) : repository,
-              package_version_id: '${{ inputs.imageTag }}',
               username: '${{ github.repository_owner }}'
             });
 
-            return 'true'
+            return pkgs.find(p => p.name == '${{ inputs.imageTag }}') === undefined ? 'false' : 'true';
           }
           catch (httpError) {
-            // A missing package version will throw a 404
+            // No package versions is the same as missing
             if (httpError.status == 404) {
               return 'false'
             } else {
