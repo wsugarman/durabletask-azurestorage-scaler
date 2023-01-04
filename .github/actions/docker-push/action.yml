@@ -1,6 +1,9 @@
 name: docker push
 description: Loads and pushes the docker image if it does not already exist in the registry
 inputs:
+  gitHubToken:
+    description: The GitHub access token from the secret context
+    required: true
   imageArchive:
     description: The TAR archive containing the docker image
     required: true
@@ -31,7 +34,7 @@ runs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.gitHubToken }}
 
     - name: Push Docker Image
       id: push

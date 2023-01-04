@@ -80,6 +80,7 @@ jobs:
         id: push
         uses: ./.github/actions/docker-push
         with:
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           imageArchive: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
           imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ steps.chart.outputs.imageTag }}
