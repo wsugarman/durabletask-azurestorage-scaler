@@ -4,21 +4,27 @@ on:
   push:
     branches: [ main ]
     paths-ignore:
-    - README.md
+      - '**.md'
 
 jobs:
-  test:
-    name: test
+  validate:
+    name: Validate
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Test
+      - name: Read Versions
+        id: chart
+        uses: ./.github/actions/parse-chart
+
+      - name: Run Unit Tests
         uses: ./.github/actions/dotnet-test
         with:
-          solution: Scaler
+          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
+          buildConfiguration: Release
+          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           resultsDirectory: ${{ runner.temp }}/TestResults
 
       - name: Upload Code Coverage
@@ -26,17 +32,60 @@ jobs:
         with:
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
 
-  publish:
-    name: Publish
-    needs: test
+      - name: Build Docker Image
+        uses: ./.github/actions/docker-build
+        with:
+          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
+          buildConfiguration: Release
+          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
+          imageRepository: ghcr.io/${{ github.repository }}
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+
+      - name: Validate Helm Chart
+        uses: ./.github/actions/helm-test
+        with:
+          buildConfiguration: Release
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+          scalerImageRepository: ghcr.io/${{ github.repository }}
+
+  publishImage:
+    name: Publish Image
     runs-on: ubuntu-latest
+    needs: validate
+    permissions:
+      contents: write
+      packages: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Publish
-        uses: ./.github/actions/dotnet-publish
+      - name: Download Image
+        uses: actions/download-artifact@v3
         with:
-          project: Keda.Scaler.DurableTask.AzureStorage
-          buildConfiguration: Release
+          name: image
+          path: ${{ runner.temp }}/image
+
+      - name: Read Versions
+        id: chart
+        uses: ./.github/actions/parse-chart
+
+      - name: Push Docker Image
+        id: push
+        uses: ./.github/actions/docker-push
+        with:
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          imageArchive: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
+          imageRepository: ghcr.io/${{ github.repository }}
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+          pushLatest: ${{ steps.chart.outputs.imagePrerelease != 'true' }}
+
+      - name: Create Image Release
+        uses: ./.github/actions/github-release
+        if: ${{ steps.push.outputs.success == 'true' }}
+        with:
+          asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
+          name: 'Durable Task KEDA External Scaler Image'
+          prerelease: ${{ steps.chart.outputs.imagePrerelease }}
+          tag: 'Image_${{ steps.chart.outputs.imageTag }}'
+          version: ${{ steps.chart.outputs.imageTag }}

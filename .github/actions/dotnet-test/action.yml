@@ -1,15 +1,18 @@
 name: dotnet test
-description: Ensures quality by running cross-platform tests and code coverage
+description: Builds the scaler and ensures its quality by running both cross-platform tests and code coverage
 inputs:
-  solution:
-    description: The name of the solution file
+  assemblyVersion:
+    description: The resulting assembly's version
     required: true
   buildConfiguration:
     default: Debug
     description: The dotnet build configuration
     required: false
+  fileVersion:
+    description: The resulting assembly's file version
+    required: true
   resultsDirectory:
-    description: The directory where the test results are going to be placed
+    description: The directory where the test results will be placed
     required: true
 
 runs:
@@ -21,20 +24,35 @@ runs:
     - name: Build
       shell: bash
       run: |
-        dotnet build "./src/${{ inputs.solution }}.sln" \
+        dotnet build "./src/Scaler.sln" \
           -c "${{ inputs.buildConfiguration }}" \
-          -p:ContinuousIntegrationBuild=true \
+          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
           -warnaserror
 
     - name: Test
       shell: bash
       run: |
-        dotnet test "./src/${{ inputs.solution }}.sln" \
+        dotnet test "./src/Scaler.sln" \
           -c "${{ inputs.buildConfiguration }}" \
-          -p:ContinuousIntegrationBuild=true \
+          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
           -warnaserror \
           --no-build \
           --results-directory "${{ inputs.resultsDirectory }}" \
           --collect "XPlat Code Coverage" \
-          -s "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \
-          -v normal
+          -s "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings"
+
+    - name: Publish
+      shell: bash
+      run: |
+        dotnet publish "./src/Keda.Scaler.DurableTask.AzureStorage/Keda.Scaler.DurableTask.AzureStorage.csproj" \
+          -c "${{ inputs.buildConfiguration }}" \
+          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
+          -warnaserror \
+          --no-build \
+          -o "${{ runner.temp }}/app"
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: app
+        path: ${{ runner.temp }}/app

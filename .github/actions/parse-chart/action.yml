@@ -1,0 +1,34 @@
+name: parse chart
+description: Retrieves chart metadata from the chart.yaml file
+inputs:
+  workflowRunId:
+    default: ''
+    description: The optional workflow run id for Pull Requests
+    required: false
+outputs:
+  assemblyFileVersion:
+    description: The assembly file version for the scaler assembly
+    value: ${{ steps.parse.outputs.assemblyFileVersion }}
+  assemblyVersion:
+    description: The assembly version for the scaler assembly
+    value: ${{ steps.parse.outputs.assemblyVersion }}
+  helmPrerelease:
+    description: Indicates whether the Helm chart is a prerelease version
+    value: ${{ steps.parse.outputs.helmPrerelease }}
+  helmVersion:
+    description: The scaler helm chart version
+    value: ${{ steps.parse.outputs.helmVersion }}
+  imageTag:
+    description: The scaler image tag
+    value: ${{ steps.parse.outputs.imageTag }}
+  imagePrerelease:
+    description: Indicates whether the scaler image is a prerelease version
+    value: ${{ steps.parse.outputs.imagePrerelease }}
+
+runs:
+  using: composite
+  steps:
+    - name: Parse Chart.yaml
+      id: parse
+      shell: pwsh
+      run: ./.github/actions/parse-chart/scripts/ParseVersions.ps1 -WorkflowRunId '${{ inputs.workflowRunId }}'
