@@ -41,7 +41,23 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
+    directory: "/actions/docker-push"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
     directory: "/actions/dotnet-test"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/actions/github-release"
     schedule:
       interval: "daily"
       time: "09:00"
