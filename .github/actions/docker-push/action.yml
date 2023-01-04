@@ -20,7 +20,7 @@ inputs:
 outputs:
   success:
     description: Indicates whether the image was successfully pushed
-    value: ${{ steps.push.outputs.success }}
+    value: ${{ steps.exists.outputs.result != 'true' }}
 
 runs:
   using: composite
@@ -36,20 +36,40 @@ runs:
         username: ${{ github.actor }}
         password: ${{ inputs.gitHubToken }}
 
+    - name: Check ghcr.io for Image Tag
+      id: exists
+      uses: actions/github-script@v6
+      with:
+        script: |
+          try {
+            // Check for the package version
+            const repository = '${{ inputs.imageRepository }}';
+            const pkg = await github.rest.packages.getPackageVersionForUser({
+              package_type: 'container',
+              package_name: repository.includes('/') ? repository.substring(repository.lastIndexOf('/') + 1) : repository,
+              package_version_id: '${{ inputs.imageTag }}',
+              username: '${{ github.repository_owner }}'
+            });
+
+            return 'true'
+          }
+          catch (httpError) {
+            // A missing package version will throw a 404
+            if (httpError.status == 404) {
+              return 'false'
+            } else {
+              throw httpError;
+            }
+          }
+        result-encoding: string
+
     - name: Push Docker Image
-      id: push
+      if: ${{ steps.exists.outputs.result != 'true' }}
       shell: bash
-      run: |
-        if DOCKER_CLI_EXPERIMENTAL=enabled docker manifest inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} >/dev/null; then
-          docker push ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
-          echo "success=true" >> $GITHUB_OUTPUT
-        else
-          echo "Docker tag already exists."
-          echo "success=false" >> $GITHUB_OUTPUT
-        fi
+      run: docker push ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
 
     - name: Push Latest Docker Image
-      if: ${{ steps.push.outputs.success && inputs.pushLatest }}
+      if: ${{ (steps.exists.outputs.result != 'true') && (inputs.pushLatest == 'true') }}
       shell: bash
       run: |
         docker tag ${{ inputs.imageRepository }}:${{ inputs.imageTag }} ${{ inputs.imageRepository }}:latest

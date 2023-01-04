@@ -28,8 +28,6 @@ runs:
       with:
         images: |
           ${{ inputs.imageRepository }}
-        labels: |
-          com.docker.desktop.extension.icon=https://github.com/wsugarman/durabletask-azurestorage-scaler/blob/${{ github.sha }}/img/storm-icon.png
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 

@@ -84,11 +84,11 @@ jobs:
           imageArchive: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
           imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ steps.chart.outputs.imageTag }}
-          pushLatest: ${{ !steps.chart.outputs.imagePrerelease }}
+          pushLatest: ${{ steps.chart.outputs.imagePrerelease != 'true' }}
 
       - name: Create Image Release
         uses: ./.github/actions/github-release
-        if: ${{ steps.push.outputs.success }}
+        if: ${{ steps.push.outputs.success == 'true' }}
         with:
           asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
           name: 'Durable Task KEDA External Scaler Image'

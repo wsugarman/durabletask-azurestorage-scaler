@@ -31,7 +31,7 @@ runs:
               release: {
                 asset: '${{ inputs.asset }}',
                 name: '${{ inputs.name }}',
-                prerelease: ${{ inputs.prerelease }},
+                prerelease: '${{ inputs.prerelease }}'.toLowerCase() === 'true',
                 tag: '${{ inputs.tag }}',
                 version: '${{ inputs.version }}',
               }
