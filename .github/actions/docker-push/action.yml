@@ -41,10 +41,11 @@ runs:
       uses: actions/github-script@v6
       with:
         script: |
+          const repository = '${{ inputs.imageRepository }}';
+          const packageName = repository.includes('/') ? repository.substring(repository.lastIndexOf('/') + 1) : repository;
+
           try {
             // Check for the package version
-            const repository = '${{ inputs.imageRepository }}';
-            const packageName = repository.includes('/') ? repository.substring(repository.lastIndexOf('/') + 1) : repository;
             const versions = await github.rest.packages.getAllPackageVersionsForPackageOwnedByUser({
               package_type: 'container',
               package_name: packageName,

@@ -119,24 +119,23 @@ runs:
     - name: Test Scaler
       shell: bash
       run: |
-        export DurableTask__ConnectionName="DurableTask:ConnectionString"
-        export DurableTask__ConnectionString="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
-        export DurableTask__IsExternalClient="true"
-        export DurableTask__TaskHub="${{ inputs.taskHubName }}"
-        export Function__Name="${{ inputs.functionAppName }}"
-        export Function__Namespace="${{ inputs.functionAppNamespace }}"
-        export Kubernetes__Context="kind-integration"
-        export Scaling__ActivityDuration="${{ inputs.testActivityDuration }}"
-        export Scaling__MaxActivitiesPerWorker="${{ inputs.maxActivitiesPerWorker }}"
-        export Scaling__PollingInterval="${{ inputs.testStatusPollingInterval }}"
-        export Scaling__Timeout="${{ inputs.testTimeout }}"
-
         kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 >/dev/null &
-
         dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \
           -warnaserror
+      env:
+        DurableTask__ConnectionName: DurableTask:ConnectionString
+        DurableTask__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;'
+        DurableTask__IsExternalClient: 'true'
+        DurableTask__TaskHub: ${{ inputs.taskHubName }}
+        Function__Name: ${{ inputs.functionAppName }}
+        Function__Namespace: ${{ inputs.functionAppNamespace }}
+        Kubernetes__Context: kind-integration
+        Scaling__ActivityDuration: ${{ inputs.testActivityDuration }}
+        Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
+        Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
+        Scaling__Timeout: ${{ inputs.testTimeout }}
 
     - name: Uninstall Function App Helm Chart
       shell: bash

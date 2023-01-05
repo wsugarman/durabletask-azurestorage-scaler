@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths-ignore:
       - '**.md'
+      - 'charts/releases/**'
 
 jobs:
   validate:

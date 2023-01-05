@@ -1,0 +1,41 @@
+name: helm release
+description: Releases the helm chart if the version has changed
+inputs:
+  chartPath:
+    description: The path to the Helm chart
+    required: true
+  gitHubToken:
+    description: The GitHub access token from the secret context
+    required: true
+  gpgPassword:
+    description: The password for the GPG key
+    required: true
+  gpgPrivateKey:
+    description: The Base64 GPG private signing key
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+
+    - name: Create Private Keyring
+      shell: bash
+      run: echo '${{ inputs.gpgPrivateKey }}' | base64 --decode >> private-key.gpg
+
+    - name: Helm Pack
+      shell: bash
+      run: |
+        echo '${{ inputs.gpgPassword }}' |  | helm package ${{ input.chartPath }} --sign --key 'Will Sugarman' --keyring private-key.gpg --passphrase-file -
+
+    - name: Delete Keyring
+      shell: bash
+      if: ${{ always() }}
+      run: rm private-key.gpg
+
+    - name: Configure Git
+      shell: bash
+      run: |
+        git config user.name "${{ github.actor }}"
+        git config user.email "${{ github.actor }}@users.noreply.github.com"
