@@ -45,40 +45,40 @@ helm install --namespace keda --create-namespace -f values.yaml dtfx-scaler wsug
 
 Below is a table containing the possible set of configurations and their default values.
 
-| Path                                          | Type      | Description                                                  | Default                                             |
-| --------------------------------------------- | --------- | ------------------------------------------------------------ | --------------------------------------------------- |
-| `nameOverride`                                | `string`  | Overrides the chart name used in the `helm.sh/chart` label   |                                                     |
+| Path                                          | Type      | Description                                                                  | Default                                             |
+| --------------------------------------------- | --------- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
+| `additionalAnnotations`                       | `object`  | Additional annotations to add to all of the chart's resources                | `{}`                                                |
+| `additionalLabels`                            | `object`  | Additional labels to add to all of the chart's resources                     | `{}`                                                |
+| `env`                                         | `array`   | Additional environment variables that will be passed into the scaler pods    | `[]`                                                |
 | `fullnameOverride`                            | `string`  | Overrides the object name and the name in the `app.kubernetes.io/name` label |                                                     |
-| `additionalLabels`                            | `object`  | Additional labels to add to all of the chart's resources     | `{}`                                                |
-| `additionalAnnotations`                       | `object`  | Additional annotations to add to all of the chart's resources | `{}`                                                |
-| `image.repository`                            | `string`  | Scaler gRPC service image repository                         | `ghcr.io/wsugarman/durabletask-azurestorage-scaler` |
-| `image.tag`                                   | `string`  | Scaler gRPC service image tag                                | `1.0.0-alpha.1`                                     |
-| `image.pullPolicy`                            | `string`  | Scaler gRPC service image pull policy                        | `IfNotPresent`                                      |
-| `image.pullSecrets`                           | `array`   | Scaler gRPC service image pull secrets                       | `[]`                                                |
-| `port`                                        | `integer` | Scaler gRPC service port                                     | `4370`                                              |
-| `replicaCount`                                | `integer` | The number of replicas for the gRPC service                  | `1`                                                 |
-| `upgradeStrategy`                             | `object`  | The upgrade strategy                                         | The deployment strategy for replacing existing pods |
-| `resources.requests.cpu`                      | `string`  | Requested CPU units for the scaler gRPC service              | `10m`                                               |
-| `resources.requests.memory`                   | `string`  | Requested memory in bytes for the scaler gRPC service        | `128Mi`                                             |
-| `resources.limits.cpu`                        | `string`  | Maxiumum CPU units for the scaler gRPC service               | `100m`                                              |
-| `resources.limits.memory`                     | `string`  | Maxiumum memory in bytes for the scaler service              | `512Mi`                                             |
-| `nodeSelector`                                | `object`  | Node selector for scaler deployment pods                     | `{}`                                                |
-| `topologySpreadConstraints`                   | `object`  | Scaler constraints for distributing pods across a cluster    | `{}`                                                |
-| `priorityClassName`                           | `string`  | Scaler pod priority                                          | `''`                                                |
-| `podLabels`                                   | `object`  | Additional labels for only the pods                          | `{}`                                                |
-| `podAnnotations`                              | `object`  | Additional annotations for only the pods                     | `{}`                                                |
-| `serviceAccount.create`                       | `boolean` | Specifies whether a service account should be created        | `true`                                              |
-| `serviceAccount.name`                         | `string`  | The name of the service account to use. If not set and create is true, a name is generated based on the release name and `fullnameOverride` |                                                     |
-| `serviceAccount.automountServiceAccountToken` | `boolean` | Specifies whether created service account should automount API-Credentials | `true`                                              |
-| `serviceAccount.annotations`                  | `object`  | Annotations to add to the service account                    | `{}`                                                |
-| `podIdentity.activeDirectory.identity`        | `string`  | Identity in Azure Active Directory to use for Azure pod identity | `''`                                                |
-| `podIdentity.azureWorkload.enabled`           | `boolean` | Specifies whether [Azure Workload Identity](https://azure.github.io/azure-workload-identity/) is to be enabled or not. | `false`                                             |
-| `podIdentity.azureWorkload.clientId`          | `string`  | Id of Azure Active Directory Client to use for authentication with Azure Workload Identity. | `''`                                                |
-| `podIdentity.azureWorkload.tenantId`          | `string`  | Id Azure Active Directory Tenant to use for authentication with for Azure Workload Identity. | `''`                                                |
-| `podIdentity.azureWorkload.tokenExpiration`   | `integer` | Duration in seconds to automatically expire tokens for the service account. | `3600`                                              |
-| `env`                                         | `array`   | Additional environment variables that will be passed into the scaler pods | `[]`                                                |
-| `securityContext`                             | `object`  | Security context for all containers                          | [See below](#security)                              |
-| `podSecurityContext`                          | `object`  | Security context for all pods                                | [See below](#security)                              |
+| `image.pullPolicy`                            | `string`  | Scaler gRPC service image pull policy                                        | `IfNotPresent`                                      |
+| `image.pullSecrets`                           | `array`   | Scaler gRPC service image pull secrets                                       | `[]`                                                |
+| `image.repository`                            | `string`  | Scaler gRPC service image repository                                         | `ghcr.io/wsugarman/durabletask-azurestorage-scaler` |
+| `image.tag`                                   | `string`  | Scaler gRPC service image tag                                                | `1.0.0-alpha.1`                                     |
+| `nameOverride`                                | `string`  | Overrides the chart name used in the `helm.sh/chart` label                   |                                                     |
+| `nodeSelector`                                | `object`  | Node selector for scaler deployment pods                                     | `{}`                                                |
+| `podAnnotations`                              | `object`  | Additional annotations for only the pods                                     | `{}`                                                |
+| `podIdentity.activeDirectory.identity`        | `string`  | Identity in Azure Active Directory to use for Azure pod identity             | `''`                                                |
+| `podIdentity.azureWorkload.clientId`          | `string`  | Id of Azure Active Directory Client to use for authentication with Azure Workload Identity. | `''`                                 |
+| `podIdentity.azureWorkload.enabled`           | `boolean` | Specifies whether [Azure Workload Identity](https://azure.github.io/azure-workload-identity/) is to be enabled or not. | `false`   |
+| `podIdentity.azureWorkload.tenantId`          | `string`  | Id Azure Active Directory Tenant to use for authentication with for Azure Workload Identity. | `''`                                |
+| `podIdentity.azureWorkload.tokenExpiration`   | `integer` | Duration in seconds to automatically expire tokens for the service account.  | `3600`                                              |
+| `podLabels`                                   | `object`  | Additional labels for only the pods                                          | `{}`                                                |
+| `podSecurityContext`                          | `object`  | Security context for all pods                                                | [See below](#security)                              |
+| `port`                                        | `integer` | Scaler gRPC service port                                                     | `4370`                                              |
+| `priorityClassName`                           | `string`  | Scaler pod priority                                                          | `''`                                                |
+| `replicaCount`                                | `integer` | The number of replicas for the gRPC service                                  | `1`                                                 |
+| `resources.limits.cpu`                        | `string`  | Maxiumum CPU units for the scaler gRPC service                               | `100m`                                              |
+| `resources.limits.memory`                     | `string`  | Maxiumum memory in bytes for the scaler service                              | `512Mi`                                             |
+| `resources.requests.cpu`                      | `string`  | Requested CPU units for the scaler gRPC service                              | `10m`                                               |
+| `resources.requests.memory`                   | `string`  | Requested memory in bytes for the scaler gRPC service                        | `128Mi`                                             |
+| `serviceAccount.annotations`                  | `object`  | Annotations to add to the service account                                    | `{}`                                                |
+| `serviceAccount.automountServiceAccountToken` | `boolean` | Specifies whether created service account should automount API-Credentials   | `true`                                              |
+| `securityContext`                             | `object`  | Security context for all containers                                          | [See below](#security)                              |
+| `serviceAccount.create`                       | `boolean` | Specifies whether a service account should be created                        | `true`                                              |
+| `serviceAccount.name`                         | `string`  | The name of the service account to use. If not set and create is true, a name is generated based on the release name and `fullnameOverride` | |
+| `topologySpreadConstraints`                   | `object`  | Scaler constraints for distributing pods across a cluster                    | `{}`                                                |
+| `upgradeStrategy`                             | `object`  | The upgrade strategy                                                         | The deployment strategy for replacing existing pods |
 
 ## Security
 
