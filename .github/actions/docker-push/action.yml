@@ -72,13 +72,13 @@ runs:
         result-encoding: string
 
     - name: Push Docker Image
-      if: ${{ steps.exists.outputs.result != 'true' }}
       shell: bash
+      if: ${{ steps.exists.outputs.result != 'true' }}
       run: docker push ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
 
     - name: Push Latest Docker Image
-      if: ${{ (steps.exists.outputs.result != 'true') && (inputs.pushLatest == 'true') }}
       shell: bash
+      if: ${{ (steps.exists.outputs.result != 'true') && (inputs.pushLatest == 'true') }}
       run: |
         docker tag ${{ inputs.imageRepository }}:${{ inputs.imageTag }} ${{ inputs.imageRepository }}:latest
         docker push ${{ inputs.imageRepository }}:latest
