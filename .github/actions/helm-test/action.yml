@@ -47,6 +47,9 @@ runs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
+    - name: Install Helm
+      uses: azure/setup-helm@v3
+
     - name: Lint Helm Chart
       shell: bash
       run: |
@@ -156,9 +159,3 @@ runs:
     - name: Delete Cluster
       shell: bash
       run: kind delete cluster --name integration
-
-    - name: Upload Chart
-      uses: actions/upload-artifact@v3
-      with:
-        name: chart
-        path: ./charts/durabletask-azurestorage-scaler

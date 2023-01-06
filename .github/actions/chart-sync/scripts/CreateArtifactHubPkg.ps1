@@ -32,14 +32,14 @@ $ErrorActionPreference = 'Stop'
 
 # Import YAML module and parse the chart YAML into an object
 Install-Module powershell-yaml -Scope CurrentUser
-$chart = Get-Content -Path $chartPath -Raw | ConvertFrom-Yaml
+$chart = Get-Content -Path $chartPath -Raw | ConvertFrom-Yaml -Ordered
 $annotations = $chart['annotations']
 
 # Source of the fields in the artifacthub-pkg.yml from the chart.yml
 # See here for the chart.yaml schema: https://helm.sh/docs/topics/charts/#the-chart-file-structure
 # See here for the artifacthub-pkg.yml schema: https://github.com/artifacthub/hub/blob/master/docs/metadata/artifacthub-pkg.yml
 # See here for the available annotations: https://artifacthub.io/docs/topics/annotations/helm/
-$pkg = [Hashtable]::new()
+$pkg = [System.Collections.Specialized.OrderedDictionary]::new([StringComparer].OrdinalIgnoreCase)
 
 if ($chart['version']) {
     $pkg['version'] = $chart['version']

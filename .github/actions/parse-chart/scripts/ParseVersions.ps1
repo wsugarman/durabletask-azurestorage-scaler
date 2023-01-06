@@ -51,14 +51,14 @@ $assemblyVersion = "$($appVersionMatches.Major).0.0.0"
 
 # Adjust the version for Pull Requests (by passing the workflow run id) to differentiate them from official builds
 if ($WorkflowRunId) {
-    $helmPrerelease = $True
-    $helmVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)-pr.$WorkflowRunId"
+    $chartPrerelease = $True
+    $chartVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)-pr.$WorkflowRunId"
     $imagePrerelease = $True
     $imageTag = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch)-pr.$WorkflowRunId"
 }
 else {
-    $helmPrerelease = -Not [string]::IsNullOrEmpty($versionMatches.Suffix)
-    $helmVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)$($versionMatches.Suffix)"
+    $chartPrerelease = -Not [string]::IsNullOrEmpty($versionMatches.Suffix)
+    $chartVersion = "$($versionMatches.Major).$($versionMatches.Minor).$($versionMatches.Patch)$($versionMatches.Suffix)"
     $imagePrerelease = -Not [string]::IsNullOrEmpty($appVersionMatches.Suffix)
     $imageTag = "$($appVersionMatches.Major).$($appVersionMatches.Minor).$($appVersionMatches.Patch)$($appVersionMatches.Suffix)"
 }
@@ -66,7 +66,7 @@ else {
 # Create output variables
 "assemblyFileVersion=$assemblyFileVersion" >> $env:GITHUB_OUTPUT
 "assemblyVersion=$assemblyVersion" >> $env:GITHUB_OUTPUT
-"helmPrerelease=$helmPrerelease" >> $env:GITHUB_OUTPUT
-"helmVersion=$helmVersion" >> $env:GITHUB_OUTPUT
+"chartPrerelease=$chartPrerelease" >> $env:GITHUB_OUTPUT
+"chartVersion=$chartVersion" >> $env:GITHUB_OUTPUT
 "imageTag=$imageTag" >> $env:GITHUB_OUTPUT
 "imagePrerelease=$imagePrerelease" >> $env:GITHUB_OUTPUT
