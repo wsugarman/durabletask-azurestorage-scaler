@@ -39,13 +39,13 @@ runs:
     - name: Helm Pack with Signing
       shell: bash
       if: ${{ inputs.sign == 'true' }}
-      run: echo "${{ inputs.gpgPassword }}" | helm package ${{ input.chartPath }} --sign --key 'Will Sugarman' --keyring ${{ runner.temp }}/gpg/private-key.gpg --passphrase-file -
+      run: echo "${{ inputs.gpgPassword }}" | helm package ${{ inputs.chartPath }} --sign --key 'Will Sugarman' --keyring ${{ runner.temp }}/gpg/private-key.gpg --passphrase-file -
       working-directory: ${{ runner.temp }}/chart
 
     - name: Helm Pack
       shell: bash
       if: ${{ inputs.sign != 'true' }}
-      run: helm package ${{ input.chartPath }}
+      run: helm package ${{ inputs.chartPath }}
       working-directory: ${{ runner.temp }}/chart
 
     - name: Delete Keyring

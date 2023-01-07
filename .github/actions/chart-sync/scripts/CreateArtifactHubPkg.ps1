@@ -17,11 +17,6 @@ param
     $DisplayName = 'Durable Task KEDA External Scaler',
 
     [Parameter(Mandatory=$False)]
-    [ValidateNotNullOrEmpty()]
-    [string]
-    $License = 'MIT',
-
-    [Parameter(Mandatory=$False)]
     [string]
     $LogoPath
 )
@@ -31,8 +26,8 @@ Set-PSDebug -Off
 $ErrorActionPreference = 'Stop'
 
 # Import YAML module and parse the chart YAML into an object
-Install-Module powershell-yaml -Scope CurrentUser
-$chart = Get-Content -Path $chartPath -Raw | ConvertFrom-Yaml -Ordered
+Install-Module powershell-yaml -Force -Repository PSGallery -Scope CurrentUser
+$chart = Get-Content -Path $ChartPath -Raw | ConvertFrom-Yaml -Ordered
 $annotations = $chart['annotations']
 
 # Source of the fields in the artifacthub-pkg.yml from the chart.yml
@@ -58,7 +53,8 @@ if ($chart['description']) {
 
 if ($LogoPath) {
     $pkg['logoPath'] = $LogoPath
-} elseif ($chart['description']) {
+}
+elseif ($chart['description']) {
     $pkg['description'] = $chart['description']
 }
 
@@ -66,7 +62,9 @@ if ($chart['icon']) {
     $pkg['logoURL'] = $chart['icon']
 }
 
-$pkg['license'] = $License
+if ($annotations['artifacthub.io/license']) {
+    $pkg['license'] = $annotations['artifacthub.io/license']
+}
 
 if ($chart['home']) {
     $pkg['homeURL'] = $chart['home']

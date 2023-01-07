@@ -16,33 +16,45 @@ Set-PSDebug -Off
 $ErrorActionPreference = "Stop"
 
 # Read the Chart.yaml
-$chart = Get-Content -Path $ChartPath
+Install-Module powershell-yaml -Force -Repository PSGallery -Scope CurrentUser
+$chart = Get-Content -Path $chartPath -Raw | ConvertFrom-Yaml -Ordered
 
 # Find the fields in the YAML file
-$appVersionResult = $chart | Select-String -Pattern '^appVersion\s*:' | Select-Object -First 1
-if (-Not $appVersionResult.Matches.Success) {
-    throw [InvalidOperationException]::new("Could not find top-level field 'appVersion' in chart '$ChartPath'.")
+$appVersion = $chart['appVersion']
+if (-Not $appVersion) {
+    throw [InvalidOperationException]::new("Could not find field 'appVersion' in chart '$ChartPath'.")
 }
 
-$versionResult = $chart | Select-String -Pattern '^version\s*:' | Select-Object -First 1
-if (-Not $versionResult.Matches.Success) {
-    throw [InvalidOperationException]::new("Could not find top-level field 'version' in chart '$ChartPath'.")
+$version = $chart['version']
+if (-Not $version) {
+    throw [InvalidOperationException]::new("Could not find field 'version' in chart '$ChartPath'.")
 }
 
 # Ensure the versions are valid semantic versions
-$isValid = $appVersionResult.Line -match ('^appVersion\s*:\s*(?<Version>(?<Major>\d+)\.(?<Minor>\d+)\.(?<Patch>\d+)(?<Suffix>-[a-zA-Z]+\.\d+)?)$')
+$isValid = $appVersion -match '^(?<Major>\d+)\.(?<Minor>\d+)\.(?<Patch>\d+)(?<Suffix>-[a-zA-Z]+\.\d+)?$'
 if (-Not $isValid) {
-    throw [FormatException]::new("'$($appVersionResult.Line)' denotes an invalid semantic version.")
+    throw [FormatException]::new("'$appVersion' denotes an invalid semantic version.")
 }
 
 $appVersionMatches = $Matches
 
-$isValid = $versionResult.Line -match ('^version\s*:\s*(?<Version>(?<Major>\d+)\.(?<Minor>\d+)\.(?<Patch>\d+)(?<Suffix>-[a-zA-Z]+\.\d+)?)$')
+$isValid = $version -match '^(?<Major>\d+)\.(?<Minor>\d+)\.(?<Patch>\d+)(?<Suffix>-[a-zA-Z]+\.\d+)?$'
 if (-Not $isValid) {
-    throw [FormatException]::new("'$($versionResult.Line)' denotes an invalid semantic version.")
+    throw [FormatException]::new("'$version' denotes an invalid semantic version.")
 }
 
 $versionMatches = $Matches
+
+# Also ensure that the container image tag is up-to-date
+$annotations = $chart['annotations']
+if ($annotations -And $annotations['artifacthub.io/images']) {
+    $images = ConvertFrom-Yaml -Ordered $annotations['artifacthub.io/images']
+    $image = $images | Where-Object {$_.name -eq 'durabletask-azurestorage-scaler'} | Select-Object @{Name='image';Expression={$_.image}} | Select-Object -ExpandProperty image -First 1
+
+    if ($image -And -Not $image.EndsWith(':' + $appVersion)) {
+        throw [InvalidOperationException]::new("Tag for image 'durabletask-azurestorage-scaler' does not match appVersion '$appVersion'.")
+    }
+}
 
 # Each version number for .NET is restricted to 16-bit numbers, so we'll only preserve the run id for the tag
 # See here for details: https://learn.microsoft.com/en-us/windows/win32/menurc/versioninfo-resource
