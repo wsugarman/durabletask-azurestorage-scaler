@@ -27,14 +27,16 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install Helm
-      uses: azure/setup-helm@v3
+    - name: Create Chart Folder
+      shell: bash
+      run: mkdir -p ${{ runner.temp }}/chart
 
     - name: Create Keyring
       shell: bash
       if: ${{ inputs.sign == 'true' }}
-      run: echo '${{ inputs.gpgPrivateKey }}' | base64 --decode >> private-key.gpg
-      working-directory: ${{ runner.temp }}/gpg
+      run: |
+        mkdir -p ${{ runner.temp }}/gpg
+        echo '${{ inputs.gpgPrivateKey }}' | base64 --decode >> ${{ runner.temp }}/gpg/private-key.gpg
 
     - name: Helm Pack with Signing
       shell: bash
@@ -51,8 +53,7 @@ runs:
     - name: Delete Keyring
       shell: bash
       if: ${{ (inputs.sign == 'true') && always() }}
-      run: rm private-key.gpg
-      working-directory: ${{ runner.temp }}/gpg
+      run: rm ${{ runner.temp }}/gpg/private-key.gpg
 
     - name: Upload Chart
       uses: actions/upload-artifact@v3

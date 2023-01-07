@@ -47,9 +47,6 @@ runs:
     - name: Setup dotnet
       uses: actions/setup-dotnet@v3
 
-    - name: Install Helm
-      uses: azure/setup-helm@v3
-
     - name: Lint Helm Chart
       shell: bash
       run: |
