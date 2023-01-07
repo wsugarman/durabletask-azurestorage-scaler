@@ -1,10 +1,16 @@
 name: Scaler
 
 on:
-  push:
+  pull_request:
     branches: [ main ]
     paths-ignore:
       - '**.md'
+
+#on:
+#  push:
+#    branches: [ main ]
+#    paths-ignore:
+#      - '**.md'
 
 jobs:
   validate:
@@ -123,7 +129,7 @@ jobs:
         id: sync
         uses: ./.github/actions/chart-sync
         with:
-          chartPath: ${{ runner.temp }}/chart
+          assetPath: ${{ runner.temp }}/chart
           chartRepositoryDirectory: 'releases'
           chartRepositoryToken: ${{ secrets.CHART_REPO_PAT }}
           chartVersion: ${{ steps.chart.outputs.chartVersion }}

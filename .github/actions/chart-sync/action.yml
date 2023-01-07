@@ -1,17 +1,17 @@
 name: chart sync
 description: Synchronizes the packed Helm chart with the chart repository
 inputs:
-  artifactHubDirectory:
+  artifactHubDirectoryName:
     default: artifacthub
     description: The directory in the chart repository that contains the Artifact Hub metadata
     required: false
+  assetPath:
+    description: The path to the already packaged Helm chart
+    required: true
   chartName:
     default: durabletask-azurestorage-scaler
     description: The name of the Helm chart
     required: false
-  chartPath:
-    description: The path to the Helm chart
-    required: true
   chartRepository:
     default: wsugarman/charts
     description: The name of the GitHub repository for Helm charts
@@ -72,7 +72,7 @@ runs:
     - name: Copy Chart
       shell: bash
       if: ${{ steps.exists.outputs.result != 'true' }}
-      run: cp -r ${{ inputs.chartPath}} ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}
+      run: cp -r ${{ inputs.assetPath }} ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}
 
     - name: Regenerate Index
       shell: bash
@@ -89,14 +89,14 @@ runs:
         mkdir -p ./${{ inputs.chartName }}/${{ inputs.chartVersion }}
         cp  ${{ inputs.readmePath }} ./${{ inputs.chartName }}/${{ inputs.chartVersion }}/README.md
         cp  ${{ inputs.logoPath }} ./${{ inputs.chartName }}/${{ inputs.chartVersion }}/logo.png
-      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}/${{ inputs.artifactHubDirectory }}
+      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}/${{ inputs.artifactHubDirectoryName }}
 
     - name: Generate artifacthub-pkg.yml
       shell: pwsh
       if: ${{ steps.exists.outputs.result != 'true' }}
       run: ./.github/actions/chart-sync/scripts/CreateArtifactHubPkg.ps1 `
-        -Destination '${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}/${{ inputs.artifactHubDirectory }}/${{ inputs.chartName }}/${{ inputs.chartVersion }}' `
-        -LogoPath '${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}/${{ inputs.artifactHubDirectory }}/${{ inputs.chartName }}/${{ inputs.chartVersion }}/logo.png'
+        -Destination '${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}/${{ inputs.artifactHubDirectoryName }}/${{ inputs.chartName }}/${{ inputs.chartVersion }}' `
+        -LogoPath 'logo.png'
 
     - name: Push Changes
       shell: bash
