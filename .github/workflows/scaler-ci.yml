@@ -68,6 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: validate
     permissions:
+      contents: write
       packages: write
 
     steps:
@@ -109,6 +110,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: publishImage
     permissions:
+      contents: write
       packages: write
 
     steps:
