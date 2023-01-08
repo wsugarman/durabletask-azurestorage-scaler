@@ -35,10 +35,10 @@ upgradeStrategy: {}
 resources:
   requests:
     cpu: 50m
-    memory: 256M
+    memory: 128M
   limits:
     cpu: "1"
-    memory: 1G
+    memory: 512M
 
 # Optional node selector for scaler pods
 nodeSelector: {}

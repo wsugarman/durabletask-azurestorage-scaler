@@ -113,6 +113,20 @@ if ($annotations['artifacthub.io/links']) {
     $pkg['links'] = $annotations['artifacthub.io/links'] | ConvertFrom-Yaml -Ordered
 }
 
+$pkg['install'] = @"
+Add repository
+``````bash
+helm repo add wsugarman https://wsugarman.github.io/charts
+``````
+
+Install chart
+``````bash
+helm install dtfx-scaler wsugarman/durabletask-azurestorage-scaler --version $ChartVersion
+``````
+
+***dtfx-scaler** corresponds to the release name, feel free to change it to suit your needs. You can also add additional flags to the **helm install** command if you need to.*
+"@
+
 if ($annotations['artifacthub.io/changes']) {
     $pkg['changes'] = $annotations['artifacthub.io/changes'] | ConvertFrom-Yaml -Ordered
 }
