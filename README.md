@@ -1,7 +1,7 @@
 # KEDA Durable Task External Scaler for Azure Storage
 [![Scaler Build](https://github.com/wsugarman/durabletask-azurestorage-scaler/actions/workflows/scaler-ci.yml/badge.svg)](https://github.com/wsugarman/durabletask-azurestorage-scaler/actions/workflows/scaler-ci.yml) [![Scaler Code Coverage](https://codecov.io/gh/wsugarman/durabletask-azurestorage-scaler/branch/main/graph/badge.svg)](https://codecov.io/gh/wsugarman/durabletask-azurestorage-scaler) [![GitHub License](https://img.shields.io/github/license/wsugarman/durabletask-azurestorage-scaler?label=License)](https://github.com/wsugarman/durabletask-azurestorage-scaler/blob/main/LICENSE)
 
-A KEDA external scaler for [Durable Task Framework (DTFx)](https://github.com/Azure/durabletask) and [Azure Durable Function](https://github.com/Azure/azure-functions-durable-extension) applications in Kubernetes that rely on the Azure Storage provider.
+A KEDA external scaler for [Durable Task Framework (DTFx)](https://github.com/Azure/durabletask) and [Azure Durable Function](https://github.com/Azure/azure-functions-durable-extension) applications in Kubernetes that rely on the Azure Storage backend.
 
 ## Trigger Specification
 This specification describes the `external` trigger for applications that use the Durable Task Azure Storage provider.
@@ -20,7 +20,7 @@ This specification describes the `external` trigger for applications that use th
 ### Parameter List
 - **`accountName`** - Optional name of the Azure Storage account used by the Durable Task Framework (DTFx). This value is only required when `useManagedIdentity` is `true`
 - **`activeDirectoryEndpoint`** - Optional host authority for Azure Active Directory (AAD). This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
-- **`clientId`** - Optional specifies the identity used when authenticating via managed identity. This value can only be specified when `useManagedIdentity` is `true`
+- **`clientId`** - Optional identity used when authenticating via managed identity. This value can only be specified when `useManagedIdentity` is `true`
 - **`cloud`** - Optional name of the cloud environment that contains the Azure Storage account. Must be a known Azure cloud environment, or `Private` for Azure Stack Hub or air-gapped clouds. If `Private` is specified, both `endpointSuffix` and `activeDirectoryEndpoint` must be specified. Defaults to the `AzurePublicCloud`. Possible values include:
   - `AzurePublicCloud`
   - `AzureUSGovernmentCloud`
@@ -60,7 +60,7 @@ Connection strings may also be specified directly via the `connection` parameter
 ```
 
 ### Identity-Based Connection
-Unfortunately, KEDA external scalers do not support the use of [`TriggerAuthentication`](https://keda.sh/docs/2.5/concepts/authentication/#re-use-credentials-and-delegate-auth-with-triggerauthentication), but the scaler can still leverage an identity-based connection. To use an identity, the scaler deployment must include an [AAD Pod Binding](https://azure.github.io/aad-pod-identity/docs/demo/standard_walkthrough/#5-deploy-azureidentitybinding) or [Workload Identity Service Account labels](https://azure.github.io/azure-workload-identity/docs/topics/service-account-labels-and-annotations.html). If there are multiple identities, be sure to specify the `clientId` parameter.
+KEDA external scalers do not support the use of [`TriggerAuthentication`](https://keda.sh/docs/2.5/concepts/authentication/#re-use-credentials-and-delegate-auth-with-triggerauthentication), but the scaler can still leverage an identity-based connection. To use an identity, the scaler deployment must include an [AAD Pod Binding](https://azure.github.io/aad-pod-identity/docs/demo/standard_walkthrough/#5-deploy-azureidentitybinding) or [Workload Identity Service Account labels](https://azure.github.io/azure-workload-identity/docs/topics/service-account-labels-and-annotations.html). If there are multiple identities, be sure to specify the `clientId` parameter if not already specified for Workload Identity.
 
 An example specification that uses an identity-based connection can be seen below:
 

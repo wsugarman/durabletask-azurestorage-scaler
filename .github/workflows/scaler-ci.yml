@@ -48,6 +48,15 @@ jobs:
           imageTag: ${{ steps.chart.outputs.imageTag }}
           scalerImageRepository: ghcr.io/${{ github.repository }}
 
+      - name: Pack Helm Chart
+        uses: ./.github/actions/helm-package
+        with:
+          chartPath: ${{ github.workspace }}/charts/durabletask-azurestorage-scaler
+          chartVersion: ${{ steps.chart.outputs.chartVersion }}
+          gpgPassword: ${{ secrets. GPG_PASSWORD }}
+          gpgPrivateKey: ${{ secrets. GPG_PRIVATE_KEY_BASE64 }}
+          sign: 'true'
+
   publishImage:
     name: Publish Image
     runs-on: ubuntu-latest
@@ -89,3 +98,46 @@ jobs:
           prerelease: ${{ steps.chart.outputs.imagePrerelease }}
           tag: 'Image_${{ steps.chart.outputs.imageTag }}'
           version: ${{ steps.chart.outputs.imageTag }}
+
+  publishChart:
+    name: Publish Chart
+    runs-on: ubuntu-latest
+    needs: publishImage
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download Chart
+        uses: actions/download-artifact@v3
+        with:
+          name: chart
+          path: ${{ runner.temp }}/chart
+
+      - name: Read Versions
+        id: chart
+        uses: ./.github/actions/parse-chart
+
+      - name: Sync Chart
+        id: sync
+        uses: ./.github/actions/chart-sync
+        with:
+          assetPath: ${{ runner.temp }}/chart
+          chartRepositoryDirectoryName: 'releases'
+          chartRepositoryToken: ${{ secrets.CHART_REPO_PAT }}
+          chartVersion: ${{ steps.chart.outputs.chartVersion }}
+          logoPath: ${{ github.workspace }}/img/storm-icon.png
+          readmePath: ${{ github.workspace }}/charts/durabletask-azurestorage-scaler/README.md
+
+      - name: Create Chart Release
+        uses: ./.github/actions/github-release
+        if: ${{ steps.sync.outputs.success == 'true' }}
+        with:
+          asset: ${{ runner.temp }}/chart
+          name: 'Durable Task KEDA External Scaler Chart'
+          prerelease: ${{ steps.chart.outputs.chartPrerelease }}
+          tag: 'Chart_${{ steps.chart.outputs.chartVersion }}'
+          version: ${{ steps.chart.outputs.chartVersion }}

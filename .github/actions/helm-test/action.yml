@@ -7,18 +7,22 @@ inputs:
     required: false
   functionAppName:
     default: example-function-app
-    description: The Kubernetes namespace for the function app.
+    description: The Kubernetes namespace for the function app
     required: false
   functionAppNamespace:
     default: test
-    description: The Kubernetes namespace for the function app.
+    description: The Kubernetes namespace for the function app
     required: false
   imageTag:
-    description: The tag to use for the images.
+    description: The tag to use for the images
     required: true
   maxActivitiesPerWorker:
-    default: '3'
-    description: The maximum number of activities per worker.
+    default: '2'
+    description: The maximum number of activities per worker
+    required: false
+  partitionCount:
+    default: '1'
+    description: The task hub partition count
     required: false
   scalerImageRepository:
     default: durabletask-azurestorage-scaler
@@ -26,19 +30,19 @@ inputs:
     required: false
   taskHubName:
     default: ExampleTaskHub
-    description: The name of the Durable Task Hub.
+    description: The name of the Durable Task Hub
     required: false
   testActivityDuration:
-    default: 00:00:12
-    description: The duration of each activity.
+    default: 00:00:30
+    description: The duration of each activity
     required: false
   testStatusPollingInterval:
     default: 00:00:02
-    description: The polling interval when checking test conditions.
+    description: The polling interval when checking test conditions
     required: false
   testTimeout:
     default: 00:10:00
-    description: The timeout for each test case.
+    description: The timeout for each test case
     required: false
 
 runs:
@@ -111,6 +115,7 @@ runs:
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \
+          --set taskHub.partitionCount=${{ inputs.partitionCount }} \
           --wait \
           --timeout 30s \
           ${{ inputs.functionAppName }} \
@@ -119,24 +124,24 @@ runs:
     - name: Test Scaler
       shell: bash
       run: |
-        export DurableTask__ConnectionName="DurableTask:ConnectionString"
-        export DurableTask__ConnectionString="DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;"
-        export DurableTask__IsExternalClient="true"
-        export DurableTask__TaskHub="${{ inputs.taskHubName }}"
-        export Function__Name="${{ inputs.functionAppName }}"
-        export Function__Namespace="${{ inputs.functionAppNamespace }}"
-        export Kubernetes__Context="kind-integration"
-        export Scaling__ActivityDuration="${{ inputs.testActivityDuration }}"
-        export Scaling__MaxActivitiesPerWorker="${{ inputs.maxActivitiesPerWorker }}"
-        export Scaling__PollingInterval="${{ inputs.testStatusPollingInterval }}"
-        export Scaling__Timeout="${{ inputs.testTimeout }}"
-
         kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 >/dev/null &
-
         dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \
           -warnaserror
+      env:
+        DurableTask__ConnectionName: DurableTask:ConnectionString
+        DurableTask__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;'
+        DurableTask__IsExternalClient: 'true'
+        DurableTask__StorageProvider__PartitionCount: ${{ inputs.partitionCount }}
+        DurableTask__TaskHub: ${{ inputs.taskHubName }}
+        Function__Name: ${{ inputs.functionAppName }}
+        Function__Namespace: ${{ inputs.functionAppNamespace }}
+        Kubernetes__Context: kind-integration
+        Scaling__ActivityDuration: ${{ inputs.testActivityDuration }}
+        Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
+        Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
+        Scaling__Timeout: ${{ inputs.testTimeout }}
 
     - name: Uninstall Function App Helm Chart
       shell: bash
@@ -157,9 +162,3 @@ runs:
     - name: Delete Cluster
       shell: bash
       run: kind delete cluster --name integration
-
-    - name: Upload Chart
-      uses: actions/upload-artifact@v3
-      with:
-        name: chart
-        path: ./charts/durabletask-azurestorage-scaler
