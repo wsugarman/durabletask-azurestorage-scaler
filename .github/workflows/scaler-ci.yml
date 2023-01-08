@@ -132,7 +132,7 @@ jobs:
         uses: ./.github/actions/chart-sync
         with:
           assetPath: ${{ runner.temp }}/chart
-          chartRepositoryDirectory: 'releases'
+          chartRepositoryDirectoryName: 'releases'
           chartRepositoryToken: ${{ secrets.CHART_REPO_PAT }}
           chartVersion: ${{ steps.chart.outputs.chartVersion }}
           logoPath: ${{ github.workspace }}/img/storm-icon.png

@@ -16,7 +16,7 @@ inputs:
     default: wsugarman/charts
     description: The name of the GitHub repository for Helm charts
     required: false
-  chartRepositoryDirectory:
+  chartRepositoryDirectoryName:
     description: The directory under $GITHUB_WORKSPACE into which the chart repository should be cloned
     required: true
   chartRepositoryToken:
@@ -44,7 +44,7 @@ runs:
       with:
         repository: ${{ inputs.chartRepository }}
         token: ${{ inputs.chartRepositoryToken }}
-        path: ${{ inputs.chartRepositoryDirectory }}
+        path: ${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Check Chart Exists
       id: exists
@@ -58,7 +58,7 @@ runs:
           echo "Chart version '${{ inputs.chartVersion }}' does not yet exist."
           echo "result=false" >> $GITHUB_OUTPUT
         fi
-      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}
+      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Create Release Branch
       shell: bash
@@ -67,12 +67,12 @@ runs:
         git config user.name 'github-actions[bot]'
         git config user.email 'github-actions[bot]@users.noreply.github.com'
         git checkout -b releases/${{ inputs.chartName }}/${{ inputs.chartVersion }}
-      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}
+      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Copy Chart
       shell: bash
       if: ${{ steps.exists.outputs.result != 'true' }}
-      run: cp -r ${{ inputs.assetPath }} ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}
+      run: cp -r ${{ inputs.assetPath }} ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Regenerate Index
       shell: bash
@@ -80,7 +80,7 @@ runs:
       run: |
         rm index.yaml
         helm repo index .
-      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}
+      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Copy Artifact Hub Repository Assets
       shell: bash
@@ -89,13 +89,15 @@ runs:
         mkdir -p ./${{ inputs.chartName }}/${{ inputs.chartVersion }}
         cp  ${{ inputs.readmePath }} ./${{ inputs.chartName }}/${{ inputs.chartVersion }}/README.md
         cp  ${{ inputs.logoPath }} ./${{ inputs.chartName }}/${{ inputs.chartVersion }}/logo.png
-      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}/${{ inputs.artifactHubDirectoryName }}
+      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}/${{ inputs.artifactHubDirectoryName }}
 
     - name: Generate artifacthub-pkg.yml
       shell: pwsh
       if: ${{ steps.exists.outputs.result != 'true' }}
       run: ./.github/actions/chart-sync/scripts/CreateArtifactHubPkg.ps1 `
-        -Destination '${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}/${{ inputs.artifactHubDirectoryName }}/${{ inputs.chartName }}/${{ inputs.chartVersion }}' `
+        -ChartVersion '${{ inputs.chartVersion }}' `
+        -Destination '${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}/${{ inputs.artifactHubDirectoryName }}/${{ inputs.chartName }}/${{ inputs.chartVersion }}' `
+        -IndexPath '${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}/index.yaml' `
         -LogoPath 'logo.png'
 
     - name: Push Changes
@@ -105,7 +107,7 @@ runs:
         git add -A
         git commit -m "Synchronize ${{ inputs.chartName }} ${{ inputs.chartVersion }}"
         git push -u origin releases/${{ inputs.chartName }}/${{ inputs.chartVersion }}
-      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectory }}
+      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Create Pull Request
       uses: actions/github-script@v6
@@ -120,5 +122,6 @@ runs:
             repo: parts[1],
             title: 'Release ${{ inputs.chartName }} ${{ inputs.chartVersion }}',
             head: 'releases/${{ inputs.chartName }}/${{ inputs.chartVersion }}',
-            base: 'main'
+            base: 'main',
+            body: 'Adds release artifacts for chart ${{ inputs.chartName }} version ${{ inputs.chartVersion }}'
           });

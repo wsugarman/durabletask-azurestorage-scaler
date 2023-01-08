@@ -1,10 +1,10 @@
 #!/usr/bin/env pwsh
 param
 (
-    [Parameter(Mandatory=$False)]
+    [Parameter(Mandatory=$True)]
     [ValidateNotNullOrEmpty()]
     [string]
-    $ChartPath = (Join-Path $PSScriptRoot '..' '..' '..' '..' 'charts' 'durabletask-azurestorage-scaler' 'Chart.yaml'),
+    $ChartVersion,
 
     [Parameter(Mandatory=$True)]
     [ValidateNotNullOrEmpty()]
@@ -15,6 +15,11 @@ param
     [ValidateNotNullOrEmpty()]
     [string]
     $DisplayName = 'Durable Task KEDA External Scaler',
+
+    [Parameter(Mandatory=$True)]
+    [ValidateNotNullOrEmpty()]
+    [string]
+    $IndexPath,
 
     [Parameter(Mandatory=$False)]
     [string]
@@ -27,7 +32,13 @@ $ErrorActionPreference = 'Stop'
 
 # Import YAML module and parse the chart YAML into an object
 Install-Module powershell-yaml -Force -Repository PSGallery -Scope CurrentUser
-$chart = Get-Content -Path $ChartPath -Raw | ConvertFrom-Yaml -Ordered
+$index = Get-Content -Path $IndexPath -Raw | ConvertFrom-Yaml -Ordered
+
+$chart = $index['entries']['durabletask-azurestorage-scaler'] | Where-Object {$_['version'] -eq $ChartVersion} | Select-Object -First 1
+if (-Not $chart) {
+    throw [InvalidOperationException]::new("Cannot find entry for chart version '$ChartVersion' in index.yaml.")
+}
+
 $annotations = $chart['annotations']
 
 # Source of the fields in the artifacthub-pkg.yml from the chart.yml
@@ -54,12 +65,12 @@ if ($chart['description']) {
 if ($LogoPath) {
     $pkg['logoPath'] = $LogoPath
 }
-elseif ($chart['description']) {
-    $pkg['description'] = $chart['description']
+elseif ($chart['icon']) {
+    $pkg['logoURL'] = $chart['icon']
 }
 
-if ($chart['icon']) {
-    $pkg['logoURL'] = $chart['icon']
+if ($chart['digest']) {
+    $pkg['digest'] = $chart['digest']
 }
 
 if ($annotations['artifacthub.io/license']) {
