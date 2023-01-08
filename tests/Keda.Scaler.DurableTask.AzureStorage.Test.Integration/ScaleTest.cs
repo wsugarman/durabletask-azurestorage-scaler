@@ -43,6 +43,11 @@ public sealed class ScaleTest : IDisposable
             .Bind(Configuration.GetSection("DurableTask"));
 
         services
+            .AddOptions<DurableTaskOptions>()
+            .Bind(Configuration.GetSection("DurableTask"))
+            .PostConfigure<IOptions<DurableClientOptions>>((o, other) => o.HubName = other.Value.TaskHub);
+
+        services
             .AddOptions<KubernetesOptions>()
             .Bind(Configuration.GetSection(KubernetesOptions.DefaultSectionName))
             .ValidateDataAnnotations();
