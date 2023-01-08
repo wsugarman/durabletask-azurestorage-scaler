@@ -1,13 +1,9 @@
 # durabletask-azurestorage-scaler
-
-> **Note**
->
-> This helm chart has not yet been published
-
 A KEDA external scaler for the Durable Task Azure Storage backend. It is compatible with both the [Durable Task Framework (DTFx)](https://github.com/Azure/durabletask) and [Azure Durable Functions](https://github.com/Azure/azure-functions-durable-extension).
 
 ## Installation
 The below command installs a scaler called `dtfx-scaler`.
+
 ```bash
 helm repo add wsugarman https://wsugarman.github.io/charts
 helm repo update
@@ -17,12 +13,12 @@ helm install --namespace keda --create-namespace dtfx-scaler wsugarman/durableta
 
 ## Deletion
 The below command deletes an existing scaler release called `dtfx-scaler`.
+
 ```bash
 helm uninstall --namespace keda dtfx-scaler
 ```
 
 ## Configuration
-
 Values may be specified using the `--set key=value` argument as seen in the [`helm install` documentation](https://helm.sh/docs/helm/helm_install/):
 
 ```bash
@@ -98,4 +94,3 @@ podSecurityContext:
   runAsNonRoot: true
   runAsUser: 200
 ```
-

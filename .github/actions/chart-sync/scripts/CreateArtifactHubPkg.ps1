@@ -86,15 +86,15 @@ if ($chart['appVersion']) {
 }
 
 if ($annotations['artifacthub.io/images']) {
-    $pkg['containersImages'] = $annotations['artifacthub.io/images']
+    $pkg['containersImages'] = $annotations['artifacthub.io/images'] | ConvertFrom-Yaml -Ordered
 }
 
 if ($annotations.Contains('artifacthub.io/containsSecurityUpdates')) {
-    $pkg['containsSecurityUpdates'] = $annotations['artifacthub.io/containsSecurityUpdates']
+    $pkg['containsSecurityUpdates'] = [bool]::Parse($annotations['artifacthub.io/containsSecurityUpdates'])
 }
 
-if ($annotations['artifacthub.io/operator']) {
-    $pkg['operator'] = $annotations['artifacthub.io/operator']
+if ($annotations.Contains('artifacthub.io/operator')) {
+    $pkg['operator'] = [bool]::Parse($annotations['artifacthub.io/operator'])
 }
 
 if ($chart.Contains('deprecated')) {
@@ -102,7 +102,7 @@ if ($chart.Contains('deprecated')) {
 }
 
 if ($annotations.Contains('artifacthub.io/prerelease')) {
-    $pkg['prerelease'] = $annotations['artifacthub.io/prerelease']
+    $pkg['prerelease'] = [bool]::Parse($annotations['artifacthub.io/prerelease'])
 }
 
 if ($chart['keywords']) {
@@ -110,11 +110,11 @@ if ($chart['keywords']) {
 }
 
 if ($annotations['artifacthub.io/links']) {
-    $pkg['links'] = $annotations['artifacthub.io/links']
+    $pkg['links'] = $annotations['artifacthub.io/links'] | ConvertFrom-Yaml -Ordered
 }
 
 if ($annotations['artifacthub.io/changes']) {
-    $pkg['changes'] = $annotations['artifacthub.io/changes']
+    $pkg['changes'] = $annotations['artifacthub.io/changes'] | ConvertFrom-Yaml -Ordered
 }
 
 if ($chart['maintainers']) {
@@ -122,7 +122,7 @@ if ($chart['maintainers']) {
 }
 
 if ($annotations['artifacthub.io/recommendations']) {
-    $pkg['recommendations'] = $annotations['artifacthub.io/recommendations']
+    $pkg['recommendations'] = $annotations['artifacthub.io/recommendations'] | ConvertFrom-Yaml -Ordered
 }
 
 # Output the file as YAML
