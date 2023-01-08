@@ -40,6 +40,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:7.0.1-cbl-mariner2.0-distroless-amd64@sha25
 COPY --from=nonroot / /
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0
+RUN tdnf update -y && tdnf clean all
 USER nonroot
 EXPOSE 8080
 
