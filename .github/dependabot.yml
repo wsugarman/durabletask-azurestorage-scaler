@@ -25,6 +25,14 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "github-actions"
+    directory: "/actions/chart-sync"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
     directory: "/actions/code-coverage"
     schedule:
       interval: "daily"
@@ -58,6 +66,14 @@ updates:
 
   - package-ecosystem: "github-actions"
     directory: "/actions/github-release"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/Los_Angeles"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "github-actions"
+    directory: "/actions/helm-package"
     schedule:
       interval: "daily"
       time: "09:00"
