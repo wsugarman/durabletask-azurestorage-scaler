@@ -1,13 +1,9 @@
-# durabletask-azurestorage-scaler
-
-> **Note**
->
-> This helm chart has not yet been published
-
+# Durable Task KEDA External Scaler for Azure Storage
 A KEDA external scaler for the Durable Task Azure Storage backend. It is compatible with both the [Durable Task Framework (DTFx)](https://github.com/Azure/durabletask) and [Azure Durable Functions](https://github.com/Azure/azure-functions-durable-extension).
 
 ## Installation
-The below command installs a scaler called `dtfx-scaler`.
+The below command installs a scaler called `dtfx-scaler`:
+
 ```bash
 helm repo add wsugarman https://wsugarman.github.io/charts
 helm repo update
@@ -16,13 +12,13 @@ helm install --namespace keda --create-namespace dtfx-scaler wsugarman/durableta
 ```
 
 ## Deletion
-The below command deletes an existing scaler release called `dtfx-scaler`.
+The below command deletes an existing scaler release called `dtfx-scaler`:
+
 ```bash
 helm uninstall --namespace keda dtfx-scaler
 ```
 
 ## Configuration
-
 Values may be specified using the `--set key=value` argument as seen in the [`helm install` documentation](https://helm.sh/docs/helm/helm_install/):
 
 ```bash
@@ -43,7 +39,7 @@ helm install --namespace keda --create-namespace -f values.yaml dtfx-scaler wsug
 
 ### Values
 
-Below is a table containing the possible set of configurations and their default values.
+The following table contains the possible set of configurations and their default values.
 
 | Path                                          | Type      | Description                                                                  | Default                                             |
 | --------------------------------------------- | --------- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
@@ -61,17 +57,17 @@ Below is a table containing the possible set of configurations and their default
 | `podIdentity.activeDirectory.identity`        | `string`  | Identity in Azure Active Directory to use for Azure pod identity             | `''`                                                |
 | `podIdentity.azureWorkload.clientId`          | `string`  | Id of Azure Active Directory Client to use for authentication with Azure Workload Identity. | `''`                                 |
 | `podIdentity.azureWorkload.enabled`           | `boolean` | Specifies whether [Azure Workload Identity](https://azure.github.io/azure-workload-identity/) is to be enabled or not. | `false`   |
-| `podIdentity.azureWorkload.tenantId`          | `string`  | Id Azure Active Directory Tenant to use for authentication with for Azure Workload Identity. | `''`                                |
+| `podIdentity.azureWorkload.tenantId`          | `string`  | Id of Azure Active Directory Tenant to use for authentication with for Azure Workload Identity. | `''`                             |
 | `podIdentity.azureWorkload.tokenExpiration`   | `integer` | Duration in seconds to automatically expire tokens for the service account.  | `3600`                                              |
 | `podLabels`                                   | `object`  | Additional labels for only the pods                                          | `{}`                                                |
 | `podSecurityContext`                          | `object`  | Security context for all pods                                                | [See below](#security)                              |
 | `port`                                        | `integer` | Scaler gRPC service port                                                     | `4370`                                              |
 | `priorityClassName`                           | `string`  | Scaler pod priority                                                          | `''`                                                |
 | `replicaCount`                                | `integer` | The number of replicas for the gRPC service                                  | `1`                                                 |
-| `resources.limits.cpu`                        | `string`  | Maxiumum CPU units for the scaler gRPC service                               | `100m`                                              |
-| `resources.limits.memory`                     | `string`  | Maxiumum memory in bytes for the scaler service                              | `512Mi`                                             |
-| `resources.requests.cpu`                      | `string`  | Requested CPU units for the scaler gRPC service                              | `10m`                                               |
-| `resources.requests.memory`                   | `string`  | Requested memory in bytes for the scaler gRPC service                        | `128Mi`                                             |
+| `resources.limits.cpu`                        | `string`  | Maxiumum CPU units for the scaler gRPC service                               | `512M`                                              |
+| `resources.limits.memory`                     | `string`  | Maxiumum memory in bytes for the scaler service                              | `1G`                                                |
+| `resources.requests.cpu`                      | `string`  | Requested CPU units for the scaler gRPC service                              | `50m`                                               |
+| `resources.requests.memory`                   | `string`  | Requested memory in bytes for the scaler gRPC service                        | `128M`                                              |
 | `serviceAccount.annotations`                  | `object`  | Annotations to add to the service account                                    | `{}`                                                |
 | `serviceAccount.automountServiceAccountToken` | `boolean` | Specifies whether created service account should automount API-Credentials   | `true`                                              |
 | `securityContext`                             | `object`  | Security context for all containers                                          | [See below](#security)                              |
@@ -82,7 +78,7 @@ Below is a table containing the possible set of configurations and their default
 
 ## Security
 
-By default, the external scaler runs as non-root in a read-only file system.
+By default, the external scaler runs as non-root in a read-only file system:
 
 ```yaml
 securityContext:
@@ -98,4 +94,3 @@ podSecurityContext:
   runAsNonRoot: true
   runAsUser: 200
 ```
-
