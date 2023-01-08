@@ -1,5 +1,6 @@
 # KEDA Durable Task External Scaler for Azure Storage
 [![Scaler Build](https://github.com/wsugarman/durabletask-azurestorage-scaler/actions/workflows/scaler-ci.yml/badge.svg)](https://github.com/wsugarman/durabletask-azurestorage-scaler/actions/workflows/scaler-ci.yml) [![Scaler Code Coverage](https://codecov.io/gh/wsugarman/durabletask-azurestorage-scaler/branch/main/graph/badge.svg)](https://codecov.io/gh/wsugarman/durabletask-azurestorage-scaler) [![GitHub License](https://img.shields.io/github/license/wsugarman/durabletask-azurestorage-scaler?label=License)](https://github.com/wsugarman/durabletask-azurestorage-scaler/blob/main/LICENSE)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwsugarman%2Fdurabletask-azurestorage-scaler.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwsugarman%2Fdurabletask-azurestorage-scaler?ref=badge_shield)
 
 A KEDA external scaler for [Durable Task Framework (DTFx)](https://github.com/Azure/durabletask) and [Azure Durable Function](https://github.com/Azure/azure-functions-durable-extension) applications in Kubernetes that rely on the Azure Storage backend.
 
@@ -80,3 +81,6 @@ Coming soon
 
 ## Licenses
 The external scaler is licensed under the [MIT](https://github.com/wsugarman/durabletask-azurestorage-scaler/blob/main/LICENSE) license. The storm icon was created by [Evon](https://thenounproject.com/evonmbon/) and is licensed royalty-free through [The Noun Project](https://thenounproject.com/).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwsugarman%2Fdurabletask-azurestorage-scaler.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwsugarman%2Fdurabletask-azurestorage-scaler?ref=badge_large)
