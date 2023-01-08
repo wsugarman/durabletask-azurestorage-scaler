@@ -123,5 +123,5 @@ runs:
             title: 'Release ${{ inputs.chartName }} ${{ inputs.chartVersion }}',
             head: 'releases/${{ inputs.chartName }}/${{ inputs.chartVersion }}',
             base: 'main',
-            body: 'Adds release artifacts for chart ${{ inputs.chartName }} version ${{ inputs.chartVersion }}'
+            body: 'Add release artifacts for ${{ inputs.chartName }} version ${{ inputs.chartVersion }}'
           });
