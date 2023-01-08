@@ -42,6 +42,7 @@ runs:
     - name: Checkout Charts
       uses: actions/checkout@v3
       with:
+        ref: refs/heads/main
         repository: ${{ inputs.chartRepository }}
         token: ${{ inputs.chartRepositoryToken }}
         path: ${{ inputs.chartRepositoryDirectoryName }}
@@ -72,7 +73,7 @@ runs:
     - name: Copy Chart
       shell: bash
       if: ${{ steps.exists.outputs.result != 'true' }}
-      run: cp -r ${{ inputs.assetPath }} ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
+      run: cp -r ${{ inputs.assetPath }}/* ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Regenerate Index
       shell: bash
