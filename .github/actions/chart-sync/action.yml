@@ -51,7 +51,7 @@ runs:
       id: exists
       shell: bash
       run: |
-        expected="${{ inputs.chartName }}-${{ inputs.chartVersion }}.tgz"
+        expected="${{ inputs.chartName }}/${{ inputs.chartName }}-${{ inputs.chartVersion }}.tgz"
         if [ -f $expected ]; then
           echo "Chart version '${{ inputs.chartVersion }}' already exists."
           echo "result=true" >> $GITHUB_OUTPUT
@@ -73,7 +73,10 @@ runs:
     - name: Copy Chart
       shell: bash
       if: ${{ steps.exists.outputs.result != 'true' }}
-      run: cp -r ${{ inputs.assetPath }}/* ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
+      run: |
+        mkdir ${{ inputs.chartName }}
+        cp -r ${{ inputs.assetPath }}/* ./${{ inputs.chartName }}
+      working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Regenerate Index
       shell: bash
