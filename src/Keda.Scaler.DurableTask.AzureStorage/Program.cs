@@ -1,9 +1,11 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using System;
 using Keda.Scaler.DurableTask.AzureStorage;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -22,6 +24,10 @@ builder.Services
         o.Interceptors.Add<ExceptionInterceptor>();
     });
 
+// Add TLS if configured
+using IDisposable certificateWatcher = builder.ConfigureKestrelTls();
+
+// Build the app
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Google.Protobuf.Collections;
+using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 
@@ -129,16 +130,5 @@ internal sealed class MapFieldConfiguration : IConfiguration
 
         public IDisposable RegisterChangeCallback(Action<object> callback, object? state)
             => NullDisposable.Instance;
-    }
-
-    private sealed class NullDisposable : IDisposable
-    {
-        public static NullDisposable Instance { get; } = new NullDisposable();
-
-        private NullDisposable()
-        { }
-
-        public void Dispose()
-        { }
     }
 }
