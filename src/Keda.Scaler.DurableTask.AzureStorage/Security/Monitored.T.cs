@@ -6,7 +6,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
-internal sealed class Monitored<T> where T : class
+internal class Monitored<T> where T : class
 {
     public T Current => _value;
 

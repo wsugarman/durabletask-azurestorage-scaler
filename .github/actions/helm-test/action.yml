@@ -85,6 +85,16 @@ runs:
           keda \
           kedacore/keda
 
+    - name: Create TLS Secret
+      shell: bash
+      run: |
+        mkdir ${{ runner.temp }}/certs
+        dotnet dev-certs https --format PEM --trust -np -ep ${{ runner.temp }}/certs/test.pem
+        kubectl create secret tls server-tls \
+          -n ${{ inputs.functionAppNamespace }} \
+          --cert=${{ runner.temp }}/certs/test.pem \
+          --key=${{ runner.temp }}/certs/test.key
+
     - name: Install Scaler Helm Chart
       shell: bash
       run: |
@@ -93,6 +103,7 @@ runs:
           --create-namespace \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set tls.certSecret=server-tls \
           --wait \
           --timeout 30s \
           dtfx-scaler \

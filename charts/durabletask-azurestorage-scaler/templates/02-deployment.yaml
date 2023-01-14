@@ -70,18 +70,39 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if .Values.env }}
           env:
+            - name: Security__MutualTls
+              value: {{ .Values.tls.enforceClientCert | default "false" | quote }}
+            {{- if .Values.tls.certSecret }}
+            - name: Security__CertificatePath
+              value: /certs/tls.crt
+            - name: Security__KeyPath
+              value: /certs/tls.key
+            {{- end }}
+            {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 -}}
-          {{- end }}
+            {{- end }}
+          volumeMounts:
+            {{- if .Values.tls.certSecret }}
+            - name: certs
+              mountPath: /certs
+              readOnly: true
+            {{- end }}
           ports:
-          - name: grpc
-            containerPort: 8080
-            protocol: TCP
+            - name: grpc
+              containerPort: 8080
+              protocol: TCP
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      volumes:
+        {{- if .Values.tls.certSecret }}
+        - name: certs
+          secret:
+            secretName: {{ .Values.tls.certSecret }}
+            optional: false
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -6,11 +6,11 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -24,16 +24,18 @@ internal static class WebApplicationBuilderExtensions
             throw new ArgumentNullException(nameof(builder));
 
         // Check security settings
-        TlsOptions tlsOptions = new TlsOptions();
-        builder.Configuration.GetSection(TlsOptions.DefaultSectionName).Bind(tlsOptions);
+        TlsOptions tlsOptions = builder
+            .Configuration
+            .GetSection(TlsOptions.DefaultSectionName)
+            .GetOrDefault<TlsOptions>();
 
-        if (tlsOptions.CertificatePath is null)
+        if (string.IsNullOrWhiteSpace(tlsOptions.CertificatePath))
             return NullDisposable.Instance;
 
         string certificateFileName = Path.GetFileName(tlsOptions.CertificatePath);
         PhysicalFileProvider watcher = new PhysicalFileProvider(Path.GetDirectoryName(tlsOptions.CertificatePath)!);
         Monitored<X509Certificate2> cert = new Monitored<X509Certificate2>(
-            () => tlsOptions.ReadCertificate()!,
+            () => X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath),
             () => watcher.Watch(certificateFileName));
 
         builder.WebHost

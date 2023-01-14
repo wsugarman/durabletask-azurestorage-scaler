@@ -25,7 +25,7 @@ builder.Services
     });
 
 // Add TLS if configured
-using IDisposable certificateWatcher = builder.ConfigureKestrelTls();
+using IDisposable fileWatcher = builder.ConfigureKestrelTls();
 
 // Build the app
 WebApplication app = builder.Build();
