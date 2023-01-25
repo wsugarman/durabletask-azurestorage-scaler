@@ -78,13 +78,12 @@ runs:
         mkdir ${{ runner.temp }}/certs
         dotnet dev-certs https --format PEM --trust -np -ep ${{ runner.temp }}/certs/test.pem
         kubectl create namespace keda
-        kubectl create namespace ${{ inputs.functionAppNamespace }}
         kubectl create secret tls client-tls \
           -n keda \
           --cert=${{ runner.temp }}/certs/test.pem \
           --key=${{ runner.temp }}/certs/test.key
         kubectl create secret tls server-tls \
-          -n ${{ inputs.functionAppNamespace }} \
+          -n keda \
           --cert=${{ runner.temp }}/certs/test.pem \
           --key=${{ runner.temp }}/certs/test.key
 
