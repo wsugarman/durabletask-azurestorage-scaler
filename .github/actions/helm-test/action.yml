@@ -77,6 +77,8 @@ runs:
       run: |
         mkdir ${{ runner.temp }}/certs
         dotnet dev-certs https --format PEM --trust -np -ep ${{ runner.temp }}/certs/test.pem
+        kubectl create namespace keda
+        kubectl create namespace ${{ inputs.functionAppNamespace }}
         kubectl create secret tls client-tls \
           -n keda \
           --cert=${{ runner.temp }}/certs/test.pem \
@@ -108,8 +110,8 @@ runs:
           --create-namespace \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
-          --set tls.certSecret=server-tls \
-          --set tls.enforceClientCert=true \
+          --set tls.secret=server-tls \
+          --set tls.mutual=true \
           --wait \
           --timeout 30s \
           dtfx-scaler \

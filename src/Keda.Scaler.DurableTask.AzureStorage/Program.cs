@@ -1,7 +1,6 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using System;
 using Keda.Scaler.DurableTask.AzureStorage;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 using Microsoft.AspNetCore.Builder;
@@ -24,11 +23,10 @@ builder.Services
         o.Interceptors.Add<ExceptionInterceptor>();
     });
 
-// Add TLS if configured
-using IDisposable fileWatcher = builder.ConfigureKestrelTls();
-
-// Build the app
-WebApplication app = builder.Build();
+// Configure the web server for TLS if necessary and build the app
+WebApplication app = builder
+    .ConfigureKestrelTls()
+    .Build();
 
 // Configure the HTTP request pipeline.
 app.MapGrpcService<DurableTaskAzureStorageScalerService>();
@@ -36,8 +34,6 @@ app.MapGet("/", () => "Communication with gRPC endpoints must be made through a 
 
 // Only enable reflection endpoints when developing
 if (app.Environment.IsDevelopment())
-{
     app.MapGrpcReflectionService();
-}
 
 app.Run();

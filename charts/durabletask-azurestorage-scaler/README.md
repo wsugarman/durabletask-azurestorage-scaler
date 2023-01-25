@@ -73,8 +73,8 @@ The following table contains the possible set of configurations and their defaul
 | `securityContext`                             | `object`  | Security context for all containers                                          | [See below](#security)                              |
 | `serviceAccount.create`                       | `boolean` | Specifies whether a service account should be created                        | `true`                                              |
 | `serviceAccount.name`                         | `string`  | The name of the service account to use. If not set and create is true, a name is generated based on the release name and `fullnameOverride` | |
-| `tls.certSecret`                              | `string`  | Name of the `kubernetes.io/tls` secret used for TLS by the scaler service    | `""`                                                |
-| `tls.enforceClientCert`                       | `boolean` | Specifies whether the scaler service should require a client certificate     | `false`                                             |
+| `tls.secret`                                  | `string`  | Name of the `kubernetes.io/tls` secret used for TLS by the scaler service    | `""`                                                |
+| `tls.mutual`                                  | `boolean` | Specifies whether the scaler service should require a client certificate     | `false`                                             |
 | `topologySpreadConstraints`                   | `object`  | Scaler constraints for distributing pods across a cluster                    | `{}`                                                |
 | `upgradeStrategy`                             | `object`  | The upgrade strategy                                                         | The deployment strategy for replacing existing pods |
 
