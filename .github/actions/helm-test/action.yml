@@ -72,6 +72,20 @@ runs:
         kind load docker-image "${{ inputs.scalerImageRepository }}:${{ inputs.imageTag }}" "example-function-app:${{ inputs.imageTag }}" --name integration
         kubectl config use-context kind-integration
 
+    - name: Create TLS Secrets
+      shell: bash
+      run: |
+        mkdir ${{ runner.temp }}/certs
+        dotnet dev-certs https --format PEM --trust -np -ep ${{ runner.temp }}/certs/test.pem
+        kubectl create secret tls client-tls \
+          -n keda \
+          --cert=${{ runner.temp }}/certs/test.pem \
+          --key=${{ runner.temp }}/certs/test.key
+        kubectl create secret tls server-tls \
+          -n ${{ inputs.functionAppNamespace }} \
+          --cert=${{ runner.temp }}/certs/test.pem \
+          --key=${{ runner.temp }}/certs/test.key
+
     - name: Install KEDA
       shell: bash
       run: |
@@ -80,20 +94,11 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
+          --set grpcTLSCertsSecret=client-tls \
           --wait \
           --timeout 2m \
           keda \
           kedacore/keda
-
-    - name: Create TLS Secret
-      shell: bash
-      run: |
-        mkdir ${{ runner.temp }}/certs
-        dotnet dev-certs https --format PEM --trust -np -ep ${{ runner.temp }}/certs/test.pem
-        kubectl create secret tls server-tls \
-          -n ${{ inputs.functionAppNamespace }} \
-          --cert=${{ runner.temp }}/certs/test.pem \
-          --key=${{ runner.temp }}/certs/test.key
 
     - name: Install Scaler Helm Chart
       shell: bash
@@ -104,6 +109,7 @@ runs:
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
           --set tls.certSecret=server-tls \
+          --set tls.enforceClientCert=true \
           --wait \
           --timeout 30s \
           dtfx-scaler \
@@ -122,6 +128,7 @@ runs:
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
           --set image.tag=${{ inputs.imageTag }} \
+          --set scaledObject.enableTls=true \
           --set scaledObject.pollingInterval=2 \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
