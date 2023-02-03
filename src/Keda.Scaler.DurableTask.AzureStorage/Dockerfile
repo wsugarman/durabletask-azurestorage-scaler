@@ -1,5 +1,5 @@
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:7.0.102-cbl-mariner2.0-amd64@sha256:5f12e941bbc7364da8997eef2cc4f615484bfe4c0cc31a4d9434498dd541ae52 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0.102-cbl-mariner2.0-amd64@sha256:dea661fc3474fc6a4c8bbfe9645039fbb8cecc54688f9e3af2feef141a9d902f AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
@@ -28,7 +28,7 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
   -warnaserror \
   -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0.102-cbl-mariner2.0-amd64@sha256:5f12e941bbc7364da8997eef2cc4f615484bfe4c0cc31a4d9434498dd541ae52 AS users
+FROM mcr.microsoft.com/dotnet/sdk:7.0.102-cbl-mariner2.0-amd64@sha256:dea661fc3474fc6a4c8bbfe9645039fbb8cecc54688f9e3af2feef141a9d902f AS users
 RUN groupadd nonroot -g 2000 && \
     useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 200
 
