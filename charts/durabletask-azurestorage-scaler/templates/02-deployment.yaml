@@ -70,6 +70,7 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if or .Values.tls.secret .Values.env }}
           env:
             {{- if .Values.tls.secret }}
             - name: ASPNETCORE_URLS
@@ -79,11 +80,10 @@ spec:
             - name: Security__Transport__KeyPath
               value: /certs/tls.key
             {{- end }}
-            - name: Security__Transport__MutualTls
-              value: {{ .Values.tls.mutual | default "false" | quote }}
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 -}}
             {{- end }}
+          {{- end }}
           volumeMounts:
             {{- if .Values.tls.secret }}
             - name: certs

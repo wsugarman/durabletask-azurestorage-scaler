@@ -78,7 +78,7 @@ runs:
         mkdir ${{ runner.temp }}/certs
         dotnet dev-certs https --format PEM --trust -np -ep ${{ runner.temp }}/certs/test.pem
         kubectl create namespace keda
-        kubectl create secret tls client-tls \
+        kubectl create secret tls self-signed-ca \
           -n keda \
           --cert=${{ runner.temp }}/certs/test.pem \
           --key=${{ runner.temp }}/certs/test.key
@@ -95,7 +95,7 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
-          --set grpcTLSCertsSecret=client-tls \
+          --set grpcTLSCertsSecret=self-signed-ca \
           --wait \
           --timeout 2m \
           keda \
@@ -161,6 +161,16 @@ runs:
         Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
         Scaling__Timeout: ${{ inputs.testTimeout }}
+
+    - name: Get Keda Logs
+      shell: bash
+      if: ${{ failure() }}
+      run: kubectl logs -l app=keda-operator
+
+    - name: Get Scaler Logs
+      shell: bash
+      if: ${{ failure() }}
+      run: kubectl logs -l app=dtfx-scaler
 
     - name: Uninstall Function App Helm Chart
       shell: bash

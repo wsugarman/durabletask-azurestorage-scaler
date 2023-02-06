@@ -37,13 +37,8 @@ internal static class WebApplicationBuilderExtensions
                 () => X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath),
                 () => watcher.Watch(certificateFileName));
 
-            builder.WebHost
-                .ConfigureKestrel(o => o
-                    .ConfigureHttpsDefaults(x =>
-                    {
-                        x.ClientCertificateMode = tlsOptions.MutualTls ? ClientCertificateMode.RequireCertificate : ClientCertificateMode.AllowCertificate;
-                        x.ServerCertificateSelector = (context, dnsName) => cert.Current;
-                    }));
+            // TODO: Enable mTLS once supported by KEDA
+            builder.WebHost.ConfigureKestrel(o => o.ConfigureHttpsDefaults(x => x.ServerCertificateSelector = (context, dnsName) => cert.Current));
         }
 
         return builder;

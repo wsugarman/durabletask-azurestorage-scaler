@@ -13,6 +13,4 @@ internal sealed class TlsOptions
     public string? CertificatePath { get; set; }
 
     public string? KeyPath { get; set; }
-
-    public bool MutualTls { get; set; }
 }

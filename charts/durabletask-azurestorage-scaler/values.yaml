@@ -68,7 +68,6 @@ serviceAccount:
 # Optional TLS information
 tls:
   secret: ""
-  mutual: false
 
 # Optional values for configuring the identity for the scaler pods
 # Note: Names are meant to parallel the KEDA helm chart
