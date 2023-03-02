@@ -8,7 +8,6 @@ using System.Security.Cryptography.X509Certificates;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
 
@@ -34,7 +33,14 @@ internal static class WebApplicationBuilderExtensions
             string certificateFileName = Path.GetFileName(tlsOptions.CertificatePath);
             PhysicalFileProvider watcher = new PhysicalFileProvider(Path.GetDirectoryName(tlsOptions.CertificatePath)!);
             Monitored<X509Certificate2> cert = new Monitored<X509Certificate2>(
-                () => X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath),
+                () =>
+                {
+                    using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                    X509Certificate2 certificate = X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath);
+                    store.Add(certificate);
+
+                    return certificate;
+                },
                 () => watcher.Watch(certificateFileName));
 
             // TODO: Enable mTLS once supported by KEDA

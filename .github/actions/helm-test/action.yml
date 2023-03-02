@@ -76,7 +76,10 @@ runs:
       shell: bash
       run: |
         mkdir ${{ runner.temp }}/certs
-        dotnet dev-certs https --format PEM --trust -np -ep ${{ runner.temp }}/certs/test.pem
+        dotnet dev-certs https
+        sudo dotnet dev-certs https -np -ep ${{ runner.temp }}/certs/test.pem --format PEM
+        sudo update-ca-certificates
+
         kubectl create namespace keda
         kubectl create secret tls self-signed-ca \
           -n keda \
@@ -110,7 +113,6 @@ runs:
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
           --set tls.secret=server-tls \
-          --set tls.mutual=true \
           --wait \
           --timeout 30s \
           dtfx-scaler \
