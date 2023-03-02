@@ -35,8 +35,10 @@ internal static class WebApplicationBuilderExtensions
             Monitored<X509Certificate2> cert = new Monitored<X509Certificate2>(
                 () =>
                 {
-                    using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
                     X509Certificate2 certificate = X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath);
+
+                    using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
+                    store.Open(OpenFlags.ReadWrite);
                     store.Add(certificate);
 
                     return certificate;
