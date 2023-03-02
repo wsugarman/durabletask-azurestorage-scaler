@@ -81,11 +81,11 @@ runs:
         sudo update-ca-certificates
 
         kubectl create namespace keda
-        kubectl create secret tls self-signed-ca \
+        sudo kubectl create secret tls self-signed-ca \
           -n keda \
           --cert=${{ runner.temp }}/certs/test.pem \
           --key=${{ runner.temp }}/certs/test.key
-        kubectl create secret tls server-tls \
+        sudo kubectl create secret tls server-tls \
           -n keda \
           --cert=${{ runner.temp }}/certs/test.pem \
           --key=${{ runner.temp }}/certs/test.key
