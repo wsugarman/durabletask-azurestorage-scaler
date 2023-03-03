@@ -33,16 +33,7 @@ internal static class WebApplicationBuilderExtensions
             string certificateFileName = Path.GetFileName(tlsOptions.CertificatePath);
             PhysicalFileProvider watcher = new PhysicalFileProvider(Path.GetDirectoryName(tlsOptions.CertificatePath)!);
             Monitored<X509Certificate2> cert = new Monitored<X509Certificate2>(
-                () =>
-                {
-                    X509Certificate2 certificate = X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath);
-
-                    using X509Store store = new X509Store(StoreName.My, StoreLocation.CurrentUser);
-                    store.Open(OpenFlags.ReadWrite);
-                    store.Add(certificate);
-
-                    return certificate;
-                },
+                () => X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath),
                 () => watcher.Watch(certificateFileName));
 
             // TODO: Enable mTLS once supported by KEDA

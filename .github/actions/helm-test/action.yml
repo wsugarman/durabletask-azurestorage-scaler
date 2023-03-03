@@ -75,18 +75,51 @@ runs:
     - name: Create TLS Secrets
       shell: bash
       run: |
-        mkdir ${{ runner.temp }}/certs
-        dotnet dev-certs https -np -ep ${{ runner.temp }}/certs/test.pem --format PEM
-
         kubectl create namespace keda
+        mkdir ${{ runner.temp }}/certs
+
+        # Create CA Root Certificate
+        openssl req \
+          -x509 \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -days 1 \
+          -subj "/C=US/CN=Integration Tests" \
+          -keyout ${{ runner.temp }}/certs/root.key \
+          -out ${{ runner.temp }}/certs/root.pem
+
         kubectl create secret tls self-signed-ca \
           -n keda \
-          --cert=${{ runner.temp }}/certs/test.pem \
-          --key=${{ runner.temp }}/certs/test.key
+          --key=${{ runner.temp }}/certs/root.key \
+          --cert=${{ runner.temp }}/certs/root.pem
+
+        # Create a server TLS certificate
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda\n" >> ${{ runner.temp }}/certs/server.ext
+
+        openssl req \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -subj "/C=US/ST=Washington/L=Redmond/O=DTFx Scaler/CN=dtfx-scaler.keda" \
+          -addext "subjectAltName = DNS:dtfx-scaler.keda" \
+          -keyout ${{ runner.temp }}/certs/server.key \
+          -out ${{ runner.temp }}/certs/server.csr
+
+        openssl x509 \
+          -req \
+          -in ${{ runner.temp }}/certs/server.csr \
+          -extfile ${{ runner.temp }}/certs/server.ext \
+          -CA ${{ runner.temp }}/certs/root.pem \
+          -CAkey ${{ runner.temp }}/certs/root.key \
+          -CAcreateserial \
+          -days 1 \
+          -out ${{ runner.temp }}/certs/server.pem
+
         kubectl create secret tls server-tls \
           -n keda \
-          --cert=${{ runner.temp }}/certs/test.pem \
-          --key=${{ runner.temp }}/certs/test.key
+          --cert=${{ runner.temp }}/certs/server.pem \
+          --key=${{ runner.temp }}/certs/server.key
 
     - name: Install KEDA
       shell: bash
