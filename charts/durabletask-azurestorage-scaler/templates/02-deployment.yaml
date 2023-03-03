@@ -84,12 +84,12 @@ spec:
             {{- toYaml .Values.env | nindent 12 -}}
             {{- end }}
           {{- end }}
+          {{- if .Values.tls.secret }}
           volumeMounts:
-            {{- if .Values.tls.secret }}
             - name: certs
               mountPath: /certs
               readOnly: true
-            {{- end }}
+          {{- end }}
           ports:
             - name: grpc
               containerPort: 8080
@@ -98,13 +98,13 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+      {{- if .Values.tls.secret }}
       volumes:
-        {{- if .Values.tls.secret }}
         - name: certs
           secret:
             secretName: {{ .Values.tls.secret }}
             optional: false
-        {{- end }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
