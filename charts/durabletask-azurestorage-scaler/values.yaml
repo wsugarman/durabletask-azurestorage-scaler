@@ -65,6 +65,10 @@ serviceAccount:
   annotations: {}
     # key: value
 
+# Optional TLS information
+tls:
+  secret: ""
+
 # Optional values for configuring the identity for the scaler pods
 # Note: Names are meant to parallel the KEDA helm chart
 podIdentity:

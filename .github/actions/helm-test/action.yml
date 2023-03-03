@@ -72,6 +72,55 @@ runs:
         kind load docker-image "${{ inputs.scalerImageRepository }}:${{ inputs.imageTag }}" "example-function-app:${{ inputs.imageTag }}" --name integration
         kubectl config use-context kind-integration
 
+    - name: Create TLS Secrets
+      shell: bash
+      run: |
+        kubectl create namespace keda
+        mkdir ${{ runner.temp }}/certs
+
+        # Create CA Root Certificate
+        openssl req \
+          -x509 \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -days 1 \
+          -subj "/C=US/CN=Integration Tests" \
+          -keyout ${{ runner.temp }}/certs/root.key \
+          -out ${{ runner.temp }}/certs/root.pem
+
+        kubectl create secret tls self-signed-ca \
+          -n keda \
+          --key=${{ runner.temp }}/certs/root.key \
+          --cert=${{ runner.temp }}/certs/root.pem
+
+        # Create a server TLS certificate
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda\n" >> ${{ runner.temp }}/certs/server.ext
+
+        openssl req \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -subj "/C=US/ST=Washington/L=Redmond/O=DTFx Scaler/CN=dtfx-scaler.keda" \
+          -addext "subjectAltName = DNS:dtfx-scaler.keda" \
+          -keyout ${{ runner.temp }}/certs/server.key \
+          -out ${{ runner.temp }}/certs/server.csr
+
+        openssl x509 \
+          -req \
+          -in ${{ runner.temp }}/certs/server.csr \
+          -extfile ${{ runner.temp }}/certs/server.ext \
+          -CA ${{ runner.temp }}/certs/root.pem \
+          -CAkey ${{ runner.temp }}/certs/root.key \
+          -CAcreateserial \
+          -days 1 \
+          -out ${{ runner.temp }}/certs/server.pem
+
+        kubectl create secret tls server-tls \
+          -n keda \
+          --cert=${{ runner.temp }}/certs/server.pem \
+          --key=${{ runner.temp }}/certs/server.key
+
     - name: Install KEDA
       shell: bash
       run: |
@@ -80,6 +129,7 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
+          --set grpcTLSCertsSecret=self-signed-ca \
           --wait \
           --timeout 2m \
           keda \
@@ -93,6 +143,7 @@ runs:
           --create-namespace \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set tls.secret=server-tls \
           --wait \
           --timeout 30s \
           dtfx-scaler \
@@ -111,6 +162,7 @@ runs:
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
           --set image.tag=${{ inputs.imageTag }} \
+          --set scaledObject.enableTls=true \
           --set scaledObject.pollingInterval=2 \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
@@ -142,6 +194,16 @@ runs:
         Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
         Scaling__Timeout: ${{ inputs.testTimeout }}
+
+    - name: Get Keda Logs
+      shell: bash
+      if: ${{ failure() }}
+      run: kubectl logs -l app=keda-operator -n keda
+
+    - name: Get Scaler Logs
+      shell: bash
+      if: ${{ failure() }}
+      run: kubectl logs -l app=dtfx-scaler -n keda
 
     - name: Uninstall Function App Helm Chart
       shell: bash

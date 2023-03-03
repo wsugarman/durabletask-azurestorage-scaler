@@ -129,16 +129,16 @@ internal sealed class MapFieldConfiguration : IConfiguration
 
         public IDisposable RegisterChangeCallback(Action<object> callback, object? state)
             => NullDisposable.Instance;
-    }
 
-    private sealed class NullDisposable : IDisposable
-    {
-        public static NullDisposable Instance { get; } = new NullDisposable();
+        private sealed class NullDisposable : IDisposable
+        {
+            public static NullDisposable Instance { get; } = new NullDisposable();
 
-        private NullDisposable()
-        { }
+            private NullDisposable()
+            { }
 
-        public void Dispose()
-        { }
+            public void Dispose()
+            { }
+        }
     }
 }

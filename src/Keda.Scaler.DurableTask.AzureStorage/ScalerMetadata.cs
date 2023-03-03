@@ -16,7 +16,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage;
 /// </summary>
 public sealed class ScalerMetadata : IValidatableObject
 {
-    public const string DefaultConnectionEnvironmentVariable = "AzureWebJobsStorage";
+    internal const string DefaultConnectionEnvironmentVariable = "AzureWebJobsStorage";
 
     /// <summary>
     /// Gets the optional name of the Azure Storage account used by the Durable Task framework.
