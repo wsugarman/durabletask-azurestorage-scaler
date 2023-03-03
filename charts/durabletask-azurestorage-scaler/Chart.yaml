@@ -22,7 +22,10 @@ version: 1.0.0-alpha.1
 annotations:
   artifacthub.io/changes: |
     - kind: added
-      description: Initial alpha release
+      description: TLS support
+    - kind: security
+      description: Updated dotnet/aspnet base image
+  artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler
       image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:1.0.0-alpha.1
