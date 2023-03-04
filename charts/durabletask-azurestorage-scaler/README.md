@@ -50,7 +50,7 @@ The following table contains the possible set of configurations and their defaul
 | `image.pullPolicy`                            | `string`  | Scaler gRPC service image pull policy                                        | `IfNotPresent`                                      |
 | `image.pullSecrets`                           | `array`   | Scaler gRPC service image pull secrets                                       | `[]`                                                |
 | `image.repository`                            | `string`  | Scaler gRPC service image repository                                         | `ghcr.io/wsugarman/durabletask-azurestorage-scaler` |
-| `image.tag`                                   | `string`  | Scaler gRPC service image tag                                                | `1.0.0-alpha.1`                                     |
+| `image.tag`                                   | `string`  | Scaler gRPC service image tag                                                | `1.0.0`                                             |
 | `nameOverride`                                | `string`  | Overrides the chart name used in the `helm.sh/chart` label                   |                                                     |
 | `nodeSelector`                                | `object`  | Node selector for scaler deployment pods                                     | `{}`                                                |
 | `podAnnotations`                              | `object`  | Additional annotations for only the pods                                     | `{}`                                                |
