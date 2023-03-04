@@ -76,7 +76,7 @@ runs:
       shell: bash
       run: |
         kubectl create namespace keda
-        mkdir ${{ runner.temp }}/certs
+        mkdir -p ${{ runner.temp }}/certs
 
         # Create CA Root Certificate
         openssl req \
