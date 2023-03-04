@@ -125,6 +125,8 @@ helm install dtfx-scaler wsugarman/durabletask-azurestorage-scaler --version $Ch
 ``````
 
 ***dtfx-scaler** corresponds to the release name, feel free to change it to suit your needs. You can also add additional flags to the **helm install** command if you need to.*
+
+*Before you can use the scaler, you must ensure that KEDA is also installed in the Kubernetes cluster.*
 "@
 
 if ($annotations['artifacthub.io/changes']) {
