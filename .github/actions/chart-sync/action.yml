@@ -74,7 +74,7 @@ runs:
       shell: bash
       if: ${{ steps.exists.outputs.result != 'true' }}
       run: |
-        mkdir ${{ inputs.chartName }}
+        mkdir -p ${{ inputs.chartName }}
         cp -r ${{ inputs.assetPath }}/* ./${{ inputs.chartName }}
       working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
