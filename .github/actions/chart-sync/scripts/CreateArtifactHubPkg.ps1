@@ -55,6 +55,10 @@ if ($chart['name']) {
     $pkg['name'] = $chart['name']
 }
 
+if ($annotations['artifacthub.io/category']) {
+    $pkg['category'] = $annotations['artifacthub.io/category']
+}
+
 $pkg['displayName'] = $DisplayName
 $pkg['createdAt'] =  (Get-Date -AsUTC).ToString("yyyy'-'MM'-'dd'T'HH:mm:ss'Z'")
 

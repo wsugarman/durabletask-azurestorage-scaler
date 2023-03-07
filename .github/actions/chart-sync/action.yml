@@ -81,9 +81,7 @@ runs:
     - name: Regenerate Index
       shell: bash
       if: ${{ steps.exists.outputs.result != 'true' }}
-      run: |
-        rm index.yaml
-        helm repo index .
+      run: helm repo index --merge index.yaml .
       working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Copy Artifact Hub Repository Assets

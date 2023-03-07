@@ -20,6 +20,7 @@ type: application
 version: "1.0.0"
 
 annotations:
+  artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
     - kind: added
       description: Added TLS support
@@ -31,6 +32,8 @@ annotations:
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler
       image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:1.0.0
+      platforms:
+        - linux/amd64
   artifacthub.io/license: MIT
   artifacthub.io/recommendations: |
     - url: https://artifacthub.io/packages/helm/kedacore/keda
