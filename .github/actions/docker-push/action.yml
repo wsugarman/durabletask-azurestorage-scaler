@@ -18,6 +18,9 @@ inputs:
     description: Indicates whether the image should also be pushed with the latest tag
     required: false
 outputs:
+  abbr:
+    description: An abbreviated digest for the image
+    value: ${{ steps.load.outputs.abbr }}
   success:
     description: Indicates whether the image was successfully pushed
     value: ${{ steps.exists.outputs.result != 'true' }}
@@ -26,8 +29,16 @@ runs:
   using: composite
   steps:
     - name: Load Docker Image
+      id: load
       shell: bash
-      run: docker load --input ${{ inputs.imageArchive }}
+      run: |
+        docker load --input ${{ inputs.imageArchive }}
+        result=$(docker image inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} -f '{{index .RepoDigests 0}}')
+        digest=${result#*@}
+        abbr=${digest#*:}
+        abbr=${abbr:0:7}
+        echo "digest=$digest" >> $GITHUB_OUTPUT
+        echo "abbr=$abbr" >> $GITHUB_OUTPUT
 
     - name: Login to ghcr.io
       uses: docker/login-action@v2
@@ -52,8 +63,8 @@ runs:
               username: '${{ github.repository_owner }}'
             });
 
-            if (versions.data.find(v => v.metadata.container.tags.find(t => t == '${{ inputs.imageTag }}'))) {
-              console.log(`Docker tag '${{ inputs.imageTag }}' already exists.`);
+            if (versions.data.find(v => v.name == '${{ steps.load.outputs.digest }}' && v.metadata.container.tags.find(t => t == '${{ inputs.imageTag }}'))) {
+              console.log(`Docker tag '${{ inputs.imageTag }}@${{ steps.load.outputs.digest }}' already exists.`);
               return 'true';
             } else {
               console.log(`Docker tag '${{ inputs.imageTag }}' does not yet exist.`);
