@@ -39,7 +39,6 @@ jobs:
 
       - name: Create Image Release
         uses: ./.github/actions/github-release
-        if: ${{ steps.push.outputs.success == 'true' }}
         with:
           asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
           name: 'Durable Task KEDA External Scaler Image'
