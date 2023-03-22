@@ -34,7 +34,6 @@ runs:
   using: composite
   steps:
     - name: Load Docker Image
-      id: load
       shell: bash
       if: ${{ inputs.imageArchive != '' }}
       run: docker load --input ${{ inputs.imageArchive }}
