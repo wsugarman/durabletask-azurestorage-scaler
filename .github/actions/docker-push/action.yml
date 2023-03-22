@@ -1,12 +1,17 @@
 name: docker push
 description: Loads and pushes the docker image if it does not already exist in the registry
 inputs:
+  force:
+    default: 'false'
+    description: Indicates whether the image should be pushed regardless of the tag existence
+    required: false
   gitHubToken:
     description: The GitHub access token from the secret context
     required: true
   imageArchive:
+    default: ''
     description: The tarball containing the docker image
-    required: true
+    required: false
   imageRepository:
     description: The repository used for the scaler image
     required: true
@@ -31,6 +36,7 @@ runs:
     - name: Load Docker Image
       id: load
       shell: bash
+      if: ${{ inputs.imageArchive != '' }}
       run: |
         docker load --input ${{ inputs.imageArchive }}
         result=$(docker image inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} -f '{{index .RepoDigests 0}}')
@@ -50,6 +56,7 @@ runs:
     - name: Check ghcr.io for Image Tag
       id: exists
       uses: actions/github-script@v6
+      if: ${{ inputs.force != 'true' }}
       with:
         script: |
           const repository = '${{ inputs.imageRepository }}';
@@ -63,8 +70,8 @@ runs:
               username: '${{ github.repository_owner }}'
             });
 
-            if (versions.data.find(v => v.name == '${{ steps.load.outputs.digest }}' && v.metadata.container.tags.find(t => t == '${{ inputs.imageTag }}'))) {
-              console.log(`Docker tag '${{ inputs.imageTag }}@${{ steps.load.outputs.digest }}' already exists.`);
+            if (versions.data.find(v => v.metadata.container.tags.find(t => t == '${{ inputs.imageTag }}'))) {
+              console.log(`Docker tag '${{ inputs.imageTag }}' already exists.`);
               return 'true';
             } else {
               console.log(`Docker tag '${{ inputs.imageTag }}' does not yet exist.`);
@@ -84,7 +91,7 @@ runs:
 
     - name: Push Docker Image
       shell: bash
-      if: ${{ steps.exists.outputs.result != 'true' }}
+      if: ${{ (inputs.force == 'true') || (steps.exists.outputs.result != 'true') }}
       run: docker push ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
 
     - name: Push Latest Docker Image

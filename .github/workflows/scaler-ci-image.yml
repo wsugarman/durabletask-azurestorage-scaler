@@ -1,0 +1,48 @@
+name: Scaler Image
+
+on: workflow_dispatch
+
+jobs:
+  publishImage:
+    name: Publish Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Read Versions
+        id: chart
+        uses: ./.github/actions/parse-chart
+
+      - name: Build Docker Image
+        uses: ./.github/actions/docker-build
+        with:
+          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
+          buildConfiguration: Release
+          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
+          imageRepository: ghcr.io/${{ github.repository }}
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+
+      - name: Push Docker Image
+        id: push
+        uses: ./.github/actions/docker-push
+        with:
+          force: 'true'
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          imageRepository: ghcr.io/${{ github.repository }}
+          imageTag: ${{ steps.chart.outputs.imageTag }}
+          pushLatest: ${{ steps.chart.outputs.imagePrerelease != 'true' }}
+
+      - name: Create Image Release
+        uses: ./.github/actions/github-release
+        if: ${{ steps.push.outputs.success == 'true' }}
+        with:
+          asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
+          name: 'Durable Task KEDA External Scaler Image'
+          prerelease: ${{ steps.chart.outputs.imagePrerelease }}
+          tag: 'Image_${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.abbr }}'
+          version: '${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.abbr }}'
