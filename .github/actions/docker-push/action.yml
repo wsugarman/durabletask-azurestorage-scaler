@@ -23,9 +23,9 @@ inputs:
     description: Indicates whether the image should also be pushed with the latest tag
     required: false
 outputs:
-  abbr:
+  digest:
     description: An abbreviated digest for the image
-    value: ${{ steps.load.outputs.abbr }}
+    value: ${{ steps.metadata.outputs.digest }}
   success:
     description: Indicates whether the image was successfully pushed
     value: ${{ steps.exists.outputs.result != 'true' }}
@@ -37,14 +37,17 @@ runs:
       id: load
       shell: bash
       if: ${{ inputs.imageArchive != '' }}
+      run: docker load --input ${{ inputs.imageArchive }}
+
+    - name: Inspect Docker Image
+      id: metadata
+      shell: bash
       run: |
-        docker load --input ${{ inputs.imageArchive }}
         result=$(docker image inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} -f '{{index .RepoDigests 0}}')
         digest=${result#*@}
-        abbr=${digest#*:}
-        abbr=${abbr:0:7}
+        digest=${digest#*:}
+        digest=${digest:0:7}
         echo "digest=$digest" >> $GITHUB_OUTPUT
-        echo "abbr=$abbr" >> $GITHUB_OUTPUT
 
     - name: Login to ghcr.io
       uses: docker/login-action@v2

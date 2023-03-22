@@ -44,5 +44,5 @@ jobs:
           asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
           name: 'Durable Task KEDA External Scaler Image'
           prerelease: ${{ steps.chart.outputs.imagePrerelease }}
-          tag: 'Image_${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.abbr }}'
-          version: '${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.abbr }}'
+          tag: 'Image_${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.digest }}'
+          version: '${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.digest }}'
