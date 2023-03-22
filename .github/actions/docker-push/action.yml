@@ -38,16 +38,6 @@ runs:
       if: ${{ inputs.imageArchive != '' }}
       run: docker load --input ${{ inputs.imageArchive }}
 
-    - name: Inspect Docker Image
-      id: metadata
-      shell: bash
-      run: |
-        result=$(docker image inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} -f '{{index .RepoDigests 0}}')
-        digest=${result#*@}
-        digest=${digest#*:}
-        digest=${digest:0:7}
-        echo "digest=$digest" >> $GITHUB_OUTPUT
-
     - name: Login to ghcr.io
       uses: docker/login-action@v2
       with:
@@ -102,3 +92,15 @@ runs:
       run: |
         docker tag ${{ inputs.imageRepository }}:${{ inputs.imageTag }} ${{ inputs.imageRepository }}:latest
         docker push ${{ inputs.imageRepository }}:latest
+
+    - name: Inspect Docker Image
+      id: metadata
+      shell: bash
+      if: ${{ (inputs.force == 'true') || (steps.exists.outputs.result != 'true') }}
+      run: |
+        docker pull ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
+        result=$(docker image inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} -f '{{index .RepoDigests 0}}')
+        digest=${result#*@}
+        digest=${digest#*:}
+        digest=${digest:0:7}
+        echo "digest=$digest" >> $GITHUB_OUTPUT
