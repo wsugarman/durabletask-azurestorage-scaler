@@ -48,7 +48,7 @@ runs:
     - name: Save Image
       shell: bash
       run: |
-        output="${{ runner.temp }}/docker/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar"
+        output="${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar"
         mkdir -p $(dirname $output)
         docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
 
@@ -56,4 +56,4 @@ runs:
       uses: actions/upload-artifact@v3
       with:
         name: image
-        path: ${{ runner.temp }}/docker/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar
+        path: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar
