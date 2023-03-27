@@ -24,7 +24,6 @@ ARG FILE_VERSION=1.0.0.0
 RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
   -c $BUILD_CONFIGURATION \
   "-p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD;AssemblyVersion=$ASSEMBLY_VERSION;FileVersion=$FILE_VERSION;InformationalVersion=$FILE_VERSION" \
-  -p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD \
   -warnaserror \
   -o /app/publish
 
