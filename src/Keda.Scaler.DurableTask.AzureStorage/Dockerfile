@@ -35,7 +35,7 @@ FROM scratch AS nonroot
 COPY --from=users /etc/group /etc/group
 COPY --from=users /etc/passwd /etc/passwd
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0.5-cbl-mariner2.0-distroless-amd64@sha256:36bf68d2d37a03208427c9f37e356e06c34dcf3fbe393425170d8cf07c1d2336 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:7.0.5-cbl-mariner2.0-distroless-amd64@sha256:8e428065c3e4932dfebd1e80fafdf903426cb58fd16934df23e15c48ee772b9f AS runtime
 COPY --from=nonroot / /
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0
