@@ -32,7 +32,7 @@ runs:
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
     - name: Build Scaler Image
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v4
       with:
         build-args: |
           ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
