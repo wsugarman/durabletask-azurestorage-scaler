@@ -145,7 +145,7 @@ runs:
           --set image.tag=${{ inputs.imageTag }} \
           --wait \
           --timeout 30s \
-          durabletask-azurestorage-scaler \
+          plaintext-dtfx-scaler \
           ./charts/durabletask-azurestorage-scaler
 
     - name: Install Scaler Helm Chart
@@ -189,7 +189,7 @@ runs:
     - name: Ensure Reachable Scaler Services
       shell: bash
       run: |
-        kubectl port-forward service/durabletask-azurestorage-scaler -n keda 10003:4370 > /dev/null &
+        kubectl port-forward service/plaintext-dtfx-scaler -n keda 10003:4370 > /dev/null &
         kubectl port-forward service/dtfx-scaler -n keda 10004:4370 > /dev/null &
 
         export PATH=$PATH:$(go env GOPATH)/bin
@@ -199,7 +199,7 @@ runs:
           -plaintext \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
-          -d '{"name":"foo", "namespace":"bar"}' \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
           127.0.0.1:10003 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
