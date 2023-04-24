@@ -186,22 +186,28 @@ runs:
           ${{ inputs.functionAppName }} \
           ./charts/example-function-app
 
-    - name: Setup Go
-      uses: actions/setup-go@v4
-      with:
-        check-latest: true
-        go-version: '>=1.16.0'
-
     - name: Ensure Reachable Scaler Services
       shell: bash
       run: |
         kubectl port-forward service/durabletask-azurestorage-scaler -n keda 10003:4370 > /dev/null &
         kubectl port-forward service/dtfx-scaler -n keda 10004:4370 > /dev/null &
 
+        export PATH=$PATH:$(go env GOPATH)/bin
         go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
-        grpcurl -plaintext -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' 127.0.0.1:10003 externalscaler.ExternalScaler/GetMetricSpec
-        grpcurl -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' 127.0.0.1:10004 externalscaler.ExternalScaler/GetMetricSpec
+        grpcurl \
+          -plaintext \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10003 \
+          externalscaler.ExternalScaler/GetMetricSpec
+        grpcurl \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10004 \
+          externalscaler.ExternalScaler/GetMetricSpec
 
     - name: Test Scaler
       shell: bash
