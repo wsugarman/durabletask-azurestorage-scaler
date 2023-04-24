@@ -95,14 +95,14 @@ runs:
           --cert=${{ runner.temp }}/certs/root.pem
 
         # Create a server TLS certificate
-        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda\n" >> ${{ runner.temp }}/certs/server.ext
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda,IP:127.0.0.1\n" >> ${{ runner.temp }}/certs/server.ext
 
         openssl req \
           -noenc \
           -new \
           -newkey rsa:2048 \
           -subj "/C=US/ST=Washington/L=Redmond/O=DTFx Scaler/CN=dtfx-scaler.keda" \
-          -addext "subjectAltName = DNS:dtfx-scaler.keda" \
+          -addext "subjectAltName = DNS:dtfx-scaler.keda, IP:127.0.0.1" \
           -keyout ${{ runner.temp }}/certs/server.key \
           -out ${{ runner.temp }}/certs/server.csr
 
