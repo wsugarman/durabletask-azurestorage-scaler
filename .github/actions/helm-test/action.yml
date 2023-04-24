@@ -203,6 +203,7 @@ runs:
           127.0.0.1:10003 \
           externalscaler.ExternalScaler/GetMetricSpec
         grpcurl \
+          -cacert "${{ runner.temp }}/certs/root.pem" \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
