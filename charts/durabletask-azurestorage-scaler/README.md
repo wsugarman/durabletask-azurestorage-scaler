@@ -26,7 +26,7 @@ helm install \
   --namespace keda \
   --create-namespace \
   --set replicaCount=2 \
-  --set podIdentity.azureWorkload.enabled=true \
+  --set tls.secret=server-tls \
   dtfx-scaler \
   wsugarman/durabletask-azurestorage-scaler
 ```

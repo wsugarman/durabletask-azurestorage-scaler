@@ -95,14 +95,14 @@ runs:
           --cert=${{ runner.temp }}/certs/root.pem
 
         # Create a server TLS certificate
-        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda\n" >> ${{ runner.temp }}/certs/server.ext
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda,IP:127.0.0.1\n" >> ${{ runner.temp }}/certs/server.ext
 
         openssl req \
           -noenc \
           -new \
           -newkey rsa:2048 \
           -subj "/C=US/ST=Washington/L=Redmond/O=DTFx Scaler/CN=dtfx-scaler.keda" \
-          -addext "subjectAltName = DNS:dtfx-scaler.keda" \
+          -addext "subjectAltName = DNS:dtfx-scaler.keda, IP:127.0.0.1" \
           -keyout ${{ runner.temp }}/certs/server.key \
           -out ${{ runner.temp }}/certs/server.csr
 
@@ -134,6 +134,19 @@ runs:
           --timeout 2m \
           keda \
           kedacore/keda
+
+    - name: Install Default Scaler Helm Chart
+      shell: bash
+      run: |
+        helm install \
+          -n keda \
+          --create-namespace \
+          --set image.repository=${{ inputs.scalerImageRepository }} \
+          --set image.tag=${{ inputs.imageTag }} \
+          --wait \
+          --timeout 30s \
+          plaintext-dtfx-scaler \
+          ./charts/durabletask-azurestorage-scaler
 
     - name: Install Scaler Helm Chart
       shell: bash
@@ -173,10 +186,35 @@ runs:
           ${{ inputs.functionAppName }} \
           ./charts/example-function-app
 
+    - name: Ensure Reachable Scaler Services
+      shell: bash
+      run: |
+        kubectl port-forward service/plaintext-dtfx-scaler -n keda 10003:4370 > /dev/null &
+        kubectl port-forward service/dtfx-scaler -n keda 10004:4370 > /dev/null &
+
+        export PATH=$PATH:$(go env GOPATH)/bin
+        go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+
+        grpcurl \
+          -plaintext \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10003 \
+          externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
+
+        grpcurl \
+          -cacert "${{ runner.temp }}/certs/root.pem" \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10004 \
+          externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
+
     - name: Test Scaler
       shell: bash
       run: |
-        kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 >/dev/null &
+        kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 > /dev/null &
         dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \

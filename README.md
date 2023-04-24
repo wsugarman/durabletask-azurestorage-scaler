@@ -14,7 +14,7 @@ This specification describes the `external` trigger for applications that use th
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4370
+        scalerAddress: dtfx-scaler.keda:4370
         connectionFromEnv: STORAGE_CONNECTIONSTRING_ENV_NAME
         maxActivitiesPerWorker: 5
         maxOrchestrationsPerWorker: 2
@@ -36,6 +36,7 @@ This specification describes the `external` trigger for applications that use th
 - **`endpointSuffix`** - Optional suffix for the Azure Storage service URLs. This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`maxActivitiesPerWorker`** - Optional maximum number of activity work items that a single worker may process at any time. This is equivalent to `MaxConcurrentActivityFunctions`in Azure Durable Functions and `MaxConcurrentTaskActivityWorkItems` in the Durable Task Framework (DTFx). Must be greater than 0. Defaults to `10`
 - **`maxOrchestrationsPerWorker`** - Optional maximum number of orchestration work items that a single worker may process at any time. This is equivalent to `MaxConcurrentOrchestratorFunctions` in Azure Durable Functions and `MaxConcurrentTaskOrchestrationWorkItems` in the Durable Task Framework (DTFx). Must be greater than 0. Defaults to `5`
+- **`scalerAddress`** - Required address for the scaler service within the Kubernetes cluster. The format of the address is `<scaler-service-name>.<scaler-kubernetes-namespace>:<port>`. By default, the chart uses port `4370` while the service name and namespace are dependent on the Helm installation command. For example, an installation like `helm install -n keda dtfx-scaler wsugarman/durabletask-azurestorage-scaler` would use the address `dtfx-scaler.keda:4370`. For more details, please see the [service template](/charts/durabletask-azurestorage-scaler/templates/03-service.yaml) in the Helm chart
 - **`taskHubName`** - Optional name of the Durable Task Framework (DTFx) task hub. This name is used when determining the name of blob containers, tables, and queues related to the application. Defaults to `TestHubName`
 - **`useManagedIdentity`** - Optionally indicates that AAD pod identity or workload identity should be used to authenticate between the scaler and the Azure Storage account. If `true`, `Account` must be specified, and the appropriate annotations, bindings, and/or labels must be configured for the deployment. Defaults to `false`
 
@@ -49,7 +50,7 @@ Connection strings may be specified using an environment variable exposed to the
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4370 # Required. Address of the external scaler service
+        scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
         connectionFromEnv: <variable> # Optional. By default 'AzureWebJobsStorage'
 ```
 
@@ -72,7 +73,7 @@ An example specification that uses an identity-based connection can be seen belo
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4370 # Required. Address of the external scaler service
+        scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
         accountName: <name>      # Optional. Required for pod identity
         clientId: <client-id>    # Optional. Recommended if there are multiple identities
         cloud: <cloud>           # Optional. Defaults to AzurePublicCloud

@@ -89,7 +89,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .ScaledObjectRef
             .ScalerMetadata
             .ToConfiguration()
-            .Get<ScalerMetadata>()!
+            .GetOrDefault<ScalerMetadata>()
             .EnsureValidated(_serviceProvider);
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
@@ -140,7 +140,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ScalerMetadata? metadata = request
             .ScalerMetadata
             .ToConfiguration()
-            .Get<ScalerMetadata>()!
+            .GetOrDefault<ScalerMetadata>()
             .EnsureValidated(_serviceProvider);
 
         _logger.LogInformation("Metric target for Task Hub '{TaskHub}' is {MetricTarget}.", metadata.TaskHubName, metadata.MaxActivitiesPerWorker);
@@ -183,7 +183,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ScalerMetadata? metadata = request
             .ScalerMetadata
             .ToConfiguration()
-            .Get<ScalerMetadata>()!
+            .GetOrDefault<ScalerMetadata>()
             .EnsureValidated(_serviceProvider);
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
