@@ -135,6 +135,19 @@ runs:
           keda \
           kedacore/keda
 
+    - name: Install Default Scaler Helm Chart
+      shell: bash
+      run: |
+        helm install \
+          -n keda \
+          --create-namespace \
+          --set image.repository=${{ inputs.scalerImageRepository }} \
+          --set image.tag=${{ inputs.imageTag }} \
+          --wait \
+          --timeout 30s \
+          durabletask-azurestorage-scaler \
+          ./charts/durabletask-azurestorage-scaler
+
     - name: Install Scaler Helm Chart
       shell: bash
       run: |
@@ -173,10 +186,21 @@ runs:
           ${{ inputs.functionAppName }} \
           ./charts/example-function-app
 
+    - name: Ensure Reachable Scaler Services
+      shell: bash
+      run: |
+        kubectl port-forward service/durabletask-azurestorage-scaler -n keda 10003:4370 > /dev/null &
+        kubectl port-forward service/dtfx-scaler -n keda 10004:4370 > /dev/null &
+
+        go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
+
+        grpcurl -plaintext -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' 127.0.0.1:10003 externalscaler.ExternalScaler/GetMetricSpec
+        grpcurl -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' 127.0.0.1:10004 externalscaler.ExternalScaler/GetMetricSpec
+
     - name: Test Scaler
       shell: bash
       run: |
-        kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 >/dev/null &
+        kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 > /dev/null &
         dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
           -c "${{ inputs.buildConfiguration }}" \
           -p:ContinuousIntegrationBuild=true \
