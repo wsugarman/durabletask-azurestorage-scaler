@@ -17,8 +17,8 @@
       "groupName": "dotnetSdkRuntime",
       "matchPackageNames": [
         "dotnet-sdk",
-        "mcr.microsoft.com/dotnet/sdk",
-        "mcr.microsoft.com/dotnet/aspnet"
+        "mcr.microsoft.com/dotnet/aspnet",
+        "mcr.microsoft.com/dotnet/sdk"
       ]
     }
   ]
