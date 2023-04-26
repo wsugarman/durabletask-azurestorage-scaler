@@ -60,7 +60,7 @@ Connection strings may also be specified directly via the `connection` parameter
   triggers:
     - type: external
       metadata:
-        scalerAddress: durabletask-azurestorage-scaler.keda:4370 # Required. Address of the external scaler service
+        scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
         connection: <connection> # Optional. Defaults to connectionFromEnv
 ```
 
