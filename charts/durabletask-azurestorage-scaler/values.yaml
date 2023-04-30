@@ -85,6 +85,12 @@ env:
 # - name: ENV_NAME
 #   value: 'ENV-VALUE'
 
+envFrom:
+# - secretRef:
+#     name: secret-name
+# - configMapRef:
+#     name: config-map-name
+
 # Security context for the scaler container
 securityContext:
   capabilities:

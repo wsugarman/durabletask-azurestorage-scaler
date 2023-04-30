@@ -46,6 +46,7 @@ The following table contains the possible set of configurations and their defaul
 | `additionalAnnotations`                       | `object`  | Additional annotations to add to all of the chart's resources                | `{}`                                                |
 | `additionalLabels`                            | `object`  | Additional labels to add to all of the chart's resources                     | `{}`                                                |
 | `env`                                         | `array`   | Additional environment variables that will be passed into the scaler pods    | `[]`                                                |
+| `envFrom`                                     | `array`   | Additional sources of environment variables available in the scaler pods     | `[]`                                                |
 | `fullnameOverride`                            | `string`  | Overrides the object name and the name in the `app.kubernetes.io/name` label |                                                     |
 | `image.pullPolicy`                            | `string`  | Scaler gRPC service image pull policy                                        | `IfNotPresent`                                      |
 | `image.pullSecrets`                           | `array`   | Scaler gRPC service image pull secrets                                       | `[]`                                                |
