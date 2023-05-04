@@ -1,5 +1,5 @@
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:7.0.203-cbl-mariner2.0-amd64@sha256:8098dea0a8bfe97f7e3f3d5b353b12a55d3887881d3b824e8b21f2bc68733e11 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0.203-cbl-mariner2.0-amd64@sha256:647d669ddd3d80109675853232a6d4eeb9fe17608b23a5c9bf462831a54921ae AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
@@ -27,7 +27,7 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
   -warnaserror \
   -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0.203-cbl-mariner2.0-amd64@sha256:8098dea0a8bfe97f7e3f3d5b353b12a55d3887881d3b824e8b21f2bc68733e11 AS users
+FROM mcr.microsoft.com/dotnet/sdk:7.0.203-cbl-mariner2.0-amd64@sha256:647d669ddd3d80109675853232a6d4eeb9fe17608b23a5c9bf462831a54921ae AS users
 RUN groupadd nonroot -g 2000 && \
     useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 200
 
@@ -35,7 +35,7 @@ FROM scratch AS nonroot
 COPY --from=users /etc/group /etc/group
 COPY --from=users /etc/passwd /etc/passwd
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0.5-cbl-mariner2.0-distroless-amd64@sha256:8e428065c3e4932dfebd1e80fafdf903426cb58fd16934df23e15c48ee772b9f AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:7.0.5-cbl-mariner2.0-distroless-amd64@sha256:e7ce1a6623c629afe9cce2dddef142f18bac42893dfb4bc2fd6a12ce15460e98 AS runtime
 COPY --from=nonroot / /
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0
