@@ -14,11 +14,23 @@
   ],
   "packageRules": [
     {
-      "groupName": "dotnetSdkRuntime",
+      "groupName": "Dotnet SDK and Runtime",
       "matchPackageNames": [
         "dotnet-sdk",
         "mcr.microsoft.com/dotnet/aspnet",
         "mcr.microsoft.com/dotnet/sdk"
+      ]
+    },
+    {
+      "groupName": "gRPC",
+      "matchPackagePatterns": [
+        "^Grpc\\."
+      ]
+    },
+    {
+      "groupName": "MSTest",
+      "matchPackagePatterns": [
+        "^MSTest\\."
       ]
     }
   ]
