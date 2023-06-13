@@ -1,6 +1,6 @@
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 # Build using the latest .NET SDK
-FROM mcr.microsoft.com/dotnet/sdk:7.0.302-bullseye-slim-amd64@sha256:87c5ef8dee2d2b9613bf04357802c81296a9d375e2594fdc5bbf2e8a8352065c AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0.302-bullseye-slim-amd64@sha256:56c77ffba29b6cc0b2227a5de6bff4c74d75f509cac207f836bbb7f918eb901f AS build
 ARG BUILD_CONFIGURATION=Release
 
 # Azure Functions v4 targets .NET 6
