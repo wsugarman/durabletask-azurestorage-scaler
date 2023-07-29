@@ -29,5 +29,8 @@ internal sealed class Monitored<T> : IDisposable
     }
 
     public void Dispose()
-        => _receipt.Dispose();
+    {
+        _receipt.Dispose();
+        GC.SuppressFinalize(this);
+    }
 }

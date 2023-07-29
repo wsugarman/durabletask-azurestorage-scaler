@@ -1,0 +1,99 @@
+// Copyright © William Sugarman.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Net.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Keda.Scaler.DurableTask.AzureStorage.Security;
+
+[ExcludeFromCodeCoverage]
+internal sealed class TlsConnectionAdapterOptionsConfigure : IDisposable
+{
+    private readonly MonitoredCertificate? _ca;
+    private readonly MonitoredCertificate? _server;
+    private readonly ILogger _logger;
+
+    private static readonly Oid ClientCertificateOid = new Oid("1.3.6.1.5.5.7.3.2");
+
+    public TlsConnectionAdapterOptionsConfigure(ILoggerFactory loggerFactory, IOptions<TlsOptions> options)
+    {
+        if (loggerFactory is null)
+            throw new ArgumentNullException(nameof(loggerFactory));
+
+        if (options?.Value is null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (!string.IsNullOrWhiteSpace(options.Value.Client?.CaCertificatePath))
+            _ca = new MonitoredCertificate(options.Value.Client.CaCertificatePath, options.Value.Client.CaKeyPath);
+
+        if (!string.IsNullOrWhiteSpace(options.Value.Server?.CertificatePath))
+            _server = new MonitoredCertificate(options.Value.Server.CertificatePath, options.Value.Server.KeyPath);
+
+        _logger = loggerFactory.CreateLogger(Diagnostics.SecurityLoggerCategory);
+    }
+
+    public void Configure(HttpsConnectionAdapterOptions options)
+    {
+        if (options is null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (_ca is not null)
+        {
+            options.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+            options.ClientCertificateValidation = ValidateClientCertificate;
+        }
+
+        if (_server is not null)
+            options.ServerCertificateSelector = (c, s) => _server.Current;
+    }
+
+    public void Dispose()
+    {
+        _ca?.Dispose();
+        _server?.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
+    private bool ValidateClientCertificate(X509Certificate2 clientCertificate, X509Chain? existingChain, SslPolicyErrors sslPolicyErrors)
+    {
+        if (sslPolicyErrors != SslPolicyErrors.None)
+            return false;
+
+        using var chain = new X509Chain { ChainPolicy = BuildChainPolicy() };
+
+        if (!chain.Build(clientCertificate))
+        {
+            var chainErrors = new List<string>(chain.ChainStatus.Length);
+            foreach (X509ChainStatus validationFailure in chain.ChainStatus)
+                chainErrors.Add($"{validationFailure.Status} {validationFailure.StatusInformation}");
+
+            _logger.LogWarning("Certificate validation failed, subject was {Subject}. {ChainErrors}", clientCertificate.Subject, chainErrors);
+            return false;
+        }
+
+        return true;
+    }
+
+    private X509ChainPolicy BuildChainPolicy()
+    {
+        var chainPolicy = new X509ChainPolicy
+        {
+            ApplicationPolicy = { ClientCertificateOid },
+            CustomTrustStore = { _ca!.Current },
+            RevocationFlag = X509RevocationFlag.ExcludeRoot,
+            RevocationMode = X509RevocationMode.Online,
+            TrustMode = X509ChainTrustMode.CustomRootTrust,
+        };
+
+        chainPolicy.VerificationFlags |= X509VerificationFlags.IgnoreNotTimeValid;
+
+        return chainPolicy;
+    }
+}

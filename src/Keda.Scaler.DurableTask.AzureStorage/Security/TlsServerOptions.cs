@@ -6,11 +6,9 @@ using System.Diagnostics.CodeAnalysis;
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 [ExcludeFromCodeCoverage]
-internal sealed class TlsOptions
+internal sealed class TlsServerOptions
 {
-    public const string DefaultKey = "Security:Transport";
+    public string? CertificatePath { get; set; }
 
-    public TlsClientOptions? Client { get; set; }
-
-    public TlsServerOptions? Server { get; set; }
+    public string? KeyPath { get; set; }
 }
