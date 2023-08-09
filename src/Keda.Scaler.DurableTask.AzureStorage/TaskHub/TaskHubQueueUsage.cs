@@ -26,7 +26,7 @@ public sealed class TaskHubQueueUsage
     /// Gets a value indicating whether there is currently any activity for the Task Hub.
     /// </summary>
     /// <value>
-    /// <see langword="true"/> if there is at least one message that is pending; otherwise, <langword cref="false"/>.
+    /// <see langword="true"/> if there is at least one message that is pending; otherwise, <see langword="false"/>.
     /// </value>
     public bool HasActivity => WorkItemQueueMessages > 0 || ControlQueueMessages.Any(x => x > 0);
 

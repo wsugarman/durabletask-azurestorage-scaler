@@ -8,7 +8,6 @@ using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 

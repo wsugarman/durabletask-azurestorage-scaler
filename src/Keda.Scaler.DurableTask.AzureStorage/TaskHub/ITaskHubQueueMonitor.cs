@@ -13,17 +13,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 public interface ITaskHubQueueMonitor
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="TaskHubQueueMonitor"/> class.
+    /// Asynchronously fetches the number of messages in queue across the Task Hub to gauge its usage.
     /// </summary>
-    /// <param name="taskHubInfo">Metadata concerning the Task Hub.</param>
-    /// <param name="queueServiceClient">A client for accessing the Azure Queue service.</param>
-    /// <param name="logger">A diagnostic logger.</param>
-    /// <exception cref="ArgumentNullException">
-    /// <paramref name="taskHubInfo"/>, <paramref name="queueServiceClient"/>,
-    /// or <paramref name="logger"/> is <see langword="null"/>.
-    /// </exception>
-    /// <exception cref="ArgumentException">
-    /// <see cref="AzureStorageTaskHubInfo.PartitionCount"/> is less than <c>1</c> for <paramref name="taskHubInfo"/>.
-    /// </exception>
+    /// <param name="cancellationToken">
+    /// The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.
+    /// </param>
+    /// <returns>
+    /// A value task that represents the asynchronous operation. The value of the type parameter
+    /// of the value task contains the usage for the Task Hub.
+    /// </returns>
+    /// <exception cref="OperationCanceledException">The <paramref name="cancellationToken"/> is canceled.</exception>
     ValueTask<TaskHubQueueUsage> GetUsageAsync(CancellationToken cancellationToken = default);
 }
