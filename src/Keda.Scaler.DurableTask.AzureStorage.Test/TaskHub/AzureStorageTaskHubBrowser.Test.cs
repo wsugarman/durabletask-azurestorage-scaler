@@ -50,7 +50,7 @@ public class AzureStorageTaskHubBrowserTest
         Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, null!));
 
         Mock<ILoggerFactory> mockFactory = new Mock<ILoggerFactory>(MockBehavior.Strict);
-        mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null);
+        mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null!);
         Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, mockFactory.Object));
     }
 
