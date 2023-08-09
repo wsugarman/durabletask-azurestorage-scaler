@@ -42,8 +42,7 @@ public class AzureStorageTaskHubBrowser
     }
 
     /// <summary>
-    /// Asynchronously attempts to retrieve an <see cref="ITaskHubQueueMonitor"/> for the Task Hub
-    /// with the given <paramref name="name"/>.
+    /// Asynchronously attempts to retrieve an <see cref="ITaskHubQueueMonitor"/> for the Task Hub with the given name.
     /// </summary>
     /// <param name="accountInfo">The account information for the Azure Storage account.</param>
     /// <param name="taskHub">The name of the desired Task Hub.</param>
@@ -52,7 +51,7 @@ public class AzureStorageTaskHubBrowser
     /// </param>
     /// <returns>
     /// A value task that represents the asynchronous operation. The value of the type parameter
-    /// of the value task contains the monitor for the given Task Hub..
+    /// of the value task contains the monitor for the given Task Hub.
     /// </returns>
     /// <exception cref="ArgumentException"><paramref name="accountInfo"/> is missing information.</exception>
     /// <exception cref="ArgumentNullException">
