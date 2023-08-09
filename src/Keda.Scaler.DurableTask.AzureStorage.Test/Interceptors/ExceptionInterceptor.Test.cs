@@ -27,7 +27,7 @@ public class ExceptionInterceptorTest
         Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(null!));
 
         Mock<ILoggerFactory> mockFactory = new Mock<ILoggerFactory>(MockBehavior.Strict);
-        mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null);
+        mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null!);
         Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(mockFactory.Object));
     }
 
