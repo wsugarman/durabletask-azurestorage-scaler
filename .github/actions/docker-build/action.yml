@@ -65,9 +65,8 @@ runs:
       name: Create Signing Parameters
       shell: bash
       run: |
-        echo $HOME
-        ls /home
-        ls $HOME
+        echo "Home: $HOME"
+        find / -type d -name '.azure'
         mkdir -p ${{ runner.temp }}/signing
         cat << EOF >> ${{ runner.temp }}/signing/parameters.json
         {
