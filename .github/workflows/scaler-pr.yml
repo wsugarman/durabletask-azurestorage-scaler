@@ -42,6 +42,13 @@ jobs:
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           imageRepository: durabletask-azurestorage-scaler
           imageTag: ${{ steps.chart.outputs.imageTag }}
+          sign: 'true'
+          azureTenantId: ${{ secrets.AZURE_TENANT_ID }}
+          azureClientId: ${{ secrets.AZURE_CLIENT_ID }}
+          azureSubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          azureCodeSigningAccountName: ${{ secrets.AZURE_CODESIGNING_NAME }}
+          certificateProfileName: ${{ secrets.AZURE_CODESIGNING_PROFILE_NAME }}
+          repositoryUri: ${{ github.server_url }}/${{ github.repository }}
 
       - name: Validate Helm Chart
         uses: ./.github/actions/helm-test
