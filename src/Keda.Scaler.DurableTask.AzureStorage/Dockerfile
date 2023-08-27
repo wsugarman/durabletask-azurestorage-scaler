@@ -32,7 +32,7 @@ COPY --from=publish /app/publish /app
 RUN mkdir -p /sign && \
     echo "../app/Keda.Scaler.DurableTask.AzureStorage.dll" >> /sign/catalog.txt && \
     echo "../app/Keda.Scaler.DurableTask.AzureStorage.exe" >> /sign/catalog.txt
-RUN --mount=type=secret,id=credentials,target=/root/.azure/credentials \
+RUN --mount=type=secret,id=credentials,target=/root/.azure/ \
   --mount=type=secret,id=signing \
   ["pwsh", "-c", "If (Test-Path -Path '/run/secrets/signing/parameters.json') { Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery; $params = Get-Content -Path '/run/secrets/signing/parameters.json' | ConvertFrom-Json -AsHashTable; Invoke-AzureCodeSigning -FilesCatalog '/sign/catalog.txt' @params }"]
 

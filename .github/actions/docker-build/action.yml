@@ -100,8 +100,8 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         push: false
         secret-files: |
-          credentials=$HOME/.aws/credentials
-          signing=${{ runner.temp }}/signing/parameters.json
+          credentials=$HOME/.azure/
+          signing=${{ runner.temp }}/signing/
         tags: ${{ steps.meta.outputs.tags }}
 
     - name: Save Image
