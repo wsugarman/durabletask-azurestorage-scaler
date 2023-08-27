@@ -29,15 +29,12 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
 
 FROM mcr.microsoft.com/azure-powershell:mariner-2@sha256:db5f6871186431f94ed2353a91a1537ab799b0c1ad4af635b9afa5673534f8bc as signing
 COPY --from=publish /app/publish /app
+RUN mkdir -p /sign && \
+    echo "../app/Keda.Scaler.DurableTask.AzureStorage.dll" >> /sign/catalog.txt && \
+    echo "../app/Keda.Scaler.DurableTask.AzureStorage.exe" >> /sign/catalog.txt
 RUN --mount=type=secret,id=credentials,target=/root/.azure/credentials \
   --mount=type=secret,id=signing \
-  pwsh \
-  If (Test-Path -Path '/run/secrets/signing/parameters.json') \
-  { \
-    Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery; \
-    $params = Get-Content -Path '/run/secrets/signing/parameters.json' | ConvertFrom-Json -AsHashTable; \
-    Invoke-AzureCodeSigning @params \
-  }
+  ["pwsh", "-c", "If (Test-Path -Path '/run/secrets/signing/parameters.json') { Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery; $params = Get-Content -Path '/run/secrets/signing/parameters.json' | ConvertFrom-Json -AsHashTable; Invoke-AzureCodeSigning -FilesCatalog '/sign/catalog.txt' @params }"]
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:739ddaf84935f7a4756f14ca18ae6cc49a3bb57b56c953c7a9292e918d04e8bd AS users
 RUN groupadd nonroot -g 2000 && \

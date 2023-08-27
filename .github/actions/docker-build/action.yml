@@ -65,18 +65,18 @@ runs:
       name: Create Signing Parameters
       shell: bash
       run: |
-        echo "{" >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"Endpoint\":\"${{ inputs.codeSigningUri }}\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"CodeSigningAccountName\":\"${{ inputs.azureCodeSigningAccountName }}\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"CertificateProfileName\":\"${{ inputs.certificateProfileName }}\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"FilesFolder\":\"TODO\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"FilesFolderFilter\":\"dll\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"FileDigest\":\"SHA256\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"TimestampRfc3161\":\"http://timestamp.acs.microsoft.com\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"TimestampDigest\":\"SHA256\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"Description\":\"${{ steps.assembly.outputs.description }}\"," >> "${{ runner.temp }}/signing/parameters.json"
-        echo "  \"DescriptionUrl\":\"${{ inputs.repositoryUri }}\"" >> "${{ runner.temp }}/signing/parameters.json"
-        echo "}" >> "${{ runner.temp }}/signing/parameters.json"
+        cat << EOF >> ${{ runner.temp }}/signing/parameters.json
+        {
+          "Endpoint":"${{ inputs.codeSigningUri }}",
+          "CodeSigningAccountName":"${{ inputs.azureCodeSigningAccountName }}",
+          "CertificateProfileName":"${{ inputs.certificateProfileName }}",
+          "FileDigest":"SHA256",
+          "TimestampRfc3161":"http://timestamp.acs.microsoft.com",
+          "TimestampDigest":"SHA256",
+          "Description":"A KEDA external scaler for the Durable Task Azure Storage backend.",
+          "DescriptionUrl":"${{ inputs.repositoryUri }}"
+        }
+        EOF
 
     - name: Generate OCI Labels
       id: meta
@@ -100,7 +100,8 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         push: false
         secret-files: |
-          TODO=TODO
+          credentials=$HOME/.aws/credentials
+          signing=${{ runner.temp }}/signing/parameters.json
         tags: ${{ steps.meta.outputs.tags }}
 
     - name: Save Image
