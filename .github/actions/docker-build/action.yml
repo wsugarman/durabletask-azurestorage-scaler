@@ -65,6 +65,9 @@ runs:
       name: Create Signing Parameters
       shell: bash
       run: |
+        echo $HOME
+        ls /home
+        ls $HOME
         mkdir -p ${{ runner.temp }}/signing
         cat << EOF >> ${{ runner.temp }}/signing/parameters.json
         {
@@ -101,7 +104,7 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         push: false
         secret-files: |
-          credentials=$HOME/.azure/
+          credentials=/home/.azure/
           signing=${{ runner.temp }}/signing/
         tags: ${{ steps.meta.outputs.tags }}
 
