@@ -65,6 +65,7 @@ runs:
       name: Create Signing Parameters
       shell: bash
       run: |
+        mkdir -p ${{ runner.temp }}/signing
         cat << EOF >> ${{ runner.temp }}/signing/parameters.json
         {
           "Endpoint":"${{ inputs.codeSigningUri }}",
