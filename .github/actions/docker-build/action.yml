@@ -66,7 +66,7 @@ runs:
       shell: bash
       run: |
         echo "Home: $HOME"
-        find / -type d -name '.azure'
+        find $HOME -type d -name '.azure'
         mkdir -p ${{ runner.temp }}/signing
         cat << EOF >> ${{ runner.temp }}/signing/parameters.json
         {
