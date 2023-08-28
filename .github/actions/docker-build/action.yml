@@ -79,6 +79,9 @@ runs:
         }
         EOF
 
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
     - name: Generate OCI Labels
       id: meta
       uses: docker/metadata-action@v4
@@ -88,7 +91,7 @@ runs:
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
-    - name: Build Scaler Image
+    - name: Build Signed Scaler Image
       uses: docker/build-push-action@v4
       with:
         build-args: |
@@ -96,6 +99,7 @@ runs:
           BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
           CONTINUOUS_INTEGRATION_BUILD=true
           FILE_VERSION=${{ inputs.fileVersion }}
+          SIGN=${{ inputs.sign }}
         context: .
         file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
         labels: ${{ steps.meta.outputs.labels }}

@@ -1,3 +1,5 @@
+ARG SIGN=false
+
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:739ddaf84935f7a4756f14ca18ae6cc49a3bb57b56c953c7a9292e918d04e8bd AS build
 ARG BUILD_CONFIGURATION=Release
@@ -27,14 +29,22 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
   -warnaserror \
   -o /app/publish
 
-FROM mcr.microsoft.com/azure-powershell:mariner-2@sha256:db5f6871186431f94ed2353a91a1537ab799b0c1ad4af635b9afa5673534f8bc as powershell
+FROM scratch AS publish-signed-false
+COPY --from=publish /app/publish /app
+
+# Azure Code Signing requires Windows
+FROM mcr.microsoft.com/powershell:nanoserver-ltsc2022@sha256:e216ebf203bb4c6b344817ebcce789c3dce6b718cc1c96a031b58b310ee6294a AS publish-signed-true
 COPY --from=publish /app/publish /app
 RUN mkdir -p /signing && \
     echo "../app/Keda.Scaler.DurableTask.AzureStorage.dll" >> /signing/catalog.txt && \
     echo "../app/Keda.Scaler.DurableTask.AzureStorage.exe" >> /signing/catalog.txt
-RUN --mount=type=secret,id=credentials,target=/root/.azure/msal_token_cache.json \
+RUN winget install -e --id Microsoft.AzureCLI
+RUN ["pwsh", "-c", "Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery"]
+RUN --mount=type=secret,id=credentials,target=/Users/ContainerUser/.azure/msal_token_cache.json \
   --mount=type=secret,id=signing_parameters,target=/signing/parameters.json \
-  ["pwsh", "-c", "If (Test-Path -Path '/signing/parameters.json') { Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery; $params = Get-Content -Path '/signing/parameters.json' | ConvertFrom-Json -AsHashTable; Invoke-AzureCodeSigning -FilesCatalog '/sign/catalog.txt' @params }"]
+  ["pwsh", "-c", "$params = Get-Content -Path '/signing/parameters.json' | ConvertFrom-Json -AsHashTable; Invoke-AzureCodeSigning -FilesCatalog '/sign/catalog.txt' @params }"]
+
+FROM publish-signed-${SIGN} AS app
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:739ddaf84935f7a4756f14ca18ae6cc49a3bb57b56c953c7a9292e918d04e8bd AS users
 RUN groupadd nonroot -g 2000 && \
@@ -52,6 +62,6 @@ USER nonroot
 EXPOSE 8080
 
 FROM runtime AS web
-COPY --from=powershell /app /app
+COPY --from=app /app /app
 WORKDIR /app
 ENTRYPOINT ["dotnet", "Keda.Scaler.DurableTask.AzureStorage.dll"]
