@@ -65,8 +65,6 @@ runs:
       name: Create Signing Parameters
       shell: bash
       run: |
-        echo "Home: $HOME"
-        find $HOME -type d -name '.azure'
         mkdir -p ${{ runner.temp }}/signing
         cat << EOF >> ${{ runner.temp }}/signing/parameters.json
         {
@@ -103,8 +101,8 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         push: false
         secret-files: |
-          credentials=/home/.azure/
-          signing=${{ runner.temp }}/signing/
+          credentials=/home/runner/.azure/msal_token_cache.json
+          signing_parameters=${{ runner.temp }}/signing/parameters.json
         tags: ${{ steps.meta.outputs.tags }}
 
     - name: Save Image

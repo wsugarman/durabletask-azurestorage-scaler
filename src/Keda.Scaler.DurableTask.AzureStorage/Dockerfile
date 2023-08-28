@@ -27,14 +27,14 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
   -warnaserror \
   -o /app/publish
 
-FROM mcr.microsoft.com/azure-powershell:mariner-2@sha256:db5f6871186431f94ed2353a91a1537ab799b0c1ad4af635b9afa5673534f8bc as signing
+FROM mcr.microsoft.com/azure-powershell:mariner-2@sha256:db5f6871186431f94ed2353a91a1537ab799b0c1ad4af635b9afa5673534f8bc as powershell
 COPY --from=publish /app/publish /app
-RUN mkdir -p /sign && \
-    echo "../app/Keda.Scaler.DurableTask.AzureStorage.dll" >> /sign/catalog.txt && \
-    echo "../app/Keda.Scaler.DurableTask.AzureStorage.exe" >> /sign/catalog.txt
-RUN --mount=type=secret,id=credentials,target=/root/.azure/ \
-  --mount=type=secret,id=signing \
-  ["pwsh", "-c", "If (Test-Path -Path '/run/secrets/signing/parameters.json') { Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery; $params = Get-Content -Path '/run/secrets/signing/parameters.json' | ConvertFrom-Json -AsHashTable; Invoke-AzureCodeSigning -FilesCatalog '/sign/catalog.txt' @params }"]
+RUN mkdir -p /signing && \
+    echo "../app/Keda.Scaler.DurableTask.AzureStorage.dll" >> /signing/catalog.txt && \
+    echo "../app/Keda.Scaler.DurableTask.AzureStorage.exe" >> /signing/catalog.txt
+RUN --mount=type=secret,id=credentials,target=/root/.azure/msal_token_cache.json \
+  --mount=type=secret,id=signing_parameters,target=/signing/parameters.json \
+  ["pwsh", "-c", "If (Test-Path -Path '/signing/parameters.json') { Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery; $params = Get-Content -Path '/signing/parameters.json' | ConvertFrom-Json -AsHashTable; Invoke-AzureCodeSigning -FilesCatalog '/sign/catalog.txt' @params }"]
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:739ddaf84935f7a4756f14ca18ae6cc49a3bb57b56c953c7a9292e918d04e8bd AS users
 RUN groupadd nonroot -g 2000 && \
@@ -52,6 +52,6 @@ USER nonroot
 EXPOSE 8080
 
 FROM runtime AS web
-COPY --from=signing /app /app
+COPY --from=powershell /app /app
 WORKDIR /app
 ENTRYPOINT ["dotnet", "Keda.Scaler.DurableTask.AzureStorage.dll"]
