@@ -10,7 +10,9 @@ internal sealed class TlsOptions
 {
     public const string DefaultKey = "Security:Transport";
 
-    public TlsClientOptions? Client { get; set; }
+    public string? ClientCaCertificatePath { get; set; }
 
-    public TlsServerOptions? Server { get; set; }
+    public string? ServerCertificatePath { get; set; }
+
+    public string? ServerKeyPath { get; set; }
 }

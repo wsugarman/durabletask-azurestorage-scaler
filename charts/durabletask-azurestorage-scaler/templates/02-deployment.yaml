@@ -70,15 +70,19 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if or .Values.tls.secret .Values.env }}
+          {{- if or .Values.tls.caSecret .Values.tls.secret .Values.env }}
           env:
+            {{- if .Values.tls.caSecret }}
+            - name: Security__Transport__ClientCaCertificatePath
+              value: /caCerts/tls.crt
+            {{- end }}
             {{- if .Values.tls.secret }}
+            - name: Security__Transport__ServerCertificatePath
+              value: /certs/tls.crt
+            - name: Security__Transport__ServerKeyPath
+              value: /certs/tls.key
             - name: ASPNETCORE_URLS
               value: https://+:8080
-            - name: Security__Transport__CertificatePath
-              value: /certs/tls.crt
-            - name: Security__Transport__KeyPath
-              value: /certs/tls.key
             {{- end }}
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 -}}
@@ -88,11 +92,18 @@ spec:
           envFrom:
             {{- toYaml .Values.envFrom | nindent 12 -}}
           {{- end }}
-          {{- if .Values.tls.secret }}
+          {{- if or .Values.tls.caSecret .Values.tls.secret }}
           volumeMounts:
+            {{- if .Values.tls.caSecret }}
+            - name: caCerts
+              mountPath: /caCerts
+              readOnly: true
+            {{- end }}
+            {{- if .Values.tls.secret }}
             - name: certs
               mountPath: /certs
               readOnly: true
+            {{- end }}
           {{- end }}
           ports:
             - name: grpc
@@ -102,12 +113,20 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- if .Values.tls.secret }}
+      {{- if or .Values.tls.caSecret .Values.tls.secret }}
       volumes:
+        {{- if .Values.tls.caSecret }}
+        - name: caCerts
+          secret:
+            secretName: {{ .Values.tls.caSecret }}
+            optional: false
+        {{- end }}
+        {{- if .Values.tls.secret }}
         - name: certs
           secret:
             secretName: {{ .Values.tls.secret }}
             optional: false
+        {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

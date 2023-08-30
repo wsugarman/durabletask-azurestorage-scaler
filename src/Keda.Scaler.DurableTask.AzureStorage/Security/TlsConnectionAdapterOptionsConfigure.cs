@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -30,11 +31,11 @@ internal sealed class TlsConnectionAdapterOptionsConfigure : IDisposable
         if (options?.Value is null)
             throw new ArgumentNullException(nameof(options));
 
-        if (!string.IsNullOrWhiteSpace(options.Value.Client?.CaCertificatePath))
-            _ca = new MonitoredCertificate(options.Value.Client.CaCertificatePath, options.Value.Client.CaKeyPath);
+        if (!string.IsNullOrWhiteSpace(options.Value.ClientCaCertificatePath))
+            _ca = new MonitoredCertificate(options.Value.ClientCaCertificatePath);
 
-        if (!string.IsNullOrWhiteSpace(options.Value.Server?.CertificatePath))
-            _server = new MonitoredCertificate(options.Value.Server.CertificatePath, options.Value.Server.KeyPath);
+        if (!string.IsNullOrWhiteSpace(options.Value.ServerCertificatePath))
+            _server = new MonitoredCertificate(options.Value.ServerCertificatePath, options.Value.ServerKeyPath);
 
         _logger = loggerFactory.CreateLogger(Diagnostics.SecurityLoggerCategory);
     }
@@ -63,18 +64,22 @@ internal sealed class TlsConnectionAdapterOptionsConfigure : IDisposable
 
     private bool ValidateClientCertificate(X509Certificate2 clientCertificate, X509Chain? existingChain, SslPolicyErrors sslPolicyErrors)
     {
-        if (sslPolicyErrors != SslPolicyErrors.None)
+        // Check for any existing errors from validation
+        if ((existingChain?.ChainStatus.Any(x => x.Status is not X509ChainStatusFlags.NoError)).GetValueOrDefault())
+        {
+            LogChainErrors(clientCertificate, existingChain!);
+            return false;
+        }
+
+        if (sslPolicyErrors is not SslPolicyErrors.None)
             return false;
 
+        // Build a new chain with a custom policy that asserts the certificate authority
         using var chain = new X509Chain { ChainPolicy = BuildChainPolicy() };
 
         if (!chain.Build(clientCertificate))
         {
-            var chainErrors = new List<string>(chain.ChainStatus.Length);
-            foreach (X509ChainStatus validationFailure in chain.ChainStatus)
-                chainErrors.Add($"{validationFailure.Status} {validationFailure.StatusInformation}");
-
-            _logger.LogWarning("Certificate validation failed, subject was {Subject}. {ChainErrors}", clientCertificate.Subject, chainErrors);
+            LogChainErrors(clientCertificate, chain);
             return false;
         }
 
@@ -95,5 +100,14 @@ internal sealed class TlsConnectionAdapterOptionsConfigure : IDisposable
         chainPolicy.VerificationFlags |= X509VerificationFlags.IgnoreNotTimeValid;
 
         return chainPolicy;
+    }
+
+    private void LogChainErrors(X509Certificate2 certificate, X509Chain chain)
+    {
+        var chainErrors = new List<string>(chain.ChainStatus.Length);
+        foreach (X509ChainStatus validationFailure in chain.ChainStatus)
+            chainErrors.Add($"{validationFailure.Status} {validationFailure.StatusInformation}");
+
+        _logger.LogWarning("Certificate validation failed, subject was {Subject}. {ChainErrors}", certificate.Subject, chainErrors);
     }
 }

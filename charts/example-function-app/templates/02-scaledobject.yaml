@@ -23,5 +23,7 @@ spec:
         maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
         taskHubName: {{ .Values.taskHub.name }}
         {{- if .Values.scaledObject.enableTls }}
-        tlsCertFile: /grpccerts/tls.crt
+        caCert: /grpccerts/tls.crt
+        tlsClientCert:
+        tlsClientKey:
         {{- end }}

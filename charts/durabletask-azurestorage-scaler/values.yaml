@@ -67,6 +67,7 @@ serviceAccount:
 
 # Optional TLS information
 tls:
+  caSecret: ""
   secret: ""
 
 # Optional values for configuring the identity for the scaler pods
