@@ -19,8 +19,13 @@ runs:
         name: coverage
         path: ${{ runner.temp }}/codecoverage
 
+    - name: Check Files
+      shell: pwsh
+      run: |
+        ls ${{ runner.temp }}\codecoverage
+
     - name: Codecov Upload
       uses: codecov/codecov-action@v3
       with:
-        files: ${{ runner.temp }}/codecoverage/coverage.cobertura.xml
+        files: ${{ runner.temp }}\codecoverage\coverage.cobertura.xml
         fail_ci_if_error: true
