@@ -27,5 +27,7 @@ runs:
     - name: Codecov Upload
       uses: codecov/codecov-action@v3
       with:
-        files: ${{ runner.temp }}\codecoverage\coverage.cobertura.xml
+        files: coverage.cobertura.xml
         fail_ci_if_error: true
+        verbose: true
+        working-directory: ${{ runner.temp }}/codecoverage
