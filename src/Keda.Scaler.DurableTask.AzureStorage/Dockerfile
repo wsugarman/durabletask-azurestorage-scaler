@@ -33,12 +33,13 @@ FROM scratch AS publish-signed-false
 COPY --from=publish /app/publish /app
 
 # Azure Code Signing requires Windows
-FROM mcr.microsoft.com/powershell:nanoserver-ltsc2022@sha256:e216ebf203bb4c6b344817ebcce789c3dce6b718cc1c96a031b58b310ee6294a AS publish-signed-true
+FROM mcr.microsoft.com/powershell:windowsservercore-ltsc2022@sha256:af96b19499cb704ae815044e06dc3195b33f4ead7bc5369aea44a3fc28d2d502 AS publish-signed-true
 COPY --from=publish /app/publish /app
+USER ContainerUser
 RUN mkdir -p /signing && \
     echo "../app/Keda.Scaler.DurableTask.AzureStorage.dll" >> /signing/catalog.txt && \
     echo "../app/Keda.Scaler.DurableTask.AzureStorage.exe" >> /signing/catalog.txt
-RUN winget install -e --id Microsoft.AzureCLI
+RUN ["pwsh", "-c", "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi; Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'; Remove-Item .\AzureCLI.msi"]
 RUN ["pwsh", "-c", "Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery"]
 RUN --mount=type=secret,id=credentials,target=/Users/ContainerUser/.azure/msal_token_cache.json \
   --mount=type=secret,id=signing_parameters,target=/signing/parameters.json \
