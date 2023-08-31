@@ -91,23 +91,26 @@ runs:
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
-    - name: Build Signed Scaler Image
-      uses: docker/build-push-action@v4
-      with:
-        build-args: |
-          ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
-          BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
-          CONTINUOUS_INTEGRATION_BUILD=true
-          FILE_VERSION=${{ inputs.fileVersion }}
-          SIGN=${{ inputs.sign }}
-        context: .
-        file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
-        labels: ${{ steps.meta.outputs.labels }}
-        push: false
-        secret-files: |
-          credentials=/home/runner/.azure/msal_token_cache.json
-          signing_parameters=${{ runner.temp }}/signing/parameters.json
-        tags: ${{ steps.meta.outputs.tags }}
+    - name: Check Users
+      shell: bash
+      run: |
+        ls C:\Users
+
+    - name: Build Scaler Image
+      shell: bash
+      run: |
+        docker buildx build \
+          --build-arg ASSEMBLY_VERSION=${{ inputs.assemblyVersion }} \
+          --build-arg BUILD_CONFIGURATION=${{ inputs.buildConfiguration }} \
+          --build-arg CONTINUOUS_INTEGRATION_BUILD=true \
+          --build-arg FILE_VERSION=${{ inputs.fileVersion }} \
+          --build-arg SIGN=${{ inputs.sign }} \
+          --secret id=credentials, src=C:/Users/Runner/.azure/msal_token_cache.json \
+          --secret id=signing_parameters, src=${{ runner.temp }}/signing/parameters.json \
+          ${{ steps.meta.outputs.tags }} \
+          ${{ steps.meta.outputs.labels }} \
+          --file ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile \
+          .
 
     - name: Save Image
       shell: bash
