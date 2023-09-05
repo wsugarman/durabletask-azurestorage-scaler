@@ -23,12 +23,19 @@ jobs:
         uses: ./.github/actions/parse-chart
 
       - name: Run Unit Tests
-        uses: ./.github/actions/dotnet-test
+        uses: ./.github/actions/dotnet-publish
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
+          azureClientId: ${{ secrets.AZURE_CLIENT_ID }}
+          azureCodeSigningAccountName: ${{ secrets.AZURE_CODESIGNING_NAME }}
+          azureSubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          azureTenantId: ${{ secrets.AZURE_TENANT_ID }}
           buildConfiguration: Release
+          certificateProfileName: ${{ secrets.AZURE_CODESIGNING_PROFILE_NAME }}
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
-          resultsDirectory: ${{ runner.temp }}/TestResults
+          repositoryUri: ${{ github.server_url }}/${{ github.repository }}
+          sign: 'true'
+          testResultsDirectory: ${{ runner.temp }}/TestResults
 
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage

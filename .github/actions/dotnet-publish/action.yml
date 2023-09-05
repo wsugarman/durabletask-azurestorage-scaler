@@ -1,0 +1,138 @@
+name: dotnet publish
+description: Builds the scaler and ensures its quality by running both cross-platform tests and code coverage. Optionally can sign the code.
+inputs:
+  assemblyVersion:
+    description: The scaler assembly's version.
+    required: true
+  azureClientId:
+    default: ''
+    description: The client ID for the service principal used to access the Azure Code Signing Service.
+    required: false
+  azureCodeSigningAccountName:
+    default: ''
+    description: The name of the Azure Code Signing account containing the scaler's certificate profile.
+    required: false
+  azureSubscriptionId:
+    default: ''
+    description: The Azure subscription ID containing both the Azure Code Signing Service.
+    required: false
+  azureTenantId:
+    default: ''
+    description: The Azure tenant ID for service principal used to access the Azure Code Signing Service.
+    required: false
+  buildConfiguration:
+    default: Debug
+    description: The dotnet build configuration.
+    required: false
+  certificateProfileName:
+    default: ''
+    description: The name of the certificate profile within the Azure Code Signing Service.
+  codeSigningUri:
+    default: 'https://wus.codesigning.azure.net/'
+    description: The URI of the Azure Code Signing Service.
+    required: false
+  fileVersion:
+    description: The scaler assembly's file version.
+    required: true
+  imageRepository:
+    default: durabletask-azurestorage-scaler
+    description: The repository used for the scaler image.
+    required: false
+  imageTag:
+    description: The tag to use for the images.
+    required: true
+  repositoryUri:
+    default: 'https://github.com/wsugarman/durabletask-azurestorage-scaler'
+    description: The URI of the scaler repository.
+    required: false
+  sign:
+    default: 'false'
+    description: Indicates whether the assemblies in the image should be code signed. Can only be run on Windows agents.
+    required: false
+  testResultsDirectory:
+    description: The directory where the test results will be placed.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup
+      uses: actions/setup-dotnet@v3
+
+    - name: Build
+      shell: bash
+      run: |
+        dotnet build "./src/Scaler.sln" \
+          -c "${{ inputs.buildConfiguration }}" \
+          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
+          -warnaserror
+
+    - name: Test
+      shell: bash
+      run: |
+        dotnet test "./src/Scaler.sln" \
+          -c "${{ inputs.buildConfiguration }}" \
+          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
+          -warnaserror \
+          --no-build \
+          --results-directory "${{ inputs.testResultsDirectory }}" \
+          --collect "XPlat Code Coverage" \
+          -s "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings"
+
+    - name: Publish
+      shell: bash
+      run: |
+        dotnet publish "./src/Keda.Scaler.DurableTask.AzureStorage/Keda.Scaler.DurableTask.AzureStorage.csproj" \
+          -c "${{ inputs.buildConfiguration }}" \
+          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
+          -warnaserror \
+          --no-build \
+          -o "${{ runner.temp }}/app"
+
+    - if: ${{ inputs.sign == 'true' }}
+      name: az login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ inputs.azureClientId }}
+        tenant-id: ${{ inputs.azureTenantId }}
+        subscription-id: ${{ inputs.azureSubscriptionId }}
+
+    - if: ${{ inputs.sign == 'true' && success() }}
+      name: Create Signing Catalog
+      shell: bash
+      run: |
+        mkdir -p ${{ runner.temp }}/signing
+        cat << EOF >> ${{ runner.temp }}/signing/catalog.txt
+        ../app/Keda.Scaler.DurableTask.AzureStorage.dll
+        ../app/Keda.Scaler.DurableTask.AzureStorage.exe
+        EOF
+
+    - if: ${{ inputs.sign == 'true' && success() }}
+      name: Code Sign Assembly
+      shell: pwsh
+      run: |
+        Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery
+        Invoke-AzureCodeSigning `
+          -CertificateProfileName '${{ inputs.certificateProfileName }}' `
+          -CodeSigningAccountName '${{ inputs.azureCodeSigningAccountName }}' `
+          -Description 'A KEDA external scaler for the Durable Task Azure Storage backend.' `
+          -DescriptionUrl '${{ inputs.repositoryUri }}' `
+          -Endpoint '${{ inputs.codeSigningUri }}' `
+          -FileDigest 'SHA256' `
+          -FilesCatalog '${{ runner.temp }}/signing/catalog.txt' `
+          -TimestampDigest 'SHA256' `
+          -TimestampRfc3161 'http://timestamp.acs.microsoft.com'
+
+    - if: ${{ inputs.sign == 'true' && always() }}
+      name: az logout
+      shell: bash
+      run: |
+        az logout
+        az cache purge
+        az account clear
+
+    - name: Upload Binaries
+      uses: actions/upload-artifact@v3
+      with:
+        name: app
+        path: ${{ runner.temp }}/app

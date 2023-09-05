@@ -1,4 +1,4 @@
-ARG SIGN=false
+ARG COPY=false
 
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:739ddaf84935f7a4756f14ca18ae6cc49a3bb57b56c953c7a9292e918d04e8bd AS build
@@ -29,23 +29,15 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
   -warnaserror \
   -o /app/publish
 
-FROM scratch AS publish-signed-false
+FROM scratch AS publish-copy-false
 COPY --from=publish /app/publish /app
 
-# Azure Code Signing requires Windows
-FROM mcr.microsoft.com/powershell:windowsservercore-ltsc2022@sha256:af96b19499cb704ae815044e06dc3195b33f4ead7bc5369aea44a3fc28d2d502 AS publish-signed-true
-COPY --from=publish /app/publish /app
-USER ContainerUser
-RUN mkdir -p /signing && \
-    echo "../app/Keda.Scaler.DurableTask.AzureStorage.dll" >> /signing/catalog.txt && \
-    echo "../app/Keda.Scaler.DurableTask.AzureStorage.exe" >> /signing/catalog.txt
-RUN ["pwsh", "-c", "$ProgressPreference = 'SilentlyContinue'; Invoke-WebRequest -Uri https://aka.ms/installazurecliwindows -OutFile .\AzureCLI.msi; Start-Process msiexec.exe -Wait -ArgumentList '/I AzureCLI.msi /quiet'; Remove-Item .\AzureCLI.msi"]
-RUN ["pwsh", "-c", "Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery"]
-RUN --mount=type=secret,id=credentials,target=/Users/ContainerUser/.azure/msal_token_cache.json \
-  --mount=type=secret,id=signing_parameters,target=/signing/parameters.json \
-  ["pwsh", "-c", "$params = Get-Content -Path '/signing/parameters.json' | ConvertFrom-Json -AsHashTable; Invoke-AzureCodeSigning -FilesCatalog '/sign/catalog.txt' @params }"]
+# Optionally, binaries can be taken directly from the Docker build context
+FROM scratch AS publish-copy-true
+ARG PUBLISH_DIRECTORY
+COPY ${PUBLISH_DIRECTORY} /app
 
-FROM publish-signed-${SIGN} AS app
+FROM publish-copy-${COPY} AS publish-app
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:739ddaf84935f7a4756f14ca18ae6cc49a3bb57b56c953c7a9292e918d04e8bd AS users
 RUN groupadd nonroot -g 2000 && \
@@ -63,6 +55,6 @@ USER nonroot
 EXPOSE 8080
 
 FROM runtime AS web
-COPY --from=app /app /app
+COPY --from=publish-app /app /app
 WORKDIR /app
 ENTRYPOINT ["dotnet", "Keda.Scaler.DurableTask.AzureStorage.dll"]
