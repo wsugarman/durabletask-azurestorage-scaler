@@ -16,7 +16,7 @@ runs:
       uses: actions/download-artifact@v3
       with:
         name: app
-        path: ${{ runner.temp }}/app
+        path: ./app
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
@@ -35,8 +35,8 @@ runs:
       with:
         build-args: |
           COPY=true
-          PUBLISH_DIRECTORY=./
-        context: ${{ runner.temp }}/app
+          PUBLISH_DIRECTORY=./app
+        context: .
         file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
         labels: ${{ steps.meta.outputs.labels }}
         push: false
