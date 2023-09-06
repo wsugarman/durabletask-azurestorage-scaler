@@ -35,8 +35,8 @@ runs:
       with:
         build-args: |
           COPY=true
-          PUBLISH_DIRECTORY=${{ runner.temp }}/app
-        context: .
+          PUBLISH_DIRECTORY=./
+        context: ${{ runner.temp }}/app
         file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
         labels: ${{ steps.meta.outputs.labels }}
         push: false

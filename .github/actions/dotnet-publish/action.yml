@@ -99,13 +99,11 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Create Signing Catalog
-      shell: bash
+      shell: cmd
       run: |
-        mkdir -p ${{ runner.temp }}/signing
-        cat << EOF >> ${{ runner.temp }}/signing/catalog.txt
-        ../app/Keda.Scaler.DurableTask.AzureStorage.dll
-        ../app/Keda.Scaler.DurableTask.AzureStorage.exe
-        EOF
+        mkdir ${{ runner.temp }}\signing
+        echo "..\app\Keda.Scaler.DurableTask.AzureStorage.dll" >>  ${{ runner.temp }}\signing\catalog.txt
+        echo "..\app\Keda.Scaler.DurableTask.AzureStorage.exe" >> ${{ runner.temp }}\signing\catalog.txt
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
@@ -119,7 +117,7 @@ runs:
           -DescriptionUrl '${{ inputs.repositoryUri }}' `
           -Endpoint '${{ inputs.codeSigningUri }}' `
           -FileDigest 'SHA256' `
-          -FilesCatalog '${{ runner.temp }}/signing/catalog.txt' `
+          -FilesCatalog '${{ runner.temp }}\signing\catalog.txt' `
           -TimestampDigest 'SHA256' `
           -TimestampRfc3161 'http://timestamp.acs.microsoft.com'
 
