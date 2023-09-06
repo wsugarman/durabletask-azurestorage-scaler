@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build .NET App
+    name: Build
     runs-on: windows-latest
     outputs:
       chartVersion: ${{ steps.chart.outputs.chartVersion }}
@@ -25,7 +25,7 @@ jobs:
         id: chart
         uses: ./.github/actions/parse-chart
 
-      - name: Run Unit Tests
+      - name: Build Scaler
         uses: ./.github/actions/dotnet-publish
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
@@ -51,6 +51,9 @@ jobs:
     needs: build
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
