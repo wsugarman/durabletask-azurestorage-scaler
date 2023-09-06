@@ -102,8 +102,8 @@ runs:
       shell: cmd
       run: |
         mkdir ${{ runner.temp }}\signing
-        echo "..\app\Keda.Scaler.DurableTask.AzureStorage.dll" >>  ${{ runner.temp }}\signing\catalog.txt
-        echo "..\app\Keda.Scaler.DurableTask.AzureStorage.exe" >> ${{ runner.temp }}\signing\catalog.txt
+        echo ..\app\Keda.Scaler.DurableTask.AzureStorage.dll>>  ${{ runner.temp }}\signing\catalog.txt
+        echo ..\app\Keda.Scaler.DurableTask.AzureStorage.exe>> ${{ runner.temp }}\signing\catalog.txt
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
