@@ -7,15 +7,9 @@ on:
       - '**.md'
 
 jobs:
-  build:
-    name: Build
-    runs-on: windows-latest
-    outputs:
-      chartVersion: ${{ steps.chart.outputs.chartVersion }}
-      imageTag: ${{ steps.chart.outputs.imageTag }}
-
-    permissions:
-      id-token: write
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
@@ -27,50 +21,39 @@ jobs:
         with:
           workflowRunId: ${{ github.run_id }}
 
-      - name: Build Scaler
+      - name: Run Unit Tests
         uses: ./.github/actions/dotnet-publish
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
-          azureClientId: ${{ secrets.AZURE_CLIENT_ID }}
-          azureCodeSigningAccountName: ${{ secrets.AZURE_CODESIGNING_NAME }}
-          azureSubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          azureTenantId: ${{ secrets.AZURE_TENANT_ID }}
           buildConfiguration: Release
-          certificateProfileName: ${{ secrets.AZURE_CODESIGNING_PROFILE_NAME }}
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
-          repositoryUri: ${{ github.server_url }}/${{ github.repository }}
-          sign: 'true'
-          testResultsDirectory: ${{ runner.temp }}/TestResults
+          resultsDirectory: ${{ runner.temp }}/TestResults
+          sign: 'false'
 
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage
         with:
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
 
-  validate:
-    name: Validate
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
+          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
+          buildConfiguration: Release
+          copyBinaries: 'false'
+          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           imageRepository: durabletask-azurestorage-scaler
-          imageTag: ${{ needs.build.outputs.imageTag }}
+          imageTag: ${{ steps.chart.outputs.imageTag }}
 
       - name: Validate Helm Chart
         uses: ./.github/actions/helm-test
         with:
           buildConfiguration: Release
-          imageTag: ${{ needs.build.outputs.imageTag }}
+          imageTag: ${{ steps.chart.outputs.imageTag }}
           scalerImageRepository: durabletask-azurestorage-scaler
 
       - name: Pack Helm Chart
         uses: ./.github/actions/helm-package
         with:
           chartPath: ${{ github.workspace }}/charts/durabletask-azurestorage-scaler
-          chartVersion: ${{ needs.build.outputs.chartVersion }}
+          chartVersion: ${{ steps.chart.outputs.chartVersion }}

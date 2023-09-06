@@ -57,6 +57,7 @@ jobs:
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
+          copyBinaries: 'true'
           imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ needs.build.outputs.imageTag }}
 

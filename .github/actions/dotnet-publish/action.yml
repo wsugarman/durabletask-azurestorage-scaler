@@ -89,7 +89,7 @@ runs:
           --no-build \
           -o "${{ runner.temp }}/app"
 
-    - if: ${{ inputs.sign == 'true' }}
+    - if: ${{ inputs.sign == 'true' && success() }}
       name: az login
       uses: azure/login@v1
       with:

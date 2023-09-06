@@ -1,18 +1,35 @@
 name: docker test
 description: Builds the scaler docker image
 inputs:
+  assemblyVersion:
+    default: '1.0.0'
+    description: The scaler assembly's version.
+    required: false
+  buildConfiguration:
+    default: Debug
+    description: The dotnet build configuration.
+    required: false
+  copyBinaries:
+    default: 'false'
+    description: Indicates whether the dockerfile should build the scaler or simply copy existing binaries.
+    required: false
+  fileVersion:
+    default: '1.0.0'
+    description: The scaler assembly's file version.
+    required: false
   imageRepository:
     default: durabletask-azurestorage-scaler
-    description: The repository used for the scaler image
+    description: The repository used for the scaler image.
     required: false
   imageTag:
-    description: The tag to use for the images
+    description: The tag to use for the images.
     required: true
 
 runs:
   using: composite
   steps:
-    - name: Download Scaler Binaries
+    - if: ${{ inputs.copyBinaries == 'true' }}
+      name: Download Scaler Binaries
       uses: actions/download-artifact@v3
       with:
         name: app
@@ -31,7 +48,11 @@ runs:
       uses: docker/build-push-action@v4
       with:
         build-args: |
-          COPY=true
+          ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
+          BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
+          CONTINUOUS_INTEGRATION_BUILD=true
+          COPY=${{ inputs.copyBinaries }}
+          FILE_VERSION=${{ inputs.fileVersion }}
           PUBLISH_DIRECTORY=./app
         context: .
         file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
