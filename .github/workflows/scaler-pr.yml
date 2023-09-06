@@ -7,9 +7,12 @@ on:
       - '**.md'
 
 jobs:
-  validate:
-    name: Validate
+  build:
+    name: Build .NET App
     runs-on: windows-latest
+    outputs:
+      chartVersion: ${{ steps.chart.outputs.chartVersion }}
+      imageTag: ${{ steps.chart.outputs.imageTag }}
 
     permissions:
       id-token: write
@@ -44,24 +47,27 @@ jobs:
         with:
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
 
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
-          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
-          buildConfiguration: Release
-          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           imageRepository: durabletask-azurestorage-scaler
-          imageTag: ${{ steps.chart.outputs.imageTag }}
+          imageTag: ${{ needs.build.outputs.imageTag }}
 
       - name: Validate Helm Chart
         uses: ./.github/actions/helm-test
         with:
           buildConfiguration: Release
-          imageTag: ${{ steps.chart.outputs.imageTag }}
+          imageTag: ${{ needs.build.outputs.imageTag }}
           scalerImageRepository: durabletask-azurestorage-scaler
 
       - name: Pack Helm Chart
         uses: ./.github/actions/helm-package
         with:
           chartPath: ${{ github.workspace }}/charts/durabletask-azurestorage-scaler
-          chartVersion: ${{ steps.chart.outputs.chartVersion }}
+          chartVersion: ${{ needs.build.outputs.chartVersion }}
