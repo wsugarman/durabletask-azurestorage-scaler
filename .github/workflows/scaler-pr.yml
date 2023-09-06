@@ -27,8 +27,8 @@ jobs:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
           buildConfiguration: Release
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
-          resultsDirectory: ${{ runner.temp }}/TestResults
           sign: 'false'
+          testResultsDirectory: ${{ runner.temp }}/TestResults
 
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage
