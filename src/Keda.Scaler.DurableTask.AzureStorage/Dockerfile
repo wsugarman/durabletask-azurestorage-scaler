@@ -1,3 +1,5 @@
+ARG COPY=false
+
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:d54e5155b454e1915546ef3134f251496f1d26ce5f6b6e1effff12b061e58de7 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -27,6 +29,16 @@ RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
   -warnaserror \
   -o /app/publish
 
+FROM scratch AS publish-copy-false
+COPY --from=publish /app/publish /app
+
+# Optionally, binaries can be taken directly from the Docker build context
+FROM scratch AS publish-copy-true
+ARG PUBLISH_DIRECTORY
+COPY ${PUBLISH_DIRECTORY} /app
+
+FROM publish-copy-${COPY} AS publish-app
+
 FROM mcr.microsoft.com/dotnet/sdk:7.0.400-cbl-mariner2.0-amd64@sha256:d54e5155b454e1915546ef3134f251496f1d26ce5f6b6e1effff12b061e58de7 AS users
 RUN groupadd nonroot -g 2000 && \
     useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 200
@@ -43,6 +55,6 @@ USER nonroot
 EXPOSE 8080
 
 FROM runtime AS web
+COPY --from=publish-app /app /app
 WORKDIR /app
-COPY --from=publish ["/app/publish", "./"]
 ENTRYPOINT ["dotnet", "Keda.Scaler.DurableTask.AzureStorage.dll"]

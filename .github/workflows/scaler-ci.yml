@@ -7,9 +7,15 @@ on:
       - '**.md'
 
 jobs:
-  validate:
-    name: Validate
-    runs-on: ubuntu-latest
+  build:
+    name: Build
+    runs-on: windows-latest
+    outputs:
+      chartVersion: ${{ steps.chart.outputs.chartVersion }}
+      imageTag: ${{ steps.chart.outputs.imageTag }}
+
+    permissions:
+      id-token: write
 
     steps:
       - name: Checkout
@@ -19,42 +25,56 @@ jobs:
         id: chart
         uses: ./.github/actions/parse-chart
 
-      - name: Run Unit Tests
-        uses: ./.github/actions/dotnet-test
+      - name: Build Scaler
+        uses: ./.github/actions/dotnet-publish
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
+          azureClientId: ${{ secrets.AZURE_CLIENT_ID }}
+          azureCodeSigningAccountName: ${{ secrets.AZURE_CODESIGNING_NAME }}
+          azureSubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          azureTenantId: ${{ secrets.AZURE_TENANT_ID }}
           buildConfiguration: Release
+          certificateProfileName: ${{ secrets.AZURE_CODESIGNING_PROFILE_NAME }}
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
-          resultsDirectory: ${{ runner.temp }}/TestResults
+          repositoryUri: ${{ github.server_url }}/${{ github.repository }}
+          sign: 'true'
+          testResultsDirectory: ${{ runner.temp }}/TestResults
 
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage
         with:
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
 
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
-          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
-          buildConfiguration: Release
-          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
+          copyBinaries: 'true'
           imageRepository: ghcr.io/${{ github.repository }}
-          imageTag: ${{ steps.chart.outputs.imageTag }}
+          imageTag: ${{ needs.build.outputs.imageTag }}
 
       - name: Validate Helm Chart
         uses: ./.github/actions/helm-test
         with:
           buildConfiguration: Release
-          imageTag: ${{ steps.chart.outputs.imageTag }}
+          imageTag: ${{ needs.build.outputs.imageTag }}
           scalerImageRepository: ghcr.io/${{ github.repository }}
 
       - name: Pack Helm Chart
         uses: ./.github/actions/helm-package
         with:
           chartPath: ${{ github.workspace }}/charts/durabletask-azurestorage-scaler
-          chartVersion: ${{ steps.chart.outputs.chartVersion }}
-          gpgPassword: ${{ secrets. GPG_PASSWORD }}
-          gpgPrivateKey: ${{ secrets. GPG_PRIVATE_KEY_BASE64 }}
+          chartVersion: ${{ needs.build.outputs.chartVersion }}
+          gpgPassword: ${{ secrets.GPG_PASSWORD }}
+          gpgPrivateKey: ${{ secrets.GPG_PRIVATE_KEY_BASE64 }}
           sign: 'true'
 
   publishImage:

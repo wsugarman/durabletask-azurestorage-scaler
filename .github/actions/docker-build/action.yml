@@ -2,26 +2,39 @@ name: docker test
 description: Builds the scaler docker image
 inputs:
   assemblyVersion:
-    description: The resulting assembly's version
-    required: true
+    default: '1.0.0'
+    description: The scaler assembly's version.
+    required: false
   buildConfiguration:
     default: Debug
-    description: The dotnet build configuration
+    description: The dotnet build configuration.
+    required: false
+  copyBinaries:
+    default: 'false'
+    description: Indicates whether the dockerfile should build the scaler or simply copy existing binaries.
     required: false
   fileVersion:
-    description: The resulting assembly's file version
-    required: true
+    default: '1.0.0'
+    description: The scaler assembly's file version.
+    required: false
   imageRepository:
     default: durabletask-azurestorage-scaler
-    description: The repository used for the scaler image
+    description: The repository used for the scaler image.
     required: false
   imageTag:
-    description: The tag to use for the images
+    description: The tag to use for the images.
     required: true
 
 runs:
   using: composite
   steps:
+    - if: ${{ inputs.copyBinaries == 'true' }}
+      name: Download Scaler Binaries
+      uses: actions/download-artifact@v3
+      with:
+        name: app
+        path: ./app
+
     - name: Generate OCI Labels
       id: meta
       uses: docker/metadata-action@v4
@@ -38,7 +51,9 @@ runs:
           ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
           BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
           CONTINUOUS_INTEGRATION_BUILD=true
+          COPY=${{ inputs.copyBinaries }}
           FILE_VERSION=${{ inputs.fileVersion }}
+          PUBLISH_DIRECTORY=./app
         context: .
         file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
         labels: ${{ steps.meta.outputs.labels }}
