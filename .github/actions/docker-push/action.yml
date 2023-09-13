@@ -39,7 +39,7 @@ runs:
       run: docker load --input ${{ inputs.imageArchive }}
 
     - name: Login to ghcr.io
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
