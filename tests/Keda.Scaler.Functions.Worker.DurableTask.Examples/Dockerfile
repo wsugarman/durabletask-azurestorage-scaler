@@ -1,23 +1,17 @@
-# See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-# Build using the latest .NET SDK
+#See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 FROM mcr.microsoft.com/dotnet/sdk:7.0.401-bullseye-slim-amd64@sha256:4da9dff9f77f86ae7380a41332b838118f25b96eb27c4ac776325b285a331be0 AS build
 ARG BUILD_CONFIGURATION=Release
-
-# Azure Functions v4 targets .NET 6
-RUN set -x && \
-    curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin -Channel 6.0 -InstallDir /usr/share/dotnet
-
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/example/"]
-COPY ["./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/", "/example/src/"]
+COPY ["./tests/Keda.Scaler.Functions.Worker.DurableTask.Examples/", "/example/src/"]
 WORKDIR /example/src
-RUN dotnet restore "Keda.Scaler.WebJobs.DurableFunctions.Examples.csproj"
-RUN dotnet build "Keda.Scaler.WebJobs.DurableFunctions.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/build
+RUN dotnet restore "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj"
+RUN dotnet build "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Keda.Scaler.WebJobs.DurableFunctions.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/azure-functions/dotnet:4 AS runtime
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0 AS runtime
 RUN groupadd nonroot -g 2000 && \
     useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 1000 && \
     chown -R nonroot:nonroot /azure-functions-host

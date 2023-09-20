@@ -1,13 +1,13 @@
 {
   "profiles": {
-    "Keda.Scaler.WebJobs.DurableFunctions.Example": {
+    "Keda.Scaler.Functions.Worker.DurableTask.Examples": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7052"
+      "commandLineArgs": "--port 7115"
     },
     "Docker": {
       "commandName": "Docker",
       "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
-      "httpPort": 31256,
+      "httpPort": 33405,
       "useSSL": false
     }
   }
