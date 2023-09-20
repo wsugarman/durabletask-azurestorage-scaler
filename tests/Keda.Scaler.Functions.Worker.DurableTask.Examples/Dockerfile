@@ -9,7 +9,7 @@ RUN dotnet build "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "Keda.Scaler.WebJobs.DurableFunctions.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
 FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0 AS runtime
 RUN groupadd nonroot -g 2000 && \

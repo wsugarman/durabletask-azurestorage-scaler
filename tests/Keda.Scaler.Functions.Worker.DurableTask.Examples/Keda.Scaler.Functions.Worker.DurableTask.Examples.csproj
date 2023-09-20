@@ -4,7 +4,7 @@
     <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerFastModeProjectMountDirectory>/home/site/wwwroot</DockerFastModeProjectMountDirectory>
-    <DockerfileContext>$(RootDirectory)</DockerfileContext>
+    <DockerfileContext>..\..</DockerfileContext>
     <Nullable>enable</Nullable>
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0</TargetFramework>
