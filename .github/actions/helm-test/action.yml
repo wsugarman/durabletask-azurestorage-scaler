@@ -62,7 +62,7 @@ runs:
 
     - name: Build Function App Image
       shell: bash
-      run: docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ inputs.imageTag }}" .
+      run: docker build -f "./tests/Keda.Scaler.Functions.Worker.DurableTask.Examples/Dockerfile" -t "example-function-app:${{ inputs.imageTag }}" .
 
     - name: Create Kind Cluster
       shell: bash
