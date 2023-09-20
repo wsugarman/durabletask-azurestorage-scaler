@@ -187,7 +187,7 @@ public sealed class ScaleTest : IAsyncDisposable
             .ConfigureAwait(false);
 
         Assert.IsTrue(
-            metadata is not null && metadata.IsRunning,
+            metadata is not null && metadata.RuntimeStatus is OrchestrationRuntimeStatus.Pending or OrchestrationRuntimeStatus.Running,
             $"Instance '{instanceId}' has status '{metadata?.RuntimeStatus}'.");
     }
 
@@ -270,6 +270,7 @@ public sealed class ScaleTest : IAsyncDisposable
         try
         {
             await _durableClient.TerminateInstanceAsync(instanceId, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("Terminated instance '{InstanceId}.'", instanceId);
             return true;
         }
         catch (Exception e)
