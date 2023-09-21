@@ -245,7 +245,7 @@ runs:
     - name: Get Function Logs
       shell: bash
       if: ${{ failure() }}
-      run: kubectl logs -l app=${{ inputs.functionAppName }} -n keda
+      run: kubectl logs -l app=${{ inputs.functionAppName }} -n ${{ inputs.functionAppNamespace }}
 
     - name: Uninstall Function App Helm Chart
       shell: bash
