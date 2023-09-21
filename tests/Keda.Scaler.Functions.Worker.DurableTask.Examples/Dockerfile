@@ -21,7 +21,6 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     AzureFunctionsJobHost__Logging__FileLoggingMode=Never \
     AzureWebJobsScriptRoot=/home/site/wwwroot \
     DOTNET_EnableDiagnostics=0 \
-    FUNCTIONS_WORKER_RUNTIME=dotnet \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 USER nonroot

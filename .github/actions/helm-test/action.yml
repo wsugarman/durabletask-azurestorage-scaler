@@ -242,6 +242,11 @@ runs:
       if: ${{ failure() }}
       run: kubectl logs -l app=dtfx-scaler -n keda
 
+    - name: Get Function Logs
+      shell: bash
+      if: ${{ failure() }}
+      run: kubectl logs -l app=${{ inputs.functionAppName }} -n keda
+
     - name: Uninstall Function App Helm Chart
       shell: bash
       run: helm uninstall -n ${{ inputs.functionAppNamespace }} --wait --timeout 30s ${{ inputs.functionAppName }}
