@@ -45,4 +45,13 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <!-- Test Warnings -->
+  <Choose>
+    <When Condition="$(MSBuildProjectName.Contains('.Test'))">
+      <PropertyGroup>
+        <NoWarn>$(NoWarn);CA1707;CS1591</NoWarn>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
 </Project>

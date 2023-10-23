@@ -78,7 +78,7 @@ public static class ScaleTestFunctions
             throw new ArgumentNullException(nameof(client));
 
         // Run a query for all running instances to ensure the connection to the TaskHub is working correctly
-        var conditions = new OrchestrationStatusQueryCondition
+        OrchestrationStatusQueryCondition conditions = new()
         {
             CreatedTimeFrom = DateTime.MinValue,
             CreatedTimeTo = DateTime.MaxValue,
@@ -91,7 +91,7 @@ public static class ScaleTestFunctions
             ShowInput = false,
         };
 
-        await client.ListInstancesAsync(conditions, req.HttpContext.RequestAborted).ConfigureAwait(false);
+        _ = await client.ListInstancesAsync(conditions, req.HttpContext.RequestAborted).ConfigureAwait(false);
         return new OkResult();
     }
 }
