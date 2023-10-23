@@ -24,15 +24,15 @@ public class MapFieldExtensionsTest
         // so we'll demonstrate the usage inside of the KEDA scaler code below.
         MapField<string, string> raw = new()
         {
-                { nameof(ScalerMetadata.AccountName), "unittest" },
-                { nameof(ScalerMetadata.Cloud).ToUpperInvariant(), "AzureUSGovernmentCloud" }, // non-default
-                { nameof(ScalerMetadata.Connection), "foo=bar;hello=world" },
-                { nameof(ScalerMetadata.ConnectionFromEnv), "MY_CONNECTION_STRING" },
-                { nameof(ScalerMetadata.MaxActivitiesPerWorker).ToLowerInvariant(), "10" },
-                { nameof(ScalerMetadata.MaxOrchestrationsPerWorker), "3" },
-                { "TaSkHubNaMe", "MyTaskHub" },
-                { nameof(ScalerMetadata.UseManagedIdentity), "true" },
-            };
+            { nameof(ScalerMetadata.AccountName), "unittest" },
+            { nameof(ScalerMetadata.Cloud).ToUpperInvariant(), "AzureUSGovernmentCloud" }, // non-default
+            { nameof(ScalerMetadata.Connection), "foo=bar;hello=world" },
+            { nameof(ScalerMetadata.ConnectionFromEnv), "MY_CONNECTION_STRING" },
+            { nameof(ScalerMetadata.MaxActivitiesPerWorker).ToLowerInvariant(), "10" },
+            { nameof(ScalerMetadata.MaxOrchestrationsPerWorker), "3" },
+            { "TaSkHubNaMe", "MyTaskHub" },
+            { nameof(ScalerMetadata.UseManagedIdentity), "true" },
+        };
 
         ScalerMetadata? actual = raw.ToConfiguration().Get<ScalerMetadata>()!;
         Assert.IsNotNull(actual);

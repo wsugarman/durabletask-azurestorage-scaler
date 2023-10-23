@@ -182,6 +182,7 @@ public sealed class ScalerMetadata : IValidatableObject
         if (validationContext is null)
             throw new ArgumentNullException(nameof(validationContext));
 
+        // Validate common fields
         IEnumerable<ValidationResult> results = ValidateCommonMetadata();
 
         // Validate cloud metadata
@@ -196,8 +197,7 @@ public sealed class ScalerMetadata : IValidatableObject
                 ? ValidateManagedIdentityMetadata()
                 : ValidateConnectionStringMetadata(validationContext));
 
-        foreach (ValidationResult result in results)
-            yield return result;
+        return results;
     }
 
     private IEnumerable<ValidationResult> ValidateCommonMetadata()

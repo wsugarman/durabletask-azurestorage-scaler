@@ -23,9 +23,9 @@ public class IConfigurationExtensionsTest
         // Configuration contains some members
         MapField<string, string> map = new()
         {
-                { nameof(ScalerMetadata.AccountName), "unittest" },
-                { nameof(ScalerMetadata.UseManagedIdentity), "true" },
-            };
+            { nameof(ScalerMetadata.AccountName), "unittest" },
+            { nameof(ScalerMetadata.UseManagedIdentity), "true" },
+        };
 
         actual = map.ToConfiguration().GetOrDefault<ScalerMetadata>();
         Assert.IsNotNull(actual);
