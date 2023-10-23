@@ -528,8 +528,13 @@ dotnet_diagnostic.IDE2001.severity = error # Allow embedded statements on same l
 dotnet_diagnostic.IDE2002.severity = error # Allow blank lines between consecutive braces
 dotnet_diagnostic.IDE2003.severity = error # Allow statement immediately after block
 dotnet_diagnostic.IDE2004.severity = error # Allow blank line after colon in constructor initializer
-dotnet_diagnostic.IDE2005.severity = error # Allow blank line after token in conditional expression
-dotnet_diagnostic.IDE2006.severity = error # Allow blank line after token in arrow expression
+
+csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental            = false
+csharp_style_allow_embedded_statements_on_same_line_experimental                  = false
+
+dotnet_style_allow_multiple_blank_lines_experimental              = false
+dotnet_style_allow_statement_immediately_after_block_experimental = false
 
 # Null-checking preferences
 dotnet_diagnostic.IDE1005.severity = error # Use conditional delegate call
