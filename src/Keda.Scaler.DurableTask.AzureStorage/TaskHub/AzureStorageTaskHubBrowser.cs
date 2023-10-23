@@ -80,22 +80,12 @@ public class AzureStorageTaskHubBrowser
             BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
             AzureStorageTaskHubInfo info = result.Content.ToObjectFromJson<AzureStorageTaskHubInfo>();
 
-            _logger.LogDebug(
-                "Found Task Hub '{TaskHubName}' with {Partitions} partitions created at {CreatedTime:O}.",
-                info.TaskHubName,
-                info.PartitionCount,
-                info.CreatedAt);
-
+            _logger.FoundTaskHub(info.TaskHubName, info.PartitionCount, info.CreatedAt);
             return new TaskHubQueueMonitor(info, _queueServiceClientFactory.GetServiceClient(accountInfo), _logger);
         }
         catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
         {
-            _logger.LogWarning(
-                "Cannot find Task Hub '{TaskHub}' metadata blob '{TaskHubJson}' in container '{LeaseContainerName}'.",
-                taskHub,
-                client.Name,
-                client.BlobContainerName);
-
+            _logger.CouldNotFindTaskHub(taskHub, client.Name, client.BlobContainerName);
             return NullTaskHubQueueMonitor.Instance;
         }
     }

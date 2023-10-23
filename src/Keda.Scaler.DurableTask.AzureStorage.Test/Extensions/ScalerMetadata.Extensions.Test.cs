@@ -17,12 +17,12 @@ public class ScalerMetadataExtensionsTest
     {
         ScalerMetadata metadata;
         AzureStorageAccountInfo actual;
-        MockEnvironment env = new MockEnvironment();
+        MockEnvironment env = new();
         env.SetEnvironmentVariable("Connection", "UseDevelopmentStorage=true");
 
         // Errors
-        Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!, env));
-        Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(new ScalerMetadata(), null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!, env));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(new ScalerMetadata(), null!));
 
         // No managed identity
         // Note: Typically you don't specify values for some of these members in combination,

@@ -12,7 +12,6 @@
     <When Condition="$(MSBuildProjectName.EndsWith('.Test'))">
 
       <PropertyGroup>
-        <NoWarn>$(NoWarn);CA1707</NoWarn>
         <TargetProjectName>$(MSBuildProjectName.Substring(0, $([MSBuild]::Subtract($(MSBuildProjectName.Length), 5))))</TargetProjectName>
       </PropertyGroup>
 

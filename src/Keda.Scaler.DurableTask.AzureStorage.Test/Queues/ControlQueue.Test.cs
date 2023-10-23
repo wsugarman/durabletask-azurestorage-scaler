@@ -13,8 +13,8 @@ public class ControlQueueTest
     [TestMethod]
     public void GetName()
     {
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", -2));
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", 19));
+        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", -2));
+        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", 19));
 
         Assert.AreEqual("-control-01", ControlQueue.GetName(null, 1));
         Assert.AreEqual("foo-control-00", ControlQueue.GetName("foo", 0));

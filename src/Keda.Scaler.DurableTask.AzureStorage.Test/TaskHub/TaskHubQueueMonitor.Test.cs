@@ -37,42 +37,42 @@ public sealed class TaskHubQueueMonitorTest
     [TestMethod]
     public void CtorExceptions()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(null!, _mockQueueServiceClient.Object, NullLogger.Instance));
-        Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, null!, NullLogger.Instance));
-        Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, _mockQueueServiceClient.Object, null!));
-        Assert.ThrowsException<ArgumentException>(() => new TaskHubQueueMonitor(new AzureStorageTaskHubInfo { PartitionCount = -1 }, _mockQueueServiceClient.Object, NullLogger.Instance));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(null!, _mockQueueServiceClient.Object, NullLogger.Instance));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, null!, NullLogger.Instance));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, _mockQueueServiceClient.Object, null!));
+        _ = Assert.ThrowsException<ArgumentException>(() => new TaskHubQueueMonitor(new AzureStorageTaskHubInfo { PartitionCount = -1 }, _mockQueueServiceClient.Object, NullLogger.Instance));
     }
 
     [TestMethod]
     public async Task GetUsageAsync()
     {
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
 
         // Set up
         Mock<QueueClient>[] mockControlQueueClients = new Mock<QueueClient>[_taskHubInfo.PartitionCount];
         for (int i = 0; i < mockControlQueueClients.Length; i++)
         {
             string name = ControlQueue.GetName(_taskHubInfo.TaskHubName, i);
-            QueueProperties properties = new QueueProperties();
+            QueueProperties properties = new();
             SetApproximateMessagesCount(properties, i);
 
             mockControlQueueClients[i] = new Mock<QueueClient>(MockBehavior.Strict);
-            mockControlQueueClients[i]
+            _ = mockControlQueueClients[i]
                 .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
                 .Returns(Task.FromResult(Response.FromValue(properties, null!)));
-            _mockQueueServiceClient
+            _ = _mockQueueServiceClient
                 .Setup(c => c.GetQueueClient(name))
                 .Returns(mockControlQueueClients[i].Object);
         }
 
-        QueueProperties workItemProperties = new QueueProperties();
+        QueueProperties workItemProperties = new();
         SetApproximateMessagesCount(workItemProperties, 30);
 
-        Mock<QueueClient> mockWorkItemsQueueClient = new Mock<QueueClient>(MockBehavior.Strict);
-        mockWorkItemsQueueClient
+        Mock<QueueClient> mockWorkItemsQueueClient = new(MockBehavior.Strict);
+        _ = mockWorkItemsQueueClient
             .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
             .Returns(Task.FromResult(Response.FromValue(workItemProperties, null!)));
-        _mockQueueServiceClient
+        _ = _mockQueueServiceClient
             .Setup(c => c.GetQueueClient(WorkItemQueue.GetName(_taskHubInfo.TaskHubName)))
             .Returns(mockWorkItemsQueueClient.Object);
 
@@ -84,10 +84,10 @@ public sealed class TaskHubQueueMonitorTest
 
         // Test missing work item queue
         mockWorkItemsQueueClient.Reset();
-        mockWorkItemsQueueClient
+        _ = mockWorkItemsQueueClient
             .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
             .Returns(Task.FromException<Response<QueueProperties>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found")));
-        mockWorkItemsQueueClient
+        _ = mockWorkItemsQueueClient
             .Setup(c => c.Name)
             .Returns(WorkItemQueue.GetName(_taskHubInfo.TaskHubName));
 
@@ -98,10 +98,10 @@ public sealed class TaskHubQueueMonitorTest
 
         // Test missing control queue
         mockControlQueueClients[^1].Reset();
-        mockControlQueueClients[^1]
+        _ = mockControlQueueClients[^1]
             .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
             .Returns(Task.FromException<Response<QueueProperties>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found")));
-        mockControlQueueClients[^1]
+        _ = mockControlQueueClients[^1]
             .Setup(c => c.Name)
             .Returns(ControlQueue.GetName(_taskHubInfo.TaskHubName, mockControlQueueClients.Length - 1));
 

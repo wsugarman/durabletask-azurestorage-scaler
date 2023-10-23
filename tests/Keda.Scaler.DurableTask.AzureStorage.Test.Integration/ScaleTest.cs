@@ -38,26 +38,26 @@ public sealed class ScaleTest : IDisposable
         IServiceCollection services = new ServiceCollection()
             .AddSingleton(Configuration);
 
-        services
+        _ = services
             .AddOptions<DurableClientOptions>()
             .Bind(Configuration.GetSection("DurableTask"));
 
-        services
+        _ = services
             .AddOptions<DurableTaskOptions>()
             .Bind(Configuration.GetSection("DurableTask"))
             .PostConfigure<IOptions<DurableClientOptions>>((o, other) => o.HubName = other.Value.TaskHub);
 
-        services
+        _ = services
             .AddOptions<KubernetesOptions>()
             .Bind(Configuration.GetSection(KubernetesOptions.DefaultSectionName))
             .ValidateDataAnnotations();
 
-        services
+        _ = services
             .AddOptions<FunctionDeploymentOptions>()
             .Bind(Configuration.GetSection(FunctionDeploymentOptions.DefaultSectionName))
             .ValidateDataAnnotations();
 
-        services
+        _ = services
             .AddOptions<ScaleTestOptions>()
             .Bind(Configuration.GetSection(ScaleTestOptions.DefaultSectionName))
             .ValidateDataAnnotations();
@@ -97,7 +97,7 @@ public sealed class ScaleTest : IDisposable
         const int ExpectedActivityWorkers = 3;
         int activityCount = ExpectedActivityWorkers * _options.MaxActivitiesPerWorker;
 
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
         tokenSource.CancelAfter(_options.Timeout);
 
         await WaitForScaleDownAsync(tokenSource.Token).ConfigureAwait(false);
@@ -116,7 +116,7 @@ public sealed class ScaleTest : IDisposable
         catch (Exception)
         {
             string reason = tokenSource.IsCancellationRequested ? "Test timed out." : "Encountered unhandled exception.";
-            await TryTerminateAsync(instanceId, reason).ConfigureAwait(false);
+            _ = await TryTerminateAsync(instanceId, reason).ConfigureAwait(false);
             throw;
         }
 
@@ -129,7 +129,7 @@ public sealed class ScaleTest : IDisposable
     {
         const int OrchestrationCount = 3;
 
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
         tokenSource.CancelAfter(_options.Timeout);
 
         await WaitForScaleDownAsync(tokenSource.Token).ConfigureAwait(false);
@@ -156,7 +156,7 @@ public sealed class ScaleTest : IDisposable
         catch (Exception e) when (e is not AssertFailedException)
         {
             string reason = tokenSource.IsCancellationRequested ? "Test timed out." : "Encountered unhandled exception.";
-            await Task.WhenAll(instanceIds.Select(id => TryTerminateAsync(id, reason))).ConfigureAwait(false);
+            _ = await Task.WhenAll(instanceIds.Select(id => TryTerminateAsync(id, reason))).ConfigureAwait(false);
             throw;
         }
 

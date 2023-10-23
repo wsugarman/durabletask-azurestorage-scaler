@@ -12,5 +12,5 @@ internal static partial class SR
 
     public static string MissingMemberFormat => ExceptionsManager.GetString(nameof(MissingMemberFormat), CultureInfo.CurrentUICulture)!;
 
-    private static readonly ResourceManager ExceptionsManager = new ResourceManager("Keda.Scaler.DurableTask.AzureStorage.Resources.Exceptions", typeof(SR).Assembly);
+    private static readonly ResourceManager ExceptionsManager = new("Keda.Scaler.DurableTask.AzureStorage.Resources.Exceptions", typeof(SR).Assembly);
 }

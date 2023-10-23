@@ -14,7 +14,7 @@ internal static class IConfigurationExtensions
         if (configuration is null)
             throw new ArgumentNullException(nameof(configuration));
 
-        T obj = new T();
+        T obj = new();
         configuration.Bind(obj);
         return obj;
     }

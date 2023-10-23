@@ -45,25 +45,25 @@ public class AzureStorageTaskHubBrowserTest
     [TestMethod]
     public void CtorExceptions()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(null!, _queueServiceClientFactory.Object, NullLoggerFactory.Instance));
-        Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, null!, NullLoggerFactory.Instance));
-        Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(null!, _queueServiceClientFactory.Object, NullLoggerFactory.Instance));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, null!, NullLoggerFactory.Instance));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, null!));
 
-        Mock<ILoggerFactory> mockFactory = new Mock<ILoggerFactory>(MockBehavior.Strict);
-        mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null!);
-        Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, mockFactory.Object));
+        Mock<ILoggerFactory> mockFactory = new(MockBehavior.Strict);
+        _ = mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null!);
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new AzureStorageTaskHubBrowser(_blobServiceClientFactory.Object, _queueServiceClientFactory.Object, mockFactory.Object));
     }
 
     [TestMethod]
     public async Task GetMonitorAsync()
     {
         const string TaskHubName = "unit-test";
-        AzureStorageAccountInfo accountInfo = new AzureStorageAccountInfo
+        AzureStorageAccountInfo accountInfo = new()
         {
             AccountName = "testaccount",
             Cloud = CloudEndpoints.Public,
         };
-        AzureStorageTaskHubInfo taskHubInfo = new AzureStorageTaskHubInfo
+        AzureStorageTaskHubInfo taskHubInfo = new()
         {
             CreatedAt = DateTime.UtcNow,
             PartitionCount = 4,
@@ -72,35 +72,35 @@ public class AzureStorageTaskHubBrowserTest
 
         BlobDownloadResult result = DownloadResultFactory(new BinaryData(JsonSerializer.Serialize(taskHubInfo)));
 
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
 
         // Set up
-        Mock<BlobServiceClient> blobServiceClient = new Mock<BlobServiceClient>(MockBehavior.Strict);
-        Mock<BlobContainerClient> containerClient = new Mock<BlobContainerClient>(MockBehavior.Strict);
-        Mock<BlobClient> blobClient = new Mock<BlobClient>(MockBehavior.Strict);
-        _blobServiceClientFactory
+        Mock<BlobServiceClient> blobServiceClient = new(MockBehavior.Strict);
+        Mock<BlobContainerClient> containerClient = new(MockBehavior.Strict);
+        Mock<BlobClient> blobClient = new(MockBehavior.Strict);
+        _ = _blobServiceClientFactory
             .Setup(f => f.GetServiceClient(accountInfo))
             .Returns(blobServiceClient.Object);
-        blobServiceClient
+        _ = blobServiceClient
             .Setup(c => c.GetBlobContainerClient(LeasesContainer.GetName(TaskHubName)))
             .Returns(containerClient.Object);
-        containerClient
+        _ = containerClient
             .Setup(c => c.GetBlobClient(LeasesContainer.TaskHubBlobName))
             .Returns(blobClient.Object);
-        blobClient
+        _ = blobClient
             .Setup(c => c.DownloadContentAsync(tokenSource.Token))
             .Returns(Task.FromResult(Response.FromValue(result, null!)));
 
-        Mock<QueueServiceClient> queueServiceClient = new Mock<QueueServiceClient>(MockBehavior.Strict);
-        _queueServiceClientFactory
+        Mock<QueueServiceClient> queueServiceClient = new(MockBehavior.Strict);
+        _ = _queueServiceClientFactory
             .Setup(f => f.GetServiceClient(accountInfo))
             .Returns(queueServiceClient.Object);
 
         // Exceptions
-        await Assert
+        _ = await Assert
             .ThrowsExceptionAsync<ArgumentNullException>(() => _browser.GetMonitorAsync(null!, TaskHubName).AsTask())
             .ConfigureAwait(false);
-        await Assert
+        _ = await Assert
             .ThrowsExceptionAsync<ArgumentNullException>(() => _browser.GetMonitorAsync(accountInfo, null!).AsTask())
             .ConfigureAwait(false);
 
@@ -110,11 +110,11 @@ public class AzureStorageTaskHubBrowserTest
 
         // Test unsuccessful retrieval
         blobClient.Reset();
-        blobClient
+        _ = blobClient
             .Setup(c => c.DownloadContentAsync(tokenSource.Token))
             .Returns(Task.FromException<Response<BlobDownloadResult>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Blob not found")));
-        blobClient.Setup(c => c.BlobContainerName).Returns(LeasesContainer.GetName(TaskHubName));
-        blobClient.Setup(c => c.Name).Returns(LeasesContainer.TaskHubBlobName);
+        _ = blobClient.Setup(c => c.BlobContainerName).Returns(LeasesContainer.GetName(TaskHubName));
+        _ = blobClient.Setup(c => c.Name).Returns(LeasesContainer.TaskHubBlobName);
 
         monitor = await _browser.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token).ConfigureAwait(false);
         Assert.IsInstanceOfType<NullTaskHubQueueMonitor>(monitor);

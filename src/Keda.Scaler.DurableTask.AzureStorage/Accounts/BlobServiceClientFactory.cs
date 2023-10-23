@@ -10,11 +10,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 internal sealed class BlobServiceClientFactory : AzureStorageAccountClientFactory<BlobServiceClient>
 {
     protected override BlobServiceClient CreateServiceClient(string connectionString)
-        => new BlobServiceClient(connectionString);
+        => new(connectionString);
 
     protected override BlobServiceClient CreateServiceClient(Uri serviceUri)
-        => new BlobServiceClient(serviceUri);
+        => new(serviceUri);
 
     protected override BlobServiceClient CreateServiceClient(Uri serviceUri, TokenCredential credential)
-        => new BlobServiceClient(serviceUri, credential);
+        => new(serviceUri, credential);
 }

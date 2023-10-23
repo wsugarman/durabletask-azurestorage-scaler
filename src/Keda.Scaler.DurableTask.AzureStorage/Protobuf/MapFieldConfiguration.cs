@@ -20,7 +20,7 @@ internal sealed class MapFieldConfiguration : IConfiguration
         set
         {
             if (value is null)
-                _mapField.Remove(key);
+                _ = _mapField.Remove(key);
             else
                 _mapField[key] = value;
         }
