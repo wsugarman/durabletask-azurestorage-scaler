@@ -16,9 +16,9 @@ public class CloudEndpointsExtensionsTest
     public void GetStorageServiceUri()
     {
         // Exceptions
-        Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(null!, "foo", AzureStorageService.Blob));
-        Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, null!, AzureStorageService.Blob));
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, "foo", (AzureStorageService)42));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(null!, "foo", AzureStorageService.Blob));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, null!, AzureStorageService.Blob));
+        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, "foo", (AzureStorageService)42));
 
         // Successful test cases
         Assert.AreEqual(new Uri("https://foo.blob.core.windows.net", UriKind.Absolute), CloudEndpoints.Public.GetStorageServiceUri("foo", AzureStorageService.Blob));

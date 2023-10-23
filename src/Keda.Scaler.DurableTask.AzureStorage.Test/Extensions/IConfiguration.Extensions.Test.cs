@@ -16,13 +16,13 @@ public class IConfigurationExtensionsTest
     public void GetOrDefault()
     {
         // Exception
-        Assert.ThrowsException<ArgumentNullException>(() => IConfigurationExtensions.GetOrDefault<ScalerMetadata>(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => IConfigurationExtensions.GetOrDefault<ScalerMetadata>(null!));
 
         ScalerMetadata actual;
 
         // Configuration contains some members
-        MapField<string, string> map = new MapField<string, string>
-            {
+        MapField<string, string> map = new()
+        {
                 { nameof(ScalerMetadata.AccountName), "unittest" },
                 { nameof(ScalerMetadata.UseManagedIdentity), "true" },
             };

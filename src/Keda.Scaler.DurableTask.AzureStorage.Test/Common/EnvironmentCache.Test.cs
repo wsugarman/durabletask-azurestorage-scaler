@@ -17,7 +17,7 @@ public class EnvironmentCacheTest
     [TestMethod]
     public void GetEnvironmentVariable()
     {
-        MockEnvironment env = new MockEnvironment();
+        MockEnvironment env = new();
         IProcessEnvironment cache = new EnvironmentCache(env);
 
         env.SetEnvironmentVariable("2", "two");

@@ -24,14 +24,14 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 [TestClass]
 public class DurableTaskAzureStorageScalerServiceTest
 {
-    private readonly MockEnvironment _environment = new MockEnvironment();
-    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new Mock<AzureStorageTaskHubBrowser>(
+    private readonly MockEnvironment _environment = new();
+    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new(
         MockBehavior.Strict,
         new Mock<IStorageAccountClientFactory<BlobServiceClient>>(MockBehavior.Strict).Object,
         new Mock<IStorageAccountClientFactory<QueueServiceClient>>(MockBehavior.Strict).Object,
         NullLoggerFactory.Instance);
-    private readonly Mock<ITaskHubQueueMonitor> _mockMonitor = new Mock<ITaskHubQueueMonitor>(MockBehavior.Strict);
-    private readonly Mock<IOrchestrationAllocator> _mockAllocator = new Mock<IOrchestrationAllocator>(MockBehavior.Strict);
+    private readonly Mock<ITaskHubQueueMonitor> _mockMonitor = new(MockBehavior.Strict);
+    private readonly Mock<IOrchestrationAllocator> _mockAllocator = new(MockBehavior.Strict);
     private readonly IServiceProvider _serviceProvider;
     private readonly DurableTaskAzureStorageScalerService _service;
 
@@ -50,16 +50,16 @@ public class DurableTaskAzureStorageScalerServiceTest
     [TestMethod]
     public void CtorExceptions()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
-        Assert.ThrowsException<InvalidOperationException>(() => new DurableTaskAzureStorageScalerService(new ServiceCollection().BuildServiceProvider()));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
+        _ = Assert.ThrowsException<InvalidOperationException>(() => new DurableTaskAzureStorageScalerService(new ServiceCollection().BuildServiceProvider()));
     }
 
     [TestMethod]
     public async Task GetMetrics()
     {
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
 
-        ScalerMetadata metadata = new ScalerMetadata
+        ScalerMetadata metadata = new()
         {
             AccountName = "unitteststorage",
             Cloud = nameof(CloudEnvironment.AzurePublicCloud),
@@ -69,27 +69,27 @@ public class DurableTaskAzureStorageScalerServiceTest
             UseManagedIdentity = true,
         };
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
-        TaskHubQueueUsage usage = new TaskHubQueueUsage(new int[] { 1, 2, 3 }, 10);
+        TaskHubQueueUsage usage = new(new int[] { 1, 2, 3 }, 10);
 
         GetMetricsRequest request = CreateGetMetricsRequest(metadata);
         ServerCallContext context = new MockServerCallContext(tokenSource.Token);
 
         // Argument validation
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.GetMetrics(null!, context)).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.GetMetrics(request, null!)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.GetMetrics(null!, context)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.GetMetrics(request, null!)).ConfigureAwait(false);
 
         // Set up
-        _mockBrowser
+        _ = _mockBrowser
             .Setup(s => s
                 .GetMonitorAsync(
                     It.Is(accountInfo, AzureStorageAccountInfoEqualityComparer.Instance),
                     "UnitTestTaskHub",
                     tokenSource.Token))
             .Returns(() => ValueTask.FromResult(_mockMonitor.Object));
-        _mockMonitor
+        _ = _mockMonitor
             .Setup(m => m.GetUsageAsync(tokenSource.Token))
             .Returns(() => ValueTask.FromResult(usage));
-        _mockAllocator
+        _ = _mockAllocator
             .Setup(a => a.GetWorkerCount(usage.ControlQueueMessages, 3))
             .Returns(2);
 
@@ -98,13 +98,13 @@ public class DurableTaskAzureStorageScalerServiceTest
 
         MetricValue actual = response.MetricValues.Single();
         Assert.AreEqual(DurableTaskAzureStorageScalerService.MetricName, actual.MetricName);
-        Assert.AreEqual(10 + 2 * 5, actual.MetricValue_);
+        Assert.AreEqual(10 + (2 * 5), actual.MetricValue_);
     }
 
     [TestMethod]
     public async Task GetMetricSpec()
     {
-        ScalerMetadata metadata = new ScalerMetadata
+        ScalerMetadata metadata = new()
         {
             AccountName = "unitteststorage",
             Cloud = nameof(CloudEnvironment.AzurePublicCloud),
@@ -114,14 +114,14 @@ public class DurableTaskAzureStorageScalerServiceTest
             UseManagedIdentity = true,
         };
 
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
 
         ScaledObjectRef scaledObj = CreateScaledObjectRef(metadata);
         ServerCallContext context = new MockServerCallContext(tokenSource.Token);
-        DurableTaskAzureStorageScalerService service = new DurableTaskAzureStorageScalerService(_serviceProvider);
+        DurableTaskAzureStorageScalerService service = new(_serviceProvider);
 
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(null!, context)).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(scaledObj, null!)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(null!, context)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => service.GetMetricSpec(scaledObj, null!)).ConfigureAwait(false);
         GetMetricSpecResponse response = await service.GetMetricSpec(scaledObj, context).ConfigureAwait(false);
 
         MetricSpec actual = response.MetricSpecs.Single();
@@ -132,9 +132,9 @@ public class DurableTaskAzureStorageScalerServiceTest
     [TestMethod]
     public async Task IsActive()
     {
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
 
-        ScalerMetadata metadata = new ScalerMetadata
+        ScalerMetadata metadata = new()
         {
             AccountName = "unitteststorage",
             Cloud = nameof(CloudEnvironment.AzurePublicCloud),
@@ -144,27 +144,27 @@ public class DurableTaskAzureStorageScalerServiceTest
             UseManagedIdentity = true,
         };
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
-        TaskHubQueueUsage usage = new TaskHubQueueUsage(new int[] { 1, 2, 3 }, 10);
+        TaskHubQueueUsage usage = new(new int[] { 1, 2, 3 }, 10);
 
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);
         ServerCallContext context = new MockServerCallContext(tokenSource.Token);
 
         // Argument validation
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.IsActive(null!, context)).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.IsActive(scaledObjectRef, null!)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.IsActive(null!, context)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _service.IsActive(scaledObjectRef, null!)).ConfigureAwait(false);
 
         // Set up
-        _mockBrowser
+        _ = _mockBrowser
             .Setup(s => s
                 .GetMonitorAsync(
                     It.Is(accountInfo, AzureStorageAccountInfoEqualityComparer.Instance),
                     "UnitTestTaskHub",
                     tokenSource.Token))
             .Returns(() => ValueTask.FromResult(_mockMonitor.Object));
-        _mockMonitor
+        _ = _mockMonitor
             .Setup(m => m.GetUsageAsync(tokenSource.Token))
             .Returns(() => ValueTask.FromResult(usage));
-        _mockAllocator
+        _ = _mockAllocator
             .Setup(a => a.GetWorkerCount(usage.ControlQueueMessages, 3))
             .Returns(2);
 
@@ -175,10 +175,10 @@ public class DurableTaskAzureStorageScalerServiceTest
         // Run test (without activity)
         _mockMonitor.Reset();
         _mockAllocator.Reset();
-        _mockMonitor
+        _ = _mockMonitor
             .Setup(m => m.GetUsageAsync(tokenSource.Token))
             .Returns(() => ValueTask.FromResult(new TaskHubQueueUsage(Array.Empty<int>(), 0)));
-        _mockAllocator
+        _ = _mockAllocator
             .Setup(a => a.GetWorkerCount(Array.Empty<int>(), 3))
             .Returns(0);
 
@@ -187,7 +187,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     }
 
     private static GetMetricsRequest CreateGetMetricsRequest(ScalerMetadata metadata)
-        => new GetMetricsRequest
+        => new()
         {
             MetricName = DurableTaskAzureStorageScalerService.MetricName,
             ScaledObjectRef = CreateScaledObjectRef(metadata),
@@ -195,7 +195,7 @@ public class DurableTaskAzureStorageScalerServiceTest
 
     private static ScaledObjectRef CreateScaledObjectRef(ScalerMetadata metadata)
     {
-        ScaledObjectRef result = new ScaledObjectRef();
+        ScaledObjectRef result = new();
 
         if (metadata.AccountName is not null)
             result.ScalerMetadata[nameof(ScalerMetadata.AccountName)] = metadata.AccountName;

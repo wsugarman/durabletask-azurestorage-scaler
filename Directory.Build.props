@@ -44,5 +44,13 @@
       <_Parameter1_TypeName>System.String</_Parameter1_TypeName>
     </AssemblyAttribute>
   </ItemGroup>
+  
+  <!-- High Performance Logging -->
+  <ItemGroup>
+    <None Include="**\*.Log.cs">
+      <LogTargetFile>$([System.Text.RegularExpressions.Regex]::Match(%(Identity), "(?&lt;FileName&gt;[^\\/]+)\.Log\.cs").get_Groups().get_Item("FileName"))</LogTargetFile>
+      <DependentUpon>$(LogTargetFile).cs</DependentUpon>
+    </None>
+  </ItemGroup>
 
 </Project>

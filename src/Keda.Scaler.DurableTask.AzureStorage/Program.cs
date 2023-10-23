@@ -34,6 +34,6 @@ app.MapGet("/", () => "Communication with gRPC endpoints must be made through a 
 
 // Only enable reflection endpoints when developing
 if (app.Environment.IsDevelopment())
-    app.MapGrpcReflectionService();
+    _ = app.MapGrpcReflectionService();
 
 app.Run();

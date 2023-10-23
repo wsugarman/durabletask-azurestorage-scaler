@@ -31,13 +31,13 @@ internal static class WebApplicationBuilderExtensions
         if (!string.IsNullOrWhiteSpace(tlsOptions?.CertificatePath))
         {
             string certificateFileName = Path.GetFileName(tlsOptions.CertificatePath);
-            PhysicalFileProvider watcher = new PhysicalFileProvider(Path.GetDirectoryName(tlsOptions.CertificatePath)!);
-            Monitored<X509Certificate2> cert = new Monitored<X509Certificate2>(
+            PhysicalFileProvider watcher = new(Path.GetDirectoryName(tlsOptions.CertificatePath)!);
+            Monitored<X509Certificate2> cert = new(
                 () => X509Certificate2.CreateFromPemFile(tlsOptions.CertificatePath, tlsOptions.KeyPath),
                 () => watcher.Watch(certificateFileName));
 
             // TODO: Enable mTLS once supported by KEDA
-            builder.WebHost.ConfigureKestrel(o => o.ConfigureHttpsDefaults(x => x.ServerCertificateSelector = (context, dnsName) => cert.Current));
+            _ = builder.WebHost.ConfigureKestrel(o => o.ConfigureHttpsDefaults(x => x.ServerCertificateSelector = (context, dnsName) => cert.Current));
         }
 
         return builder;

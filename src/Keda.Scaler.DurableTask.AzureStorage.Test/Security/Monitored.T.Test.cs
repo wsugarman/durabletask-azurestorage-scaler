@@ -17,12 +17,12 @@ public class MonitoredTest
     public void Reload()
     {
         int reloads = 0;
-        Queue<CancellationTokenSource> sources = new Queue<CancellationTokenSource>();
-        using Monitored<string> monitored = new Monitored<string>(
+        Queue<CancellationTokenSource> sources = new();
+        using Monitored<string> monitored = new(
             () => reloads++.ToString(CultureInfo.InvariantCulture),
             () =>
             {
-                CancellationTokenSource source = new CancellationTokenSource();
+                CancellationTokenSource source = new();
                 sources.Enqueue(source);
                 return new CancellationChangeToken(source.Token);
             });

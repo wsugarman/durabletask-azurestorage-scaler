@@ -17,9 +17,9 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
         IStorageAccountClientFactory<TClient> factory = GetFactory();
 
         // Exceptions
-        Assert.ThrowsException<ArgumentNullException>(() => factory.GetServiceClient(null!));
-        Assert.ThrowsException<ArgumentException>(() => factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = null, ConnectionString = null }));
-        Assert.ThrowsException<ArgumentException>(() => factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "foo", Cloud = null }));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => factory.GetServiceClient(null!));
+        _ = Assert.ThrowsException<ArgumentException>(() => factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = null, ConnectionString = null }));
+        _ = Assert.ThrowsException<ArgumentException>(() => factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "foo", Cloud = null }));
 
         // Connection String
         actual = factory.GetServiceClient(new AzureStorageAccountInfo { ConnectionString = "UseDevelopmentStorage=true" });
