@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -20,14 +20,14 @@ public class IValidatableObjectExtensionsTest
         IServiceProvider services = new ServiceCollection().AddSingleton(Epoch.Unix).BuildServiceProvider();
 
         // Null object
-        Assert.ThrowsException<ArgumentNullException>(() => IValidatableObjectExtensions.EnsureValidated<Example>(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => IValidatableObjectExtensions.EnsureValidated<Example>(null!));
 
         // Single error
-        Example single = new Example { EvenNumber = 3 };
-        Assert.ThrowsException<ValidationException>(() => single.EnsureValidated(services));
+        Example single = new() { EvenNumber = 3 };
+        _ = Assert.ThrowsException<ValidationException>(() => single.EnsureValidated(services));
 
         // Multiple validation results
-        Example multiple = new Example { EvenNumber = 101, RecentTime = DateTime.MinValue + TimeSpan.FromHours(1) };
+        Example multiple = new() { EvenNumber = 101, RecentTime = DateTime.MinValue + TimeSpan.FromHours(1) };
         AggregateException actual = Assert.ThrowsException<AggregateException>(() => multiple.EnsureValidated(services));
         Assert.AreEqual(2, actual.InnerExceptions.Count);
         Assert.IsTrue(actual.InnerExceptions.All(x => x.GetType() == typeof(ValidationException)));

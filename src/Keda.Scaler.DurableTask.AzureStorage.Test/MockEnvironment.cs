@@ -8,7 +8,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 
 internal sealed class MockEnvironment : IProcessEnvironment
 {
-    private readonly Dictionary<string, string> _env = new Dictionary<string, string>();
+    private readonly Dictionary<string, string> _env = new();
 
     public string? GetEnvironmentVariable(string variable)
         => _env.TryGetValue(variable, out string? value) ? value : null;
@@ -16,7 +16,7 @@ internal sealed class MockEnvironment : IProcessEnvironment
     public void SetEnvironmentVariable(string variable, string? value)
     {
         if (value is null)
-            _env.Remove(variable);
+            _ = _env.Remove(variable);
         else
             _env[variable] = value;
     }

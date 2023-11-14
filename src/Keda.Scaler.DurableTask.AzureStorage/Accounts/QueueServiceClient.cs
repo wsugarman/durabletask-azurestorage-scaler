@@ -10,11 +10,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 internal sealed class QueueServiceClientFactory : AzureStorageAccountClientFactory<QueueServiceClient>
 {
     protected override QueueServiceClient CreateServiceClient(string connectionString)
-        => new QueueServiceClient(connectionString);
+        => new(connectionString);
 
     protected override QueueServiceClient CreateServiceClient(Uri serviceUri)
-        => new QueueServiceClient(serviceUri);
+        => new(serviceUri);
 
     protected override QueueServiceClient CreateServiceClient(Uri serviceUri, TokenCredential credential)
-        => new QueueServiceClient(serviceUri, credential);
+        => new(serviceUri, credential);
 }

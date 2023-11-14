@@ -107,7 +107,7 @@ public class MapFieldConfigurationTest
             });
 
         // Invalid key
-        Assert.ThrowsException<ArgumentNullException>(() => config.GetSection(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => config.GetSection(null!));
 
         // Missing
         IConfigurationSection missing = config.GetSection("four");
@@ -137,20 +137,20 @@ public class MapFieldConfigurationTest
         Assert.IsNull(nested["any key"]);
 
         // Invalid nested
-        Assert.ThrowsException<ArgumentNullException>(() => nested.GetSection(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => nested.GetSection(null!));
 
         // Modify the sections
         missing.Value = "quatre";
         section.Value = "deux";
-        Assert.ThrowsException<NotSupportedException>(() => nested.Value = "vingt-deux");
+        _ = Assert.ThrowsException<NotSupportedException>(() => nested.Value = "vingt-deux");
 
         Assert.AreEqual("quatre", missing.Value);
         Assert.AreEqual("deux", section.Value);
 
         // Can't modify by key (as there is only 1 level of keys for map fields)
-        Assert.ThrowsException<NotSupportedException>(() => missing["foo"] = "foo");
-        Assert.ThrowsException<NotSupportedException>(() => section["bar"] = "bar");
-        Assert.ThrowsException<NotSupportedException>(() => nested["baz"] = "baz");
+        _ = Assert.ThrowsException<NotSupportedException>(() => missing["foo"] = "foo");
+        _ = Assert.ThrowsException<NotSupportedException>(() => section["bar"] = "bar");
+        _ = Assert.ThrowsException<NotSupportedException>(() => nested["baz"] = "baz");
 
         // Nested-Nested
         IConfigurationSection subNested = nested.GetSection("two");

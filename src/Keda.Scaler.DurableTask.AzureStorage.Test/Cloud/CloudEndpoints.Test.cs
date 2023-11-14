@@ -30,8 +30,8 @@ public class CloudEndpointsTest
     [TestMethod]
     public void CtorExceptions()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(null!, "suffix"));
-        Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(new Uri("https://test"), null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(null!, "suffix"));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new CloudEndpoints(new Uri("https://test"), null!));
     }
 
     [TestMethod]
@@ -41,7 +41,7 @@ public class CloudEndpointsTest
         Assert.AreSame(CloudEndpoints.USGovernment, CloudEndpoints.ForEnvironment(CloudEnvironment.AzureUSGovernmentCloud));
         Assert.AreSame(CloudEndpoints.China, CloudEndpoints.ForEnvironment(CloudEnvironment.AzureChinaCloud));
         Assert.AreSame(CloudEndpoints.Germany, CloudEndpoints.ForEnvironment(CloudEnvironment.AzureGermanCloud));
-        Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpoints.ForEnvironment((CloudEnvironment)42));
+        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpoints.ForEnvironment((CloudEnvironment)42));
     }
 
     private static void AssertEndpoints(Uri authorityHost, string storageSuffix, CloudEndpoints actual)

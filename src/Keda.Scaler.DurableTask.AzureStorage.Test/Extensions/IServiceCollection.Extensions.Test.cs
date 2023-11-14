@@ -19,7 +19,7 @@ public class IServiceCollectionExtensionsTest
     [TestMethod]
     public void AddScaler()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => IServiceCollectionExtensions.AddDurableTaskScaler(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => IServiceCollectionExtensions.AddDurableTaskScaler(null!));
 
         IServiceCollection services = new ServiceCollection().AddDurableTaskScaler();
         Assert.AreEqual(5, services.Count);

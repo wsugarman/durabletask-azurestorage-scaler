@@ -10,5 +10,5 @@ internal static partial class SR
 {
     public static string InternalErrorMessage => ResponseResourceManager.GetString(nameof(InternalErrorMessage), CultureInfo.CurrentUICulture)!;
 
-    private static readonly ResourceManager ResponseResourceManager = new ResourceManager("Keda.Scaler.DurableTask.AzureStorage.Resources.Responses", typeof(SR).Assembly);
+    private static readonly ResourceManager ResponseResourceManager = new("Keda.Scaler.DurableTask.AzureStorage.Resources.Responses", typeof(SR).Assembly);
 }

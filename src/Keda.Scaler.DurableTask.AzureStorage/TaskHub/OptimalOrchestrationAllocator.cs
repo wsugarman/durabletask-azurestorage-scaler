@@ -21,7 +21,7 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
         if (partitionWorkItems.Count == 0)
             return 0;
 
-        WorkerSet workers = new WorkerSet(PartitionSet.FromWorkItems(partitionWorkItems));
+        WorkerSet workers = new(PartitionSet.FromWorkItems(partitionWorkItems));
         while (workers.RemainingPartitions.Count > 0)
         {
             PartitionSet workerPartitions = MaximizeWorkerPartitions(partitionWorkItems, workers.RemainingPartitions, maxOrchestrationWorkItems);
@@ -80,14 +80,14 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
 
         // Precondition: Partition does not yet exist
         public PartitionSet Add(int partition)
-            => new PartitionSet((ushort)(_partitionBitSet | (1 << partition)), (byte)(_count + 1));
+            => new((ushort)(_partitionBitSet | (1 << partition)), (byte)(_count + 1));
 
         public bool Contains(int partition)
             => (_partitionBitSet & (1 << partition)) != 0;
 
         // Preconditions: There are no overlaps in bits and this.Count >= other.Count
         public PartitionSet Remove(PartitionSet other)
-            => new PartitionSet((ushort)(_partitionBitSet & ~other._partitionBitSet), (byte)(_count - other._count));
+            => new((ushort)(_partitionBitSet & ~other._partitionBitSet), (byte)(_count - other._count));
 
         [ExcludeFromCodeCoverage]
         public override string ToString()
@@ -125,6 +125,6 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
         }
 
         public WorkerSet AddWorker(PartitionSet partitions)
-            => new WorkerSet((byte)(_count + 1), RemainingPartitions.Remove(partitions));
+            => new((byte)(_count + 1), RemainingPartitions.Remove(partitions));
     }
 }

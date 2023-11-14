@@ -29,7 +29,7 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
 
             if (string.Equals(accountInfo.Credential, Credential.ManagedIdentity, StringComparison.OrdinalIgnoreCase))
             {
-                ManagedIdentityCredential credential = new ManagedIdentityCredential(
+                ManagedIdentityCredential credential = new(
                     accountInfo.ClientId,
                     new TokenCredentialOptions { AuthorityHost = accountInfo.Cloud.AuthorityHost });
 
