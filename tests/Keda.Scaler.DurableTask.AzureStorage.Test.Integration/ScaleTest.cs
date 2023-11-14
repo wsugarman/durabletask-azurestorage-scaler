@@ -11,6 +11,7 @@ using DurableTask.Core;
 using k8s;
 using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Test.Integration.K8s;
+using Keda.Scaler.DurableTask.AzureStorage.Test.Integration.Logging;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Configuration;
@@ -30,45 +31,42 @@ public sealed class ScaleTest : IAsyncDisposable
     private readonly FunctionDeploymentOptions _deployment;
     private readonly ScaleTestOptions _options;
 
+    private static TestContext? s_testContext;
     private static readonly IConfiguration Configuration = new ConfigurationBuilder()
         .AddEnvironmentVariables()
         .Build();
+
+    [ClassInitialize]
+    public static void ClassInitialize(TestContext testContext)
+        => s_testContext = testContext;
 
     public ScaleTest()
     {
         IServiceCollection services = new ServiceCollection()
             .AddSingleton(Configuration);
 
-        services
+        _ = services
             .AddOptions<AzureStorageDurableTaskClientOptions>()
             .Bind(Configuration.GetSection(AzureStorageDurableTaskClientOptions.DefaultSectionName))
             .ValidateDataAnnotations();
 
-        services
+        _ = services
             .AddOptions<KubernetesOptions>()
             .Bind(Configuration.GetSection(KubernetesOptions.DefaultSectionName))
             .ValidateDataAnnotations();
 
-        services
+        _ = services
             .AddOptions<FunctionDeploymentOptions>()
             .Bind(Configuration.GetSection(FunctionDeploymentOptions.DefaultSectionName))
             .ValidateDataAnnotations();
 
-        services
+        _ = services
             .AddOptions<ScaleTestOptions>()
             .Bind(Configuration.GetSection(ScaleTestOptions.DefaultSectionName))
             .ValidateDataAnnotations();
 
         IServiceProvider provider = services
-            .AddLogging(b => b
-                .AddSimpleConsole(
-                    o =>
-                    {
-                        o.IncludeScopes = true;
-                        o.SingleLine = false;
-                        o.TimestampFormat = "O";
-                        o.UseUtcTimestamp = true;
-                    }))
+            .AddLogging(b => b.AddProvider(new TestContextLoggerProvider(s_testContext!)))
             .AddSingleton(sp => sp
                 .GetRequiredService<IOptions<AzureStorageDurableTaskClientOptions>>()
                 .Value
@@ -95,10 +93,14 @@ public sealed class ScaleTest : IAsyncDisposable
         const int ExpectedActivityWorkers = 3;
         int activityCount = ExpectedActivityWorkers * _options.MaxActivitiesPerWorker;
 
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
+        using CancellationTokenSource linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
+            s_testContext!.CancellationTokenSource.Token,
+            tokenSource.Token);
+
         tokenSource.CancelAfter(_options.Timeout);
 
-        await WaitForScaleDownAsync(tokenSource.Token).ConfigureAwait(false);
+        await WaitForScaleDownAsync(linkedSource.Token).ConfigureAwait(false);
 
         // Start 1 orchestration with the configured number of activities
         OrchestrationRuntimeStatus? finalStatus;
@@ -109,11 +111,11 @@ public sealed class ScaleTest : IAsyncDisposable
             await WaitForScaleUpAsync(ExpectedActivityWorkers, t => EnsureRunningAsync(instanceId, t), tokenSource.Token).ConfigureAwait(false);
 
             // Assert completion
-            finalStatus = await WaitForOrchestration(instanceId, tokenSource.Token).ConfigureAwait(false);
+            finalStatus = await WaitForOrchestration(instanceId, linkedSource.Token).ConfigureAwait(false);
         }
         catch (Exception)
         {
-            await TryTerminateAsync(instanceId, tokenSource.Token).ConfigureAwait(false);
+            _ = await TryTerminateAsync(instanceId, linkedSource.Token).ConfigureAwait(false);
             throw;
         }
 
@@ -126,10 +128,14 @@ public sealed class ScaleTest : IAsyncDisposable
     {
         const int OrchestrationCount = 3;
 
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
+        using CancellationTokenSource linkedSource = CancellationTokenSource.CreateLinkedTokenSource(
+            s_testContext!.CancellationTokenSource.Token,
+            tokenSource.Token);
+
         tokenSource.CancelAfter(_options.Timeout);
 
-        await WaitForScaleDownAsync(tokenSource.Token).ConfigureAwait(false);
+        await WaitForScaleDownAsync(linkedSource.Token).ConfigureAwait(false);
 
         // Start 3 orchestrations with the configured number of activities
         OrchestrationRuntimeStatus?[] finalStatuses;
@@ -145,14 +151,14 @@ public sealed class ScaleTest : IAsyncDisposable
             await WaitForScaleUpAsync(
                 OrchestrationCount,
                 t => Task.WhenAll(instanceIds.Select(id => EnsureRunningAsync(id, t))),
-                tokenSource.Token).ConfigureAwait(false);
+                linkedSource.Token).ConfigureAwait(false);
 
             // Assert completion
-            finalStatuses = await Task.WhenAll(instanceIds.Select(id => WaitForOrchestration(id, tokenSource.Token))).ConfigureAwait(false);
+            finalStatuses = await Task.WhenAll(instanceIds.Select(id => WaitForOrchestration(id, linkedSource.Token))).ConfigureAwait(false);
         }
         catch (Exception e) when (e is not AssertFailedException)
         {
-            await Task.WhenAll(instanceIds.Select(id => TryTerminateAsync(id, tokenSource.Token))).ConfigureAwait(false);
+            _ = await Task.WhenAll(instanceIds.Select(id => TryTerminateAsync(id, linkedSource.Token))).ConfigureAwait(false);
             throw;
         }
 
@@ -174,7 +180,7 @@ public sealed class ScaleTest : IAsyncDisposable
             new { ActivityCount = activities, ActivityTime = _options.ActivityDuration },
             cancellationToken).ConfigureAwait(false);
 
-        _logger.LogInformation("Started 'RunAsync' instance '{InstanceId}'.", instanceId);
+        _logger.StartedOrchestration("RunAsync", instanceId);
         return instanceId;
     }
 
@@ -195,7 +201,7 @@ public sealed class ScaleTest : IAsyncDisposable
     {
         OrchestrationMetadata? metadata;
 
-        _logger.LogInformation("Waiting for instance '{InstanceId}' to complete.", instanceId);
+        _logger.WaitingForOrchestration(instanceId);
 
         while (true)
         {
@@ -208,10 +214,10 @@ public sealed class ScaleTest : IAsyncDisposable
             if (metadata is null || metadata.IsCompleted)
                 break;
 
-            _logger.LogInformation("Current status of instance '{InstanceId}' is '{Status}'.", instanceId, metadata.RuntimeStatus);
+            _logger.ObservedOrchestrationStatus(instanceId, metadata.RuntimeStatus);
         }
 
-        _logger.LogInformation("Instance '{InstanceId}' reached terminal status '{Status}'.", instanceId, metadata?.RuntimeStatus);
+        _logger.ObservedOrchestrationCompletion(instanceId, metadata?.RuntimeStatus);
         return metadata?.RuntimeStatus;
     }
 
@@ -219,7 +225,7 @@ public sealed class ScaleTest : IAsyncDisposable
     {
         V1Scale scale;
 
-        _logger.LogInformation("Waiting for scale down to {Target} replicas.", _options.MinReplicas);
+        _logger.MonitoringWorkerScaleDown(_options.MinReplicas);
 
         do
         {
@@ -230,9 +236,9 @@ public sealed class ScaleTest : IAsyncDisposable
                 .ReadNamespacedDeploymentScaleAsync(_deployment.Name, _deployment.Namespace, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            _logger.LogInformation("Current scale for deployment '{Deployment}' in namespace '{Namespace}' is {Status}/{Spec}...",
-                _deployment.Name,
-                _deployment.Namespace,
+            _logger.ObservedKubernetesDeploymentScale(
+                _deployment.Name!,
+                _deployment.Namespace!,
                 scale.Status.Replicas,
                 scale.Spec.Replicas.GetValueOrDefault());
         } while (scale.Status.Replicas != _options.MinReplicas || scale.Spec.Replicas.GetValueOrDefault() != _options.MinReplicas);
@@ -242,7 +248,7 @@ public sealed class ScaleTest : IAsyncDisposable
     {
         V1Scale scale;
 
-        _logger.LogInformation("Waiting for at least {Target} replicas.", min);
+        _logger.MonitoringWorkerScaleUp(min);
 
         do
         {
@@ -256,9 +262,9 @@ public sealed class ScaleTest : IAsyncDisposable
                 .ReadNamespacedDeploymentScaleAsync(_deployment.Name, _deployment.Namespace, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            _logger.LogInformation("Current scale for deployment '{Deployment}' in namespace '{Namespace}' is {Status}/{Spec}...",
-                _deployment.Name,
-                _deployment.Namespace,
+            _logger.ObservedKubernetesDeploymentScale(
+                _deployment.Name!,
+                _deployment.Namespace!,
                 scale.Status.Replicas,
                 scale.Spec.Replicas.GetValueOrDefault());
         } while (scale.Status.Replicas < min || scale.Spec.Replicas.GetValueOrDefault() < min);
@@ -270,12 +276,12 @@ public sealed class ScaleTest : IAsyncDisposable
         try
         {
             await _durableClient.TerminateInstanceAsync(instanceId, cancellationToken).ConfigureAwait(false);
-            _logger.LogInformation("Terminated instance '{InstanceId}.'", instanceId);
+            _logger.TerminatedOrchestration(instanceId);
             return true;
         }
         catch (Exception e)
         {
-            _logger.LogWarning(e, "Error encountered when terminating instance '{InstanceId}.'", instanceId);
+            _logger.FailedTerminatingOrchestration(e, instanceId);
             return false;
         }
     }

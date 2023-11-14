@@ -23,10 +23,12 @@ internal sealed class AzureStorageDurableTaskClientOptions
     public string TaskHubName { get; set; } = "TestHubName";
 
     public AzureStorageOrchestrationServiceSettings ToOrchestrationServiceSettings()
-        => new AzureStorageOrchestrationServiceSettings
+    {
+        return new()
         {
             PartitionCount = PartitionCount,
             TaskHubName = TaskHubName,
             StorageConnectionString = ConnectionString,
         };
+    }
 }

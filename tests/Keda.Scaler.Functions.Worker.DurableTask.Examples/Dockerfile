@@ -1,5 +1,5 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:7.0.401-bullseye-slim-amd64@sha256:4da9dff9f77f86ae7380a41332b838118f25b96eb27c4ac776325b285a331be0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0.403-cbl-mariner2.0-amd64@sha256:83c3157e64da025c69b0c53e0a5bfc73c0364c4e31c3ae11e489946d2dcca439 AS build
 ARG BUILD_CONFIGURATION=Release
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/example/"]
 COPY ["./tests/Keda.Scaler.Functions.Worker.DurableTask.Examples/", "/example/src/"]
@@ -11,7 +11,7 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0 AS runtime
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0-mariner@sha:7cbee2636453d9e7f5ed8865ced5576f643a3e267cc1c8b25e58b2e7f01fb57f AS runtime
 RUN groupadd nonroot -g 2000 && \
     useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 1000 && \
     chown -R nonroot:nonroot /azure-functions-host

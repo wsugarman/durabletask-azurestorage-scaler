@@ -18,7 +18,7 @@ namespace Keda.Scaler.Functions.Worker.DurableTask.Examples;
 /// A collection of Durable Function orchstrations and activities meant to help test
 /// the KEDA external scaler for the Durable Task framework.
 /// </summary>
-public static class ScaleTestFunctions
+public static partial class ScaleTestFunctions
 {
     /// <summary>
     /// Asynchronously triggrs the specified number of activities that run for a variable amount of time.
@@ -47,7 +47,7 @@ public static class ScaleTestFunctions
             throw new ArgumentNullException(nameof(input));
 
         ILogger logger = context.CreateReplaySafeLogger("DurableTask.AzureStorage.Keda.Tests");
-        logger.LogInformation("Starting {Count} activities with duration '{Timeout}'.", input.ActivityCount, input.ActivityTime);
+        logger.StartingDelayActivity(input.ActivityCount, input.ActivityTime);
 
         return Task.WhenAll(Enumerable
             .Repeat((Context: context, Delay: input.ActivityTime), input.ActivityCount)
@@ -89,7 +89,7 @@ public static class ScaleTestFunctions
             throw new ArgumentNullException(nameof(client));
 
         // Run a query for all running instances to ensure the connection to the TaskHub is working correctly
-        var query = new OrchestrationQuery
+        OrchestrationQuery query = new()
         {
             CreatedFrom = DateTimeOffset.MinValue,
             CreatedTo = DateTimeOffset.MaxValue,
@@ -102,11 +102,17 @@ public static class ScaleTestFunctions
             FetchInputsAndOutputs = false,
         };
 
-        await client
+        _ = await client
             .GetAllInstancesAsync(query)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         return request.CreateResponse(HttpStatusCode.OK);
     }
+
+    [LoggerMessage(
+        EventId = 1,
+        Level = LogLevel.Information,
+        Message = "Starting {Count} activities with duration '{Timeout}'.")]
+    private static partial void StartingDelayActivity(this ILogger logger, int count, TimeSpan timeout);
 }
