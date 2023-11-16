@@ -11,7 +11,6 @@ using DurableTask.Core;
 using k8s;
 using k8s.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Test.Integration.K8s;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Integration.Logging;
 using Microsoft.DurableTask;
 using Microsoft.DurableTask.Client;
 using Microsoft.Extensions.Configuration;
@@ -66,7 +65,15 @@ public sealed class ScaleTest : IAsyncDisposable
             .ValidateDataAnnotations();
 
         IServiceProvider provider = services
-            .AddLogging(b => b.AddProvider(new TestContextLoggerProvider(s_testContext!)))
+            .AddLogging(b => b
+                .AddSimpleConsole(
+                    o =>
+                    {
+                        o.IncludeScopes = true;
+                        o.SingleLine = false;
+                        o.TimestampFormat = "O";
+                        o.UseUtcTimestamp = true;
+                    }))
             .AddSingleton(sp => sp
                 .GetRequiredService<IOptions<AzureStorageDurableTaskClientOptions>>()
                 .Value
@@ -104,11 +111,11 @@ public sealed class ScaleTest : IAsyncDisposable
 
         // Start 1 orchestration with the configured number of activities
         OrchestrationRuntimeStatus? finalStatus;
-        string instanceId = await StartOrchestrationAsync(activityCount).ConfigureAwait(false);
+        string instanceId = await StartOrchestrationAsync(activityCount, linkedSource.Token).ConfigureAwait(false);
         try
         {
             // Assert scale (needs at least 3 workers for the activities)
-            await WaitForScaleUpAsync(ExpectedActivityWorkers, t => EnsureRunningAsync(instanceId, t), tokenSource.Token).ConfigureAwait(false);
+            await WaitForScaleUpAsync(ExpectedActivityWorkers, t => EnsureRunningAsync(instanceId, t), linkedSource.Token).ConfigureAwait(false);
 
             // Assert completion
             finalStatus = await WaitForOrchestration(instanceId, linkedSource.Token).ConfigureAwait(false);
@@ -142,7 +149,7 @@ public sealed class ScaleTest : IAsyncDisposable
         string[] instanceIds = await Task
             .WhenAll(Enumerable
                 .Repeat(_options, OrchestrationCount)
-                .Select(o => StartOrchestrationAsync(o.MaxActivitiesPerWorker)))
+                .Select(o => StartOrchestrationAsync(o.MaxActivitiesPerWorker, linkedSource.Token)))
             .ConfigureAwait(false);
 
         try
@@ -173,7 +180,7 @@ public sealed class ScaleTest : IAsyncDisposable
         return _durableClient.DisposeAsync();
     }
 
-    private async Task<string> StartOrchestrationAsync(int activities, CancellationToken cancellationToken = default)
+    private async Task<string> StartOrchestrationAsync(int activities, CancellationToken cancellationToken)
     {
         string instanceId = await _durableClient.ScheduleNewOrchestrationInstanceAsync(
             new TaskName("RunAsync"),
@@ -244,7 +251,7 @@ public sealed class ScaleTest : IAsyncDisposable
         } while (scale.Status.Replicas != _options.MinReplicas || scale.Spec.Replicas.GetValueOrDefault() != _options.MinReplicas);
     }
 
-    private async Task WaitForScaleUpAsync(int min, Func<CancellationToken, Task> onPollAsync, CancellationToken cancellationToken = default)
+    private async Task WaitForScaleUpAsync(int min, Func<CancellationToken, Task> onPollAsync, CancellationToken cancellationToken)
     {
         V1Scale scale;
 
