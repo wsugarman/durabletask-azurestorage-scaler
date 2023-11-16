@@ -62,7 +62,7 @@ runs:
 
     - name: Build Function App Image
       shell: bash
-      run: docker build -f "./tests/Keda.Scaler.WebJobs.DurableFunctions.Examples/Dockerfile" -t "example-function-app:${{ inputs.imageTag }}" .
+      run: docker build -f "./tests/Keda.Scaler.Functions.Worker.DurableTask.Examples/Dockerfile" -t "example-function-app:${{ inputs.imageTag }}" .
 
     - name: Create Kind Cluster
       shell: bash
@@ -222,9 +222,8 @@ runs:
       env:
         DurableTask__ConnectionName: DurableTask:ConnectionString
         DurableTask__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;'
-        DurableTask__IsExternalClient: 'true'
-        DurableTask__StorageProvider__PartitionCount: ${{ inputs.partitionCount }}
-        DurableTask__TaskHub: ${{ inputs.taskHubName }}
+        DurableTask__PartitionCount: ${{ inputs.partitionCount }}
+        DurableTask__TaskHubName: ${{ inputs.taskHubName }}
         Function__Name: ${{ inputs.functionAppName }}
         Function__Namespace: ${{ inputs.functionAppNamespace }}
         Kubernetes__Context: kind-integration
@@ -242,6 +241,11 @@ runs:
       shell: bash
       if: ${{ failure() }}
       run: kubectl logs -l app=dtfx-scaler -n keda
+
+    - name: Get Function Logs
+      shell: bash
+      if: ${{ failure() }}
+      run: kubectl logs -l app=${{ inputs.functionAppName }} -n ${{ inputs.functionAppNamespace }}
 
     - name: Uninstall Function App Helm Chart
       shell: bash
