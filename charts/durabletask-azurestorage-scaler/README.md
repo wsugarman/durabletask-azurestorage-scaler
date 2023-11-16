@@ -94,5 +94,4 @@ securityContext:
 
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 200
 ```

@@ -39,19 +39,10 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.100-cbl-mariner2.0-amd64@sha256:4e3c2fe37a44ac88e96ae77841aea3caf9264da19c3a863513de570c22df9f3a AS users
-RUN groupadd nonroot -g 2000 && \
-    useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 200
-
-FROM scratch AS nonroot
-COPY --from=users /etc/group /etc/group
-COPY --from=users /etc/passwd /etc/passwd
-
 FROM mcr.microsoft.com/dotnet/aspnet:8.0.0-cbl-mariner2.0-distroless-amd64@sha256:cd5d4f9f8110cde688f700be553b3cb57e180f46ee9f70f29cbcdf0952320253 AS runtime
-COPY --from=nonroot / /
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0
-USER nonroot
+USER $APP_UID
 EXPOSE 8080
 
 FROM runtime AS web
