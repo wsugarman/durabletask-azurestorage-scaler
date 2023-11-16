@@ -40,11 +40,8 @@ public static partial class ScaleTestFunctions
         ScaleTestInput input,
         CancellationToken cancellationToken = default)
     {
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-
-        if (input is null)
-            throw new ArgumentNullException(nameof(input));
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(input);
 
         ILogger logger = context.CreateReplaySafeLogger("DurableTask.AzureStorage.Keda.Tests");
         logger.StartingDelayActivity(input.ActivityCount, input.ActivityTime);
@@ -82,11 +79,8 @@ public static partial class ScaleTestFunctions
         [DurableClient] DurableTaskClient client,
         CancellationToken cancellationToken = default)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (client is null)
-            throw new ArgumentNullException(nameof(client));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(client);
 
         // Run a query for all running instances to ensure the connection to the TaskHub is working correctly
         OrchestrationQuery query = new()
