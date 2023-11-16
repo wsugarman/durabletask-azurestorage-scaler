@@ -26,6 +26,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     AzureFunctionsJobHost__FileWatchingEnabled=false \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
     AzureFunctionsJobHost__Logging__FileLoggingMode=Never \
+    AzureWebJobsFeatureFlags=EnableWorkerIndexing \
     AzureWebJobsScriptRoot=/home/site/wwwroot \
     DOTNET_EnableDiagnostics=0 \
     LANG=en_US.UTF-8 \
