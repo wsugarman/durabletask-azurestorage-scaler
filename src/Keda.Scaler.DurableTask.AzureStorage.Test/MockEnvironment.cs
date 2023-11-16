@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 
 internal sealed class MockEnvironment : IProcessEnvironment
 {
-    private readonly Dictionary<string, string> _env = new();
+    private readonly Dictionary<string, string> _env = [];
 
     public string? GetEnvironmentVariable(string variable)
         => _env.TryGetValue(variable, out string? value) ? value : null;

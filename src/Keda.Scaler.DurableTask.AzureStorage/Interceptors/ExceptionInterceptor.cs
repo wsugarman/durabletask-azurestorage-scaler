@@ -24,14 +24,9 @@ internal sealed class ExceptionInterceptor : Interceptor
         ServerCallContext context,
         UnaryServerMethod<TRequest, TResponse> continuation)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-
-        if (continuation is null)
-            throw new ArgumentNullException(nameof(continuation));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(continuation);
 
         try
         {

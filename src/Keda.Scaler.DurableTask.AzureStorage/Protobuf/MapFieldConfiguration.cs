@@ -28,8 +28,7 @@ internal sealed class MapFieldConfiguration : IConfiguration
 
     public MapFieldConfiguration(MapField<string, string> mapField)
     {
-        if (mapField is null)
-            throw new ArgumentNullException(nameof(mapField));
+        ArgumentNullException.ThrowIfNull(mapField);
 
         // MapField<TKey, TValue> uses StringComparer.Ordinal and cannot be changed.
         // However, IConfiguration object use case-insensitive keys, so the values must be copied

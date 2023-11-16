@@ -103,6 +103,9 @@ public class AzureStorageTaskHubBrowserTest
         _ = await Assert
             .ThrowsExceptionAsync<ArgumentNullException>(() => _browser.GetMonitorAsync(accountInfo, null!).AsTask())
             .ConfigureAwait(false);
+        _ = await Assert
+            .ThrowsExceptionAsync<ArgumentException>(() => _browser.GetMonitorAsync(accountInfo, "").AsTask())
+            .ConfigureAwait(false);
 
         // Test successful retrieval
         ITaskHubQueueMonitor monitor = await _browser.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token).ConfigureAwait(false);

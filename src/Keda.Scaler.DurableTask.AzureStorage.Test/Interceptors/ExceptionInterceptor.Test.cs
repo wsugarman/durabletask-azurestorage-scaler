@@ -50,16 +50,17 @@ public class ExceptionInterceptorTest
         RpcException actual;
 
         // AggregateException
-        actual = await Assert.ThrowsExceptionAsync<RpcException>(() => _interceptor.UnaryServerHandler(
-            request,
-            context,
-            CreateErrorContinuation(
-                new AggregateException(new ValidationException[]
+        actual = await Assert
+            .ThrowsExceptionAsync<RpcException>(() => _interceptor.UnaryServerHandler(
+                request,
+                context,
+                CreateErrorContinuation(new AggregateException(new ValidationException[]
                 {
-                    new ValidationException("One"),
-                    new ValidationException("Two"),
-                    new ValidationException("Three"),
-                })))).ConfigureAwait(false);
+                    new("One"),
+                    new("Two"),
+                    new("Three"),
+                }))))
+            .ConfigureAwait(false);
         Assert.AreEqual(StatusCodes.Status400BadRequest, context.HttpContext.Response.StatusCode);
         Assert.AreEqual(StatusCode.InvalidArgument, actual.StatusCode);
 

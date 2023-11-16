@@ -163,8 +163,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// <exception cref="ArgumentNullException"><paramref name="environment"/> is <see langword="null"/>.</exception>
     public string? ResolveConnectionString(IProcessEnvironment environment)
     {
-        if (environment is null)
-            throw new ArgumentNullException(nameof(environment));
+        ArgumentNullException.ThrowIfNull(environment);
 
         return Connection is null
             ? environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable)
@@ -179,8 +178,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// <exception cref="ArgumentNullException"><paramref name="validationContext"/> is <see langword="null"/>.</exception>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
-        if (validationContext is null)
-            throw new ArgumentNullException(nameof(validationContext));
+        ArgumentNullException.ThrowIfNull(validationContext);
 
         // Validate common fields
         IEnumerable<ValidationResult> results = ValidateCommonMetadata();

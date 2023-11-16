@@ -21,9 +21,9 @@ public class OptimalOrchestrationAllocatorTest
 
         // Valid cases
         Assert.AreEqual(0, _allocator.GetWorkerCount(Array.Empty<int>(), 3));
-        Assert.AreEqual(0, _allocator.GetWorkerCount(new int[] { 0, 0, 0 }, 1));
-        Assert.AreEqual(2, _allocator.GetWorkerCount(new int[] { 1, 2, 3, 4 }, 6));
-        Assert.AreEqual(2, _allocator.GetWorkerCount(new int[] { 3, 2, 1, 2 }, 4));
-        Assert.AreEqual(7, _allocator.GetWorkerCount(new int[] { 5, 5, 5, 5, 5, 5, 5 }, 1));
+        Assert.AreEqual(0, _allocator.GetWorkerCount([0, 0, 0], 1));
+        Assert.AreEqual(2, _allocator.GetWorkerCount([1, 2, 3, 4], 6));
+        Assert.AreEqual(2, _allocator.GetWorkerCount([3, 2, 1, 2], 4));
+        Assert.AreEqual(7, _allocator.GetWorkerCount([5, 5, 5, 5, 5, 5, 5], 1));
     }
 }

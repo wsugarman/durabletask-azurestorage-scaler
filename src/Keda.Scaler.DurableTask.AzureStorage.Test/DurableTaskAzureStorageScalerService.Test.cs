@@ -69,7 +69,7 @@ public class DurableTaskAzureStorageScalerServiceTest
             UseManagedIdentity = true,
         };
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
-        TaskHubQueueUsage usage = new(new int[] { 1, 2, 3 }, 10);
+        TaskHubQueueUsage usage = new([1, 2, 3], 10);
 
         GetMetricsRequest request = CreateGetMetricsRequest(metadata);
         ServerCallContext context = new MockServerCallContext(tokenSource.Token);
@@ -144,7 +144,7 @@ public class DurableTaskAzureStorageScalerServiceTest
             UseManagedIdentity = true,
         };
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
-        TaskHubQueueUsage usage = new(new int[] { 1, 2, 3 }, 10);
+        TaskHubQueueUsage usage = new([1, 2, 3], 10);
 
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);
         ServerCallContext context = new MockServerCallContext(tokenSource.Token);

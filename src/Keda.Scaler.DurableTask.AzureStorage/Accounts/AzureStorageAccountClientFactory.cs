@@ -13,8 +13,7 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
 {
     public T GetServiceClient(AzureStorageAccountInfo accountInfo)
     {
-        if (accountInfo is null)
-            throw new ArgumentNullException(nameof(accountInfo));
+        ArgumentNullException.ThrowIfNull(accountInfo);
 
         if (string.IsNullOrWhiteSpace(accountInfo.ConnectionString))
         {

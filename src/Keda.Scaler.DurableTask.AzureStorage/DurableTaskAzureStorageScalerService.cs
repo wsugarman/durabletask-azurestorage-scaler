@@ -78,11 +78,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// </exception>
     public override async Task<GetMetricsResponse> GetMetrics(GetMetricsRequest request, ServerCallContext context)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata? metadata = request
             .ScaledObjectRef
@@ -129,11 +126,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// </exception>
     public override Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata? metadata = request
             .ScalerMetadata
@@ -172,11 +166,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// </exception>
     public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata? metadata = request
             .ScalerMetadata

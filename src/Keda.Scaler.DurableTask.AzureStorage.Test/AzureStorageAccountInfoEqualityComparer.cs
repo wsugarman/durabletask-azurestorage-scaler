@@ -29,8 +29,7 @@ internal sealed class AzureStorageAccountInfoEqualityComparer : IEqualityCompare
 
     public int GetHashCode([DisallowNull] AzureStorageAccountInfo obj)
     {
-        if (obj is null)
-            throw new ArgumentNullException(nameof(obj));
+        ArgumentNullException.ThrowIfNull(obj);
 
         return HashCode.Combine(
             obj.AccountName,
