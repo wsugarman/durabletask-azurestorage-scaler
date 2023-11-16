@@ -60,7 +60,7 @@ public class MapFieldConfigurationTest
     [TestMethod]
     public void GetChildren()
     {
-        IConfiguration config = new MapFieldConfiguration(
+        MapFieldConfiguration config = new(
             new MapField<string, string>
             {
                 { "one", "1" },
@@ -78,7 +78,7 @@ public class MapFieldConfigurationTest
     [TestMethod]
     public void GetReloadToken()
     {
-        IConfiguration config = new MapFieldConfiguration(new MapField<string, string> { { "foo", "bar" } });
+        MapFieldConfiguration config = new(new MapField<string, string> { { "foo", "bar" } });
 
         IChangeToken token = config.GetReloadToken();
         Assert.IsTrue(token.ActiveChangeCallbacks);
@@ -98,7 +98,7 @@ public class MapFieldConfigurationTest
     [TestMethod]
     public void GetSection()
     {
-        IConfiguration config = new MapFieldConfiguration(
+        MapFieldConfiguration config = new(
             new MapField<string, string>
             {
                 { "one", "1" },

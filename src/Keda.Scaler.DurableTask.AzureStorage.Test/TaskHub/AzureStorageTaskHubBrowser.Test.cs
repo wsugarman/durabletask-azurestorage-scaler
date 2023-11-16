@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
@@ -55,6 +56,7 @@ public class AzureStorageTaskHubBrowserTest
     }
 
     [TestMethod]
+    [SuppressMessage("Maintainability", "CA1506:Avoid excessive class coupling", Justification = "Will refactor tests to be scoped to scenario.")]
     public async Task GetMonitorAsync()
     {
         const string TaskHubName = "unit-test";
@@ -102,6 +104,9 @@ public class AzureStorageTaskHubBrowserTest
             .ConfigureAwait(false);
         _ = await Assert
             .ThrowsExceptionAsync<ArgumentNullException>(() => _browser.GetMonitorAsync(accountInfo, null!).AsTask())
+            .ConfigureAwait(false);
+        _ = await Assert
+            .ThrowsExceptionAsync<ArgumentException>(() => _browser.GetMonitorAsync(accountInfo, "").AsTask())
             .ConfigureAwait(false);
 
         // Test successful retrieval

@@ -1,7 +1,7 @@
 ARG COPY=false
 
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:7.0.404-cbl-mariner2.0-amd64@sha256:9a4d0c05607d47287e3e3ac27431da7ba256d99bcf11244ba9134ff197fa7cd5 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.100-cbl-mariner2.0-amd64@sha256:4e3c2fe37a44ac88e96ae77841aea3caf9264da19c3a863513de570c22df9f3a AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
@@ -39,7 +39,7 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0.404-cbl-mariner2.0-amd64@sha256:9a4d0c05607d47287e3e3ac27431da7ba256d99bcf11244ba9134ff197fa7cd5 AS users
+FROM mcr.microsoft.com/dotnet/sdk:8.0.100-cbl-mariner2.0-amd64@sha256:4e3c2fe37a44ac88e96ae77841aea3caf9264da19c3a863513de570c22df9f3a AS users
 RUN groupadd nonroot -g 2000 && \
     useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 200
 
@@ -47,7 +47,7 @@ FROM scratch AS nonroot
 COPY --from=users /etc/group /etc/group
 COPY --from=users /etc/passwd /etc/passwd
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0.14-cbl-mariner2.0-distroless-amd64@sha256:89b9e434c54a931c5c1e38817e94bb5e9e6da4d949c156eef43dd38eeb0d67ae AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.0-cbl-mariner2.0-distroless-amd64@sha256:cd5d4f9f8110cde688f700be553b3cb57e180f46ee9f70f29cbcdf0952320253 AS runtime
 COPY --from=nonroot / /
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0

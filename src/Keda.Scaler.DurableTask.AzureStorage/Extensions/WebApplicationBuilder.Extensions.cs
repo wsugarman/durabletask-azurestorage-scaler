@@ -19,8 +19,7 @@ internal static class WebApplicationBuilderExtensions
     [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Objects persist for the lifetime of the application and are captured by closures.")]
     public static WebApplicationBuilder ConfigureKestrelTls(this WebApplicationBuilder builder)
     {
-        if (builder is null)
-            throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(builder);
 
         // Check security settings
         TlsOptions? tlsOptions = builder

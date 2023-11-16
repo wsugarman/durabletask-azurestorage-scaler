@@ -63,11 +63,8 @@ public class AzureStorageTaskHubBrowser
     /// </exception>
     public virtual async ValueTask<ITaskHubQueueMonitor> GetMonitorAsync(AzureStorageAccountInfo accountInfo, string taskHub, CancellationToken cancellationToken = default)
     {
-        if (accountInfo is null)
-            throw new ArgumentNullException(nameof(accountInfo));
-
-        if (string.IsNullOrWhiteSpace(taskHub))
-            throw new ArgumentNullException(nameof(taskHub));
+        ArgumentNullException.ThrowIfNull(accountInfo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(taskHub);
 
         // Fetch metadata about the Task Hub
         BlobClient client = _blobServiceClientFactory

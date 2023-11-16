@@ -18,6 +18,7 @@ public class CloudEndpointsExtensionsTest
         // Exceptions
         _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(null!, "foo", AzureStorageService.Blob));
         _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, null!, AzureStorageService.Blob));
+        _ = Assert.ThrowsException<ArgumentException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, "", AzureStorageService.Blob));
         _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, "foo", (AzureStorageService)42));
 
         // Successful test cases

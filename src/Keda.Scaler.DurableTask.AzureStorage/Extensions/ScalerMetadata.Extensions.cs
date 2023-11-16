@@ -12,11 +12,8 @@ internal static class ScalerMetadataExtensions
 {
     public static AzureStorageAccountInfo GetAccountInfo(this ScalerMetadata scalerMetadata, IProcessEnvironment environment)
     {
-        if (scalerMetadata is null)
-            throw new ArgumentNullException(nameof(scalerMetadata));
-
-        if (environment is null)
-            throw new ArgumentNullException(nameof(environment));
+        ArgumentNullException.ThrowIfNull(scalerMetadata);
+        ArgumentNullException.ThrowIfNull(environment);
 
         return new AzureStorageAccountInfo
         {
