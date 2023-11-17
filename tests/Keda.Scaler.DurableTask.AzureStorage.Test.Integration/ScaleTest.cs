@@ -122,7 +122,7 @@ public sealed class ScaleTest : IAsyncDisposable
         }
         catch (Exception)
         {
-            _ = await TryTerminateAsync(instanceId, linkedSource.Token).ConfigureAwait(false);
+            _ = await TryTerminateAsync(instanceId).ConfigureAwait(false);
             throw;
         }
 
@@ -165,7 +165,7 @@ public sealed class ScaleTest : IAsyncDisposable
         }
         catch (Exception e) when (e is not AssertFailedException)
         {
-            _ = await Task.WhenAll(instanceIds.Select(id => TryTerminateAsync(id, linkedSource.Token))).ConfigureAwait(false);
+            _ = await Task.WhenAll(instanceIds.Select(TryTerminateAsync)).ConfigureAwait(false);
             throw;
         }
 
@@ -278,11 +278,11 @@ public sealed class ScaleTest : IAsyncDisposable
     }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Ignore errors as this is a test clean up.")]
-    private async Task<bool> TryTerminateAsync(string instanceId, CancellationToken cancellationToken)
+    private async Task<bool> TryTerminateAsync(string instanceId)
     {
         try
         {
-            await _durableClient.TerminateInstanceAsync(instanceId, cancellationToken).ConfigureAwait(false);
+            await _durableClient.TerminateInstanceAsync(instanceId, CancellationToken.None).ConfigureAwait(false);
             _logger.TerminatedOrchestration(instanceId);
             return true;
         }

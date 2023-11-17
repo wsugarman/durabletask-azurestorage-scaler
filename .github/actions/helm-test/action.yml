@@ -235,17 +235,17 @@ runs:
     - name: Get Keda Logs
       shell: bash
       if: ${{ failure() }}
-      run: kubectl logs -l app=keda-operator -n keda
+      run: kubectl logs --tail=-1 --prefix -l app=keda-operator -n keda
 
     - name: Get Scaler Logs
       shell: bash
       if: ${{ failure() }}
-      run: kubectl logs -l app=dtfx-scaler -n keda
+      run: kubectl logs --tail=-1 --prefix -l app=dtfx-scaler -n keda
 
     - name: Get Function Logs
       shell: bash
       if: ${{ failure() }}
-      run: kubectl logs -l app=${{ inputs.functionAppName }} -n ${{ inputs.functionAppNamespace }}
+      run: kubectl logs --tail=-1 --prefix -l app=${{ inputs.functionAppName }} -n ${{ inputs.functionAppNamespace }}
 
     - name: Uninstall Function App Helm Chart
       shell: bash
