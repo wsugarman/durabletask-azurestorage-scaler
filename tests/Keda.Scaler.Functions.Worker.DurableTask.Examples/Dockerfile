@@ -19,7 +19,7 @@ FROM scratch AS nonroot
 COPY --from=users /etc/group /etc/group
 COPY --from=users /etc/passwd /etc/passwd
 
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0-mariner@sha256:310df395ae6943c965f897a202afa80b5828fe52e970b7c83f1a61d30b5300f2 AS runtime
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0-mariner@sha256:c47edc0829c85c92892abf8d2137f4b77a2586b8d7d5a1d3a91c4fd706886388 AS runtime
 COPY --from=nonroot / /
 RUN chown -R nonroot:nonroot /azure-functions-host
 ENV ASPNETCORE_URLS=http://+:8080 \
