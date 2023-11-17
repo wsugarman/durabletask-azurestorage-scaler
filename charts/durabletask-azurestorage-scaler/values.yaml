@@ -93,14 +93,14 @@ envFrom:
 
 # Security context for the scaler container
 securityContext:
+  allowPrivilegeEscalation: false
   capabilities:
     drop:
     - ALL
-  allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
-  seccompProfile:
-    type: RuntimeDefault
 
 # Security context for all containers in the scaler pods
 podSecurityContext:
   runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
