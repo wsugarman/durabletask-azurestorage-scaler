@@ -19,30 +19,30 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Interceptors;
 [TestClass]
 public class ExceptionInterceptorTest
 {
-    private readonly ExceptionInterceptor _interceptor = new ExceptionInterceptor(NullLoggerFactory.Instance);
+    private readonly ExceptionInterceptor _interceptor = new(NullLoggerFactory.Instance);
 
     [TestMethod]
     public void CtorExceptions()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(null!));
 
-        Mock<ILoggerFactory> mockFactory = new Mock<ILoggerFactory>(MockBehavior.Strict);
-        mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null);
-        Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(mockFactory.Object));
+        Mock<ILoggerFactory> mockFactory = new(MockBehavior.Strict);
+        _ = mockFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns<ILogger>(null!);
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new ExceptionInterceptor(mockFactory.Object));
     }
 
     [TestMethod]
     public async Task UnaryServerHandler()
     {
-        Request request = new Request();
-        Response response = new Response();
+        Request request = new();
+        Response response = new();
         UnaryServerMethod<Request, Response> continuation = CreateContinuation(response);
-        MockServerCallContext context = new MockServerCallContext(default);
+        MockServerCallContext context = new(default);
 
         // Null input
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(null!, context, continuation)).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(request, null!, continuation)).ConfigureAwait(false);
-        await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler<Request, Response>(request, context, null!)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(null!, context, continuation)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(request, null!, continuation)).ConfigureAwait(false);
+        _ = await Assert.ThrowsExceptionAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler<Request, Response>(request, context, null!)).ConfigureAwait(false);
 
         // Success
         Assert.AreSame(response, await _interceptor.UnaryServerHandler(request, context, continuation).ConfigureAwait(false));
@@ -50,16 +50,17 @@ public class ExceptionInterceptorTest
         RpcException actual;
 
         // AggregateException
-        actual = await Assert.ThrowsExceptionAsync<RpcException>(() => _interceptor.UnaryServerHandler(
-            request,
-            context,
-            CreateErrorContinuation(
-                new AggregateException(new ValidationException[]
+        actual = await Assert
+            .ThrowsExceptionAsync<RpcException>(() => _interceptor.UnaryServerHandler(
+                request,
+                context,
+                CreateErrorContinuation(new AggregateException(new ValidationException[]
                 {
-                    new ValidationException("One"),
-                    new ValidationException("Two"),
-                    new ValidationException("Three"),
-                })))).ConfigureAwait(false);
+                    new("One"),
+                    new("Two"),
+                    new("Three"),
+                }))))
+            .ConfigureAwait(false);
         Assert.AreEqual(StatusCodes.Status400BadRequest, context.HttpContext.Response.StatusCode);
         Assert.AreEqual(StatusCode.InvalidArgument, actual.StatusCode);
 
@@ -80,7 +81,7 @@ public class ExceptionInterceptorTest
         Assert.AreEqual(StatusCode.Internal, actual.StatusCode);
 
         // OperationCanceledException
-        using CancellationTokenSource tokenSource = new CancellationTokenSource();
+        using CancellationTokenSource tokenSource = new();
 
         actual = await Assert.ThrowsExceptionAsync<RpcException>(() => _interceptor.UnaryServerHandler(
             request,

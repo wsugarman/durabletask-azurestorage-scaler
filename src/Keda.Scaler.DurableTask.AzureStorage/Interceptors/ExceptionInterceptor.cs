@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 
-public class ExceptionInterceptor : Interceptor
+internal sealed class ExceptionInterceptor : Interceptor
 {
     private readonly ILogger _logger;
 
@@ -24,14 +24,9 @@ public class ExceptionInterceptor : Interceptor
         ServerCallContext context,
         UnaryServerMethod<TRequest, TResponse> continuation)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
-
-        if (continuation is null)
-            throw new ArgumentNullException(nameof(continuation));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(continuation);
 
         try
         {
@@ -39,7 +34,7 @@ public class ExceptionInterceptor : Interceptor
         }
         catch (AggregateException ae) when (ae.InnerExceptions is not null && ae.InnerExceptions.All(i => i is ValidationException))
         {
-            _logger.LogError(ae, "Request contain invalid input.");
+            _logger.ReceivedInvalidInput(ae);
 
             // Could also aggregate messages together
             context.GetHttpContext().Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -47,14 +42,14 @@ public class ExceptionInterceptor : Interceptor
         }
         catch (ValidationException v)
         {
-            _logger.LogError(v, "Request contain invalid input.");
+            _logger.ReceivedInvalidInput(v);
 
             context.GetHttpContext().Response.StatusCode = StatusCodes.Status400BadRequest;
             throw new RpcException(new Status(StatusCode.InvalidArgument, v.Message));
         }
         catch (OperationCanceledException oce) when (oce.CancellationToken == context.CancellationToken)
         {
-            _logger.LogWarning("RPC operation canceled.");
+            _logger.DetectedRequestCancellation(oce);
 
             // Response code is not seen by user, but could use 499 like nginx
             context.GetHttpContext().Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -62,7 +57,7 @@ public class ExceptionInterceptor : Interceptor
         }
         catch (Exception e)
         {
-            _logger.LogCritical(e, "Threw unhandled exception!");
+            _logger.CaughtUnhandledException(e);
 
             context.GetHttpContext().Response.StatusCode = StatusCodes.Status500InternalServerError;
             throw new RpcException(new Status(StatusCode.Internal, SR.InternalErrorMessage));

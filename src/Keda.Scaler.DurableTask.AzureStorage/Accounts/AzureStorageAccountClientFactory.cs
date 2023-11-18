@@ -13,8 +13,7 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
 {
     public T GetServiceClient(AzureStorageAccountInfo accountInfo)
     {
-        if (accountInfo is null)
-            throw new ArgumentNullException(nameof(accountInfo));
+        ArgumentNullException.ThrowIfNull(accountInfo);
 
         if (string.IsNullOrWhiteSpace(accountInfo.ConnectionString))
         {
@@ -29,7 +28,7 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
 
             if (string.Equals(accountInfo.Credential, Credential.ManagedIdentity, StringComparison.OrdinalIgnoreCase))
             {
-                ManagedIdentityCredential credential = new ManagedIdentityCredential(
+                ManagedIdentityCredential credential = new(
                     accountInfo.ClientId,
                     new TokenCredentialOptions { AuthorityHost = accountInfo.Cloud.AuthorityHost });
 

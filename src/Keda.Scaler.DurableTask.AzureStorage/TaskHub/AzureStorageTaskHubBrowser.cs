@@ -42,8 +42,7 @@ public class AzureStorageTaskHubBrowser
     }
 
     /// <summary>
-    /// Asynchronously attempts to retrieve an <see cref="ITaskHubQueueMonitor"/> for the Task Hub
-    /// with the given <paramref name="name"/>.
+    /// Asynchronously attempts to retrieve an <see cref="ITaskHubQueueMonitor"/> for the Task Hub with the given name.
     /// </summary>
     /// <param name="accountInfo">The account information for the Azure Storage account.</param>
     /// <param name="taskHub">The name of the desired Task Hub.</param>
@@ -52,7 +51,7 @@ public class AzureStorageTaskHubBrowser
     /// </param>
     /// <returns>
     /// A value task that represents the asynchronous operation. The value of the type parameter
-    /// of the value task contains the monitor for the given Task Hub..
+    /// of the value task contains the monitor for the given Task Hub.
     /// </returns>
     /// <exception cref="ArgumentException"><paramref name="accountInfo"/> is missing information.</exception>
     /// <exception cref="ArgumentNullException">
@@ -64,11 +63,8 @@ public class AzureStorageTaskHubBrowser
     /// </exception>
     public virtual async ValueTask<ITaskHubQueueMonitor> GetMonitorAsync(AzureStorageAccountInfo accountInfo, string taskHub, CancellationToken cancellationToken = default)
     {
-        if (accountInfo is null)
-            throw new ArgumentNullException(nameof(accountInfo));
-
-        if (string.IsNullOrWhiteSpace(taskHub))
-            throw new ArgumentNullException(nameof(taskHub));
+        ArgumentNullException.ThrowIfNull(accountInfo);
+        ArgumentException.ThrowIfNullOrWhiteSpace(taskHub);
 
         // Fetch metadata about the Task Hub
         BlobClient client = _blobServiceClientFactory
@@ -81,22 +77,12 @@ public class AzureStorageTaskHubBrowser
             BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
             AzureStorageTaskHubInfo info = result.Content.ToObjectFromJson<AzureStorageTaskHubInfo>();
 
-            _logger.LogDebug(
-                "Found Task Hub '{TaskHubName}' with {Partitions} partitions created at {CreatedTime:O}.",
-                info.TaskHubName,
-                info.PartitionCount,
-                info.CreatedAt);
-
+            _logger.FoundTaskHub(info.TaskHubName, info.PartitionCount, info.CreatedAt);
             return new TaskHubQueueMonitor(info, _queueServiceClientFactory.GetServiceClient(accountInfo), _logger);
         }
         catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
         {
-            _logger.LogWarning(
-                "Cannot find Task Hub '{TaskHub}' metadata blob '{TaskHubJson}' in container '{LeaseContainerName}'.",
-                taskHub,
-                client.Name,
-                client.BlobContainerName);
-
+            _logger.CouldNotFindTaskHub(taskHub, client.Name, client.BlobContainerName);
             return NullTaskHubQueueMonitor.Instance;
         }
     }

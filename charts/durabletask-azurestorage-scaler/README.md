@@ -85,15 +85,14 @@ By default, the external scaler runs as non-root in a read-only file system:
 
 ```yaml
 securityContext:
+  allowPrivilegeEscalation: false
   capabilities:
     drop:
     - ALL
-  allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
-  seccompProfile:
-    type: RuntimeDefault
 
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 200
+  seccompProfile:
+    type: RuntimeDefault
 ```

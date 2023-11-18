@@ -78,11 +78,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// </exception>
     public override async Task<GetMetricsResponse> GetMetrics(GetMetricsRequest request, ServerCallContext context)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata? metadata = request
             .ScaledObjectRef
@@ -98,11 +95,10 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .ConfigureAwait(false);
 
         TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
-        long metricValue = usage.WorkItemQueueMessages +
-            _partitionAllocator.GetWorkerCount(usage.ControlQueueMessages, metadata.MaxOrchestrationsPerWorker) *
-            metadata.MaxActivitiesPerWorker;
+        int workerCount = _partitionAllocator.GetWorkerCount(usage.ControlQueueMessages, metadata.MaxOrchestrationsPerWorker);
+        long metricValue = usage.WorkItemQueueMessages + (workerCount * metadata.MaxActivitiesPerWorker);
 
-        _logger.LogInformation("Metric value for Task Hub '{TaskHub}' is {MetricValue}.", metadata.TaskHubName, metricValue);
+        _logger.ComputedScalerMetricValue(metadata.TaskHubName, metricValue);
         return new GetMetricsResponse
         {
             MetricValues =
@@ -130,11 +126,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// </exception>
     public override Task<GetMetricSpecResponse> GetMetricSpec(ScaledObjectRef request, ServerCallContext context)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata? metadata = request
             .ScalerMetadata
@@ -142,7 +135,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .GetOrDefault<ScalerMetadata>()
             .EnsureValidated(_serviceProvider);
 
-        _logger.LogInformation("Metric target for Task Hub '{TaskHub}' is {MetricTarget}.", metadata.TaskHubName, metadata.MaxActivitiesPerWorker);
+        _logger.ComputedScalerMetricTarget(metadata.TaskHubName, metadata.MaxActivitiesPerWorker);
         return Task.FromResult(
             new GetMetricSpecResponse
             {
@@ -173,11 +166,8 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// </exception>
     public override async Task<IsActiveResponse> IsActive(ScaledObjectRef request, ServerCallContext context)
     {
-        if (request is null)
-            throw new ArgumentNullException(nameof(request));
-
-        if (context is null)
-            throw new ArgumentNullException(nameof(context));
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata? metadata = request
             .ScalerMetadata
@@ -195,12 +185,12 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
 
         if (usage.HasActivity)
         {
-            _logger.LogInformation("Task Hub '{TaskHub}' is currently active.", metadata.TaskHubName);
+            _logger.DetectedActiveTaskHub(metadata.TaskHubName);
             return new IsActiveResponse { Result = true };
         }
         else
         {
-            _logger.LogInformation("Task Hub '{TaskHub}' is not currently active.", metadata.TaskHubName);
+            _logger.DetectedInactiveTaskHub(metadata.TaskHubName);
             return new IsActiveResponse { Result = false };
         }
     }

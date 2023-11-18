@@ -3,6 +3,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
+using k8s;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Integration.K8s;
 
@@ -15,4 +16,7 @@ internal sealed class KubernetesOptions
 
     [Required]
     public string? Context { get; set; }
+
+    public KubernetesClientConfiguration ToClientConfiguration()
+        => KubernetesClientConfiguration.BuildConfigFromConfigFile(ConfigPath, Context);
 }

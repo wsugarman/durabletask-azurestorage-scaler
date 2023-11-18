@@ -28,5 +28,5 @@ internal static partial class SR
 
     public static string UnknownValueFormat => ValidationResourceManager.GetString(nameof(UnknownValueFormat), CultureInfo.CurrentUICulture)!;
 
-    private static readonly ResourceManager ValidationResourceManager = new ResourceManager("Keda.Scaler.DurableTask.AzureStorage.Resources.Validation", typeof(SR).Assembly);
+    private static readonly ResourceManager ValidationResourceManager = new("Keda.Scaler.DurableTask.AzureStorage.Resources.Validation", typeof(SR).Assembly);
 }

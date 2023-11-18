@@ -1,31 +1,64 @@
-name: Scaler Image
+name: Scaler Image CD
 
 on: workflow_dispatch
 
 jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    outputs:
+      imagePrerelease: ${{ steps.chart.outputs.imagePrerelease }}
+      imageTag: ${{ steps.chart.outputs.imageTag }}
+
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read Versions
+        id: chart
+        uses: ./.github/actions/parse-chart
+
+      - name: Build Scaler
+        uses: ./.github/actions/dotnet-publish
+        with:
+          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
+          azureClientId: ${{ secrets.AZURE_CLIENT_ID }}
+          azureCodeSigningAccountName: ${{ secrets.AZURE_CODESIGNING_NAME }}
+          azureSubscriptionId: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          azureTenantId: ${{ secrets.AZURE_TENANT_ID }}
+          buildConfiguration: Release
+          certificateProfileName: ${{ secrets.AZURE_CODESIGNING_PROFILE_NAME }}
+          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
+          repositoryUri: ${{ github.server_url }}/${{ github.repository }}
+          sign: 'true'
+          testResultsDirectory: ${{ runner.temp }}/TestResults
+
+      - name: Upload Code Coverage
+        uses: ./.github/actions/code-coverage
+        with:
+          reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
+
   publishImage:
     name: Publish Image
     runs-on: ubuntu-latest
+    needs: build
     permissions:
       contents: write
       packages: write
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Read Versions
-        id: chart
-        uses: ./.github/actions/parse-chart
+        uses: actions/checkout@v4
 
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
         with:
-          assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
-          buildConfiguration: Release
-          fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
+          copyBinaries: 'true'
           imageRepository: ghcr.io/${{ github.repository }}
-          imageTag: ${{ steps.chart.outputs.imageTag }}
+          imageTag: ${{ needs.build.outputs.imageTag }}
 
       - name: Push Docker Image
         id: push
@@ -34,14 +67,14 @@ jobs:
           force: 'true'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           imageRepository: ghcr.io/${{ github.repository }}
-          imageTag: ${{ steps.chart.outputs.imageTag }}
-          pushLatest: ${{ steps.chart.outputs.imagePrerelease != 'true' }}
+          imageTag: ${{ needs.build.outputs.imageTag }}
+          pushLatest: ${{ needs.build.outputs.imagePrerelease != 'true' }}
 
       - name: Create Image Release
         uses: ./.github/actions/github-release
         with:
-          asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
+          asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ needs.build.outputs.imageTag }}.tar
           name: 'Durable Task KEDA External Scaler Image'
-          prerelease: ${{ steps.chart.outputs.imagePrerelease }}
-          tag: 'Image_${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.digest }}'
-          version: '${{ steps.chart.outputs.imageTag }}.${{ steps.push.outputs.digest }}'
+          prerelease: ${{ needs.build.outputs.imagePrerelease }}
+          tag: 'Image_${{ needs.build.outputs.imageTag }}.${{ steps.push.outputs.digest }}'
+          version: '${{ needs.build.outputs.imageTag }}.${{ steps.push.outputs.digest }}'

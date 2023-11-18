@@ -13,12 +13,6 @@ insert_final_newline = true
 indent_style         = space
 indent_size          = 4
 
-# C# Files
-[*.cs]
-
-# Copyright File Header
-file_header_template = Copyright © William Sugarman.\nLicensed under the MIT License.
-
 # Xml project files
 [*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
 indent_size = 2

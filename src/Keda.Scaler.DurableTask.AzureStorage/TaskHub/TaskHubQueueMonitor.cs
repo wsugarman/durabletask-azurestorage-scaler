@@ -46,7 +46,7 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
             }
             catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
             {
-                _logger.LogWarning("Could not find control queue '{ControlQueueName}'.", controlQueueClient.Name);
+                _logger.CouldNotFindControlQueue(controlQueueClient.Name);
                 return TaskHubQueueUsage.None;
             }
         }
@@ -61,14 +61,11 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
         }
         catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
         {
-            _logger.LogWarning("Could not find work item queue '{WorkItemQueueName}'.", workItemQueueClient.Name);
+            _logger.CouldNotFindWorkItemQueue(workItemQueueClient.Name);
             return TaskHubQueueUsage.None;
         }
 
-        _logger.LogDebug(
-            "Found {WorkItemCount} work item messages and the following control queue message counts [{ControlCounts}].",
-            workItemQueueMessages,
-            string.Join(", ", controlQueueMessages));
+        _logger.FoundTaskHubQueues(workItemQueueMessages, string.Join(", ", controlQueueMessages));
         return new TaskHubQueueUsage(controlQueueMessages, workItemQueueMessages);
     }
 }

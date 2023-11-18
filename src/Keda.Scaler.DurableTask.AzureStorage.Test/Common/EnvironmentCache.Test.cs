@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -17,8 +17,8 @@ public class EnvironmentCacheTest
     [TestMethod]
     public void GetEnvironmentVariable()
     {
-        MockEnvironment env = new MockEnvironment();
-        IProcessEnvironment cache = new EnvironmentCache(env);
+        MockEnvironment env = new();
+        EnvironmentCache cache = new(env);
 
         env.SetEnvironmentVariable("2", "two");
         Assert.AreEqual("two", cache.GetEnvironmentVariable("2"));

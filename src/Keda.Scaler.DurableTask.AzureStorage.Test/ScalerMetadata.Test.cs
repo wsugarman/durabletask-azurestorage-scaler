@@ -29,9 +29,9 @@ public class ScalerMetadataTest
     [TestMethod]
     public void ResolveConnectionString()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().ResolveConnectionString(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().ResolveConnectionString(null!));
 
-        MockEnvironment env = new MockEnvironment();
+        MockEnvironment env = new();
         env.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, "one=1");
         env.SetEnvironmentVariable("MY_CONNECTION", "two=2");
 
@@ -43,9 +43,9 @@ public class ScalerMetadataTest
     [TestMethod]
     public void Validate()
     {
-        Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().Validate(null!).ToList());
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().Validate(null!).ToList());
 
-        MockEnvironment env = new MockEnvironment();
+        MockEnvironment env = new();
         env.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, "UseDevelopmentStorage=true");
 
         IServiceProvider provider = new ServiceCollection()

@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Keda.Scaler.WebJobs.DurableFunctions.Examples;
+namespace Keda.Scaler.Functions.Worker.DurableTask.Examples;
 
 /// <summary>
 /// Represents the input for a scale test orchestration.

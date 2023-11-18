@@ -39,7 +39,7 @@ runs:
       run: docker load --input ${{ inputs.imageArchive }}
 
     - name: Login to ghcr.io
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
@@ -47,7 +47,7 @@ runs:
 
     - name: Check ghcr.io for Image Tag
       id: exists
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       if: ${{ inputs.force != 'true' }}
       with:
         script: |

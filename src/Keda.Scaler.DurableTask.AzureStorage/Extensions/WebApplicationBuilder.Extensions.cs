@@ -14,8 +14,7 @@ internal static class WebApplicationBuilderExtensions
     [ExcludeFromCodeCoverage]
     public static WebApplicationBuilder ConfigureKestrelTls(this WebApplicationBuilder builder)
     {
-        if (builder is null)
-            throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(builder);
 
         builder.WebHost
             .ConfigureKestrel(k => k

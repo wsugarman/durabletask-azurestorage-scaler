@@ -11,10 +11,9 @@ internal static class IConfigurationExtensions
     public static T GetOrDefault<T>(this IConfiguration configuration)
         where T : new()
     {
-        if (configuration is null)
-            throw new ArgumentNullException(nameof(configuration));
+        ArgumentNullException.ThrowIfNull(configuration);
 
-        T obj = new T();
+        T obj = new();
         configuration.Bind(obj);
         return obj;
     }

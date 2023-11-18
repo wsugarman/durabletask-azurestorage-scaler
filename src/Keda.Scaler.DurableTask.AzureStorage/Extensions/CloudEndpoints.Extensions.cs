@@ -12,11 +12,8 @@ internal static class CloudEndpointsExtensions
 {
     public static Uri GetStorageServiceUri(this CloudEndpoints endpoints, string account, AzureStorageService service)
     {
-        if (endpoints is null)
-            throw new ArgumentNullException(nameof(endpoints));
-
-        if (string.IsNullOrWhiteSpace(account))
-            throw new ArgumentNullException(nameof(account));
+        ArgumentNullException.ThrowIfNull(endpoints);
+        ArgumentException.ThrowIfNullOrWhiteSpace(account);
 
         if (!Enum.IsDefined(service))
             throw new ArgumentOutOfRangeException(nameof(service));

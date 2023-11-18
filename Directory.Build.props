@@ -17,10 +17,11 @@
   <!-- Build -->
   <PropertyGroup>
     <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <LangVersion>latest</LangVersion>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>enable</Nullable>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>
@@ -43,5 +44,14 @@
       <_Parameter1_TypeName>System.String</_Parameter1_TypeName>
     </AssemblyAttribute>
   </ItemGroup>
+
+  <!-- Test Warnings -->
+  <Choose>
+    <When Condition="$(MSBuildProjectName.Contains('.Test'))">
+      <PropertyGroup>
+        <NoWarn>$(NoWarn);CA1707;CS1591</NoWarn>
+      </PropertyGroup>
+    </When>
+  </Choose>
 
 </Project>
