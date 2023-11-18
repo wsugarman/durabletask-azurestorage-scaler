@@ -70,6 +70,11 @@ spec:
           volumeMounts:
             - name: logs
               mountPath: /logs
+            - name: read-only-secrets
+              mountPath: /run/secrets/functions-keys
+              readOnly: true
       volumes:
         - name: logs
+          emptyDir: {}
+        - name: read-only-secrets
           emptyDir: {}
