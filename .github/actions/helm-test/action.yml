@@ -94,7 +94,34 @@ runs:
           --key=${{ runner.temp }}/certs/root.key \
           --cert=${{ runner.temp }}/certs/root.pem
 
-        # Create a server TLS certificate
+        # Create a client TLS certificate for KEDA
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:keda-operator.keda\n" >> ${{ runner.temp }}/certs/client.ext
+
+        openssl req \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -subj "/C=US/ST=Washington/L=Redmond/O=KEDA/CN=keda-operator.keda" \
+          -addext "subjectAltName = DNS:keda-operator.keda" \
+          -keyout ${{ runner.temp }}/certs/client.key \
+          -out ${{ runner.temp }}/certs/client.csr
+
+        openssl x509 \
+          -req \
+          -in ${{ runner.temp }}/certs/client.csr \
+          -extfile ${{ runner.temp }}/certs/client.ext \
+          -CA ${{ runner.temp }}/certs/root.pem \
+          -CAkey ${{ runner.temp }}/certs/root.key \
+          -CAcreateserial \
+          -days 1 \
+          -out ${{ runner.temp }}/certs/client.pem
+
+        kubectl create secret tls client-tls \
+          -n keda \
+          --cert=${{ runner.temp }}/certs/client.pem \
+          --key=${{ runner.temp }}/certs/client.key
+
+        # Create a server TLS certificate for the DTFx scaler
         printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda,IP:127.0.0.1\n" >> ${{ runner.temp }}/certs/server.ext
 
         openssl req \
@@ -130,6 +157,10 @@ runs:
           -n keda \
           --create-namespace \
           --set grpcTLSCertsSecret=self-signed-ca \
+          --set volumes.keda.extraVolumes[0].name=client-grpc-certs \
+          --set volumes.keda.extraVolumes[0].secret.secretName=client-tls \
+          --set volumes.keda.extraVolumeMounts[0].name=client-grpc-certs \
+          --set volumes.keda.extraVolumeMounts[0].mountPath=/clientgrpccerts \
           --wait \
           --timeout 2m \
           keda \
@@ -156,6 +187,7 @@ runs:
           --create-namespace \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set tls.caSecret=ca-tls \
           --set tls.secret=server-tls \
           --wait \
           --timeout 30s \
@@ -175,8 +207,10 @@ runs:
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
           --set image.tag=${{ inputs.imageTag }} \
-          --set scaledObject.enableTls=true \
+          --set scaledObject.caCert=/grpccerts/tls.crt \
           --set scaledObject.pollingInterval=2 \
+          --set scaledObject.tlsClientCert=/clientgrpccerts/tls.crt \
+          --set scaledObject.tlsClientKey=/clientgrpccerts/tls.key \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \

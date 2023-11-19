@@ -73,13 +73,13 @@ spec:
           {{- if or .Values.tls.caSecret .Values.tls.secret .Values.env }}
           env:
             {{- if .Values.tls.caSecret }}
-            - name: Security__Transport__ClientCaCertificatePath
+            - name: Security__Transport__Client__CaCertificatePath
               value: /caCerts/tls.crt
             {{- end }}
             {{- if .Values.tls.secret }}
-            - name: Security__Transport__ServerCertificatePath
+            - name: Security__Transport__Server__CertificatePath
               value: /certs/tls.crt
-            - name: Security__Transport__ServerKeyPath
+            - name: Security__Transport__Server__KeyPath
               value: /certs/tls.key
             - name: ASPNETCORE_URLS
               value: https://+:8080

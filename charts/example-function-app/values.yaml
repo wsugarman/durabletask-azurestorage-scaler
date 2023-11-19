@@ -21,7 +21,9 @@ scaledObject:
   cooldownPeriod: 15
   minReplicaCount: 0
   maxReplicaCount: 100
-  enableTls: false
+  caCert: ""
+  tlsClientCert: ""
+  tlsClientKey: ""
 
 # External scaler information
 externalScaler:

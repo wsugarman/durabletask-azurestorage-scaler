@@ -22,8 +22,12 @@ spec:
         maxActivitiesPerWorker: {{ .Values.taskHub.maxActivitiesPerWorker | quote }}
         maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
         taskHubName: {{ .Values.taskHub.name }}
-        {{- if .Values.scaledObject.enableTls }}
-        caCert: /grpccerts/tls.crt
-        tlsClientCert:
-        tlsClientKey:
+        {{- if .Values.scaledObject.caCert }}
+        caCert: {{ .Values.scaledObject.caCert }}
+        {{- end }}
+        {{- if .Values.scaledObject.tlsClientCert }}
+        tlsClientCert: {{ .Values.scaledObject.tlsClientCert }}
+        {{- end }}
+        {{- if .Values.scaledObject.tlsClientKey }}
+        tlsClientKey: {{ .Values.scaledObject.tlsClientKey }}
         {{- end }}

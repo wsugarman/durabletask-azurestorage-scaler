@@ -23,8 +23,8 @@ public sealed class CertificateFileTest : IDisposable
     [TestMethod]
     public void Reload()
     {
-        string certPath = Path.Combine(_tempPath, "cert.pem");
-        string keyPath = Path.Combine(_tempPath, "key.pem");
+        string certPath = Path.Combine(_tempPath, "tls.crt");
+        string keyPath = Path.Combine(_tempPath, "tls.key");
 
         using ManualResetEventSlim resetEvent = new();
 
@@ -52,7 +52,7 @@ public sealed class CertificateFileTest : IDisposable
 
     private static X509Certificate2 CreateCertificate(RSA key)
     {
-        CertificateRequest certRequest = new("cn=unit-test", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        CertificateRequest certRequest = new("cn=unittest", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         return certRequest.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddHours(1));
     }
 
