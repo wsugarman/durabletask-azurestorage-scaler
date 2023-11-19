@@ -3,12 +3,12 @@
 
 using System;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Keda.Scaler.DurableTask.AzureStorage.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.Extensions.Primitives;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
 
