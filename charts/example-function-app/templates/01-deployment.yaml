@@ -70,11 +70,11 @@ spec:
           volumeMounts:
             - name: logs
               mountPath: /logs
-            - name: read-only-secrets
+            - name: secrets
               mountPath: /run/secrets/functions-keys
-              readOnly: true
       volumes:
         - name: logs
           emptyDir: {}
-        - name: read-only-secrets
-          emptyDir: {}
+        - name: secrets # Secret values do not matter as our test web API is not authenticated
+          emptyDir:
+            medium: Memory
