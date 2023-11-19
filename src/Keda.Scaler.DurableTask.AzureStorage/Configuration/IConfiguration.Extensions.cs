@@ -4,7 +4,7 @@
 using System;
 using Microsoft.Extensions.Configuration;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Configuration;
 
 internal static class IConfigurationExtensions
 {

@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 
 internal static class IValidatableObjectExtensions
 {

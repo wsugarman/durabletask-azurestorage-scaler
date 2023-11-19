@@ -4,10 +4,9 @@
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
 [TestClass]
 public class ScalerMetadataExtensionsTest
@@ -22,7 +21,7 @@ public class ScalerMetadataExtensionsTest
 
         // Errors
         _ = Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!, env));
-        _ = Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(new ScalerMetadata(), null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().GetAccountInfo(null!));
 
         // No managed identity
         // Note: Typically you don't specify values for some of these members in combination,

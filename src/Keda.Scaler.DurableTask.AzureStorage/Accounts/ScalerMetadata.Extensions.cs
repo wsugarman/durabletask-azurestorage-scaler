@@ -2,11 +2,10 @@
 // Licensed under the MIT License.
 
 using System;
-using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 
 internal static class ScalerMetadataExtensions
 {

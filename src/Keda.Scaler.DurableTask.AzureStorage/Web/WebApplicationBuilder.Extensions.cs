@@ -6,8 +6,9 @@ using System.Diagnostics.CodeAnalysis;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 
 internal static class WebApplicationBuilderExtensions
 {
@@ -16,11 +17,11 @@ internal static class WebApplicationBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(builder);
 
-        builder.WebHost
+        _ = builder.WebHost
             .ConfigureKestrel(k => k
                 .ConfigureHttpsDefaults(h => k
                     .ApplicationServices
-                    .GetRequiredService<TlsConnectionAdapterOptionsConfigure>()
+                    .GetRequiredService<TlsConfigure>()
                     .Configure(h)));
 
         return builder;

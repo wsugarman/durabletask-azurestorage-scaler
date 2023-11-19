@@ -195,6 +195,7 @@ dotnet_diagnostic.CA1858.severity = error # Use StartsWith instead of IndexOf
 dotnet_diagnostic.CA1859.severity = error # Use concrete types when possible for improved performance
 dotnet_diagnostic.CA1860.severity = error # Avoid using 'Enumerable.Any()' extension method
 dotnet_diagnostic.CA1861.severity = error # Avoid constant arrays as arguments
+dotnet_diagnostic.CA1863.severity = error # Use 'CompositeFormat'
 dotnet_diagnostic.CA1864.severity = error # Prefer the 'IDictionary.TryAdd(TKey, TValue)' method
 dotnet_diagnostic.CA1865.severity = error # Use 'string.Method(char)' instead of 'string.Method(string)' for string with single char
 dotnet_diagnostic.CA1866.severity = error # Use 'string.Method(char)' instead of 'string.Method(string)' for string with single char

@@ -5,11 +5,11 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using Google.Protobuf.Collections;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
+using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.Protobuf;
 
 [TestClass]
 public class MapFieldExtensionsTest

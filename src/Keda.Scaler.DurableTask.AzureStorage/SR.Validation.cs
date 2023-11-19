@@ -14,7 +14,11 @@ internal static partial class SR
 
     public static string BlankConnectionVarFormat => ValidationResourceManager.GetString(nameof(BlankConnectionVarFormat), CultureInfo.CurrentUICulture)!;
 
+    public static string FileNotFoundFormat => ValidationResourceManager.GetString(nameof(FileNotFoundFormat), CultureInfo.CurrentUICulture)!;
+
     public static string InvalidAadFieldFormat => ValidationResourceManager.GetString(nameof(InvalidAadFieldFormat), CultureInfo.CurrentUICulture)!;
+
+    public static string MissingCertificateMessage => ValidationResourceManager.GetString(nameof(MissingCertificateMessage), CultureInfo.CurrentUICulture)!;
 
     public static string OptionalBlankValueFormat => ValidationResourceManager.GetString(nameof(OptionalBlankValueFormat), CultureInfo.CurrentUICulture)!;
 
