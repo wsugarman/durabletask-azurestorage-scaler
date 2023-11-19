@@ -95,8 +95,8 @@ spec:
           {{- if or .Values.tls.caSecret .Values.tls.secret }}
           volumeMounts:
             {{- if .Values.tls.caSecret }}
-            - name: caCerts
-              mountPath: /caCerts
+            - name: cacerts
+              mountPath: /cacerts
               readOnly: true
             {{- end }}
             {{- if .Values.tls.secret }}
@@ -116,7 +116,7 @@ spec:
       {{- if or .Values.tls.caSecret .Values.tls.secret }}
       volumes:
         {{- if .Values.tls.caSecret }}
-        - name: caCerts
+        - name: cacerts
           secret:
             secretName: {{ .Values.tls.caSecret }}
             optional: false

@@ -17,7 +17,7 @@ name: durabletask-azurestorage-scaler
 sources:
   - https://github.com/wsugarman/durabletask-azurestorage-scaler
 type: application
-version: "1.2.0"
+version: "1.1.0"
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
