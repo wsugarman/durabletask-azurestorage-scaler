@@ -26,10 +26,10 @@ internal sealed class TlsConfigure :
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
 
         if (!string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
-            _ca = new CertificateFile(clientOptions.Value.CaCertificatePath);
+            _ca = CertificateFile.From(clientOptions.Value.CaCertificatePath);
 
         if (!string.IsNullOrWhiteSpace(serverOptions.Value.CertificatePath))
-            _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath);
+            _server = CertificateFile.FromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath);
     }
 
     public string? Name => Options.DefaultName;
