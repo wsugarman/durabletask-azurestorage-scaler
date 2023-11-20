@@ -34,7 +34,8 @@ public sealed class CertificateFileTest
         string certPath = Path.Combine(_tempPath, "tls.crt");
 
         // Does not exist yet
-        _ = Assert.ThrowsException<CryptographicException>(() => CertificateFile.From(certPath));
+
+        _ = Assert.That.ThrowsDerivedException<CryptographicException>(() => CertificateFile.From(certPath));
 
         // Attempt to fail the read later
         using ManualResetEventSlim resetEvent = new();
@@ -53,7 +54,7 @@ public sealed class CertificateFileTest
         File.Move(certPath + ".bad", certPath, overwrite: true);
 
         Assert.IsTrue(resetEvent.Wait(TimeSpan.FromSeconds(10)));
-        _ = Assert.ThrowsException<CryptographicException>(() => certFile.Current);
+        _ = Assert.That.ThrowsDerivedException<CryptographicException>(() => certFile.Current);
     }
 
     [TestMethod]
