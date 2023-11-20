@@ -29,6 +29,34 @@ public sealed class CertificateFileTest
         => Directory.Delete(_tempPath, true);
 
     [TestMethod]
+    public void ReadFailure()
+    {
+        string certPath = Path.Combine(_tempPath, "tls.crt");
+
+        // Does not exist yet
+        _ = Assert.ThrowsException<CryptographicException>(() => CertificateFile.From(certPath));
+
+        // Attempt to fail the read later
+        using ManualResetEventSlim resetEvent = new();
+
+        using RSA key1 = RSA.Create();
+        using X509Certificate2 cert1 = CreateCertificate(key1);
+        WriteCertificate(cert1, certPath);
+
+        using CertificateFile certFile = CertificateFile.From(certPath);
+        using IDisposable receipt = ChangeToken.OnChange(certFile.Watch, resetEvent.Set);
+        Assert.AreEqual(cert1.Thumbprint, certFile.Current.Thumbprint);
+        Assert.IsFalse(resetEvent.IsSet);
+
+        // Overwrite the certificate with an invalid file
+        File.WriteAllText(certPath + ".bad", "hello world");
+        File.Move(certPath + ".bad", certPath, overwrite: true);
+
+        Assert.IsTrue(resetEvent.Wait(TimeSpan.FromSeconds(10)));
+        _ = Assert.ThrowsException<CryptographicException>(() => certFile.Current);
+    }
+
+    [TestMethod]
     public void Reload()
     {
         string certPath = Path.Combine(_tempPath, "tls.crt");
