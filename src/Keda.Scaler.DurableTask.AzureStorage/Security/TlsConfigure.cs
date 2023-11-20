@@ -29,7 +29,7 @@ internal sealed class TlsConfigure :
             _ca = new CertificateFile(clientOptions.Value.CaCertificatePath);
 
         if (!string.IsNullOrWhiteSpace(serverOptions.Value.CertificatePath))
-            _server = new CertificateFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath);
+            _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath);
     }
 
     public string? Name => Options.DefaultName;

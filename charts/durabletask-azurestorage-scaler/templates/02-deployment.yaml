@@ -74,7 +74,7 @@ spec:
           env:
             {{- if .Values.tls.caSecret }}
             - name: Security__Transport__Client__CaCertificatePath
-              value: /caCerts/tls.crt
+              value: /cacerts/tls.crt
             {{- end }}
             {{- if .Values.tls.secret }}
             - name: Security__Transport__Server__CertificatePath
