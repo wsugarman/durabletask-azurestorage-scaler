@@ -239,6 +239,8 @@ runs:
 
         grpcurl \
           -cacert "${{ runner.temp }}/certs/root.pem" \
+          -cert "${{ runner.temp }}/certs/client.pem" \
+          -key "${{ runner.temp }}/certs/client.key" \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
