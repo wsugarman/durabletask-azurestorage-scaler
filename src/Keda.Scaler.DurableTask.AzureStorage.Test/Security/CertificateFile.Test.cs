@@ -66,7 +66,8 @@ public sealed class CertificateFileTest
         // Initialize the certificate
         using RSA key1 = RSA.Create();
         using X509Certificate2 cert1 = CreateCertificate(key1);
-        WriteCertificate(cert1, key1, certPath, keyPath);
+        WritePrivateKey(key1, keyPath);
+        WriteCertificate(cert1, certPath);
 
         using CertificateFile certFile = CertificateFile.FromPemFile(certPath, keyPath);
         using IDisposable receipt = ChangeToken.OnChange(certFile.Watch, resetEvent.Set);
@@ -76,7 +77,8 @@ public sealed class CertificateFileTest
         // Overwrite the certificate
         using RSA key2 = RSA.Create();
         using X509Certificate2 cert2 = CreateCertificate(key2);
-        WriteCertificate(cert2, key2, certPath + ".new", keyPath + ".new");
+        WritePrivateKey(key2, keyPath + ".new");
+        WriteCertificate(cert2, certPath + ".new");
         File.Move(keyPath + ".new", keyPath, overwrite: true);
         File.Move(certPath + ".new", certPath, overwrite: true);
 
@@ -125,15 +127,12 @@ public sealed class CertificateFileTest
         certWriter.WriteBase64Cert(certificate);
     }
 
-    private static void WriteCertificate(X509Certificate2 certificate, RSA key, string certPath, string keyPath)
+    private static void WritePrivateKey(RSA key, string path)
     {
-        // Export the key
-        using FileStream keyStream = File.Create(keyPath);
-        using StreamWriter keyWriter = new(keyStream);
-        keyWriter.WritePrivateKey(key);
-
         // Export the certificate
-        WriteCertificate(certificate, certPath);
+        using FileStream certStream = File.Create(path);
+        using StreamWriter certWriter = new(certStream);
+        certWriter.WritePrivateKey(key);
     }
 
     private static void WriteCombinedCertificate(X509Certificate2 certificate, RSA key, string path)
