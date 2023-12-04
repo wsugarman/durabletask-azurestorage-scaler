@@ -17,7 +17,7 @@ internal sealed class ExceptionInterceptor : Interceptor
     private readonly ILogger _logger;
 
     public ExceptionInterceptor(ILoggerFactory loggerFactory)
-        => _logger = loggerFactory?.CreateLogger(Diagnostics.DefaultLoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
+        => _logger = loggerFactory?.CreateLogger(LogCategories.Default) ?? throw new ArgumentNullException(nameof(loggerFactory));
 
     public override async Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,

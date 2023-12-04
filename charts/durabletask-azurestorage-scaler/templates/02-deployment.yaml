@@ -70,8 +70,13 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- if or .Values.tls.caSecret .Values.tls.secret .Values.env }}
           env:
+            - name: Logging__Console__FormatterName
+              value: {{ .Values.logging.format }}
+            - name: Logging__Console__FormatterOptions__TimestampFormat
+              value: {{ .Values.logging.timestampFormat }}
+            - name: Logging__LogLevel__Default
+              value: {{ .Values.logging.level | quote }}
             {{- if .Values.tls.caSecret }}
             - name: Security__Transport__Client__CaCertificatePath
               value: /cacerts/tls.crt
@@ -87,7 +92,6 @@ spec:
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 -}}
             {{- end }}
-          {{- end }}
           {{- if .Values.envFrom }}
           envFrom:
             {{- toYaml .Values.envFrom | nindent 12 -}}

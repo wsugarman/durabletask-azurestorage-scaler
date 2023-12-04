@@ -95,14 +95,14 @@ runs:
           --key=${{ runner.temp }}/certs/root.key
 
         # Create a client TLS certificate for KEDA
-        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:keda-operator.keda\n" >> ${{ runner.temp }}/certs/client.ext
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:keda-operator.keda,IP:127.0.0.1\n" >> ${{ runner.temp }}/certs/client.ext
 
         openssl req \
           -noenc \
           -new \
           -newkey rsa:2048 \
           -subj "/C=US/ST=Washington/L=Redmond/O=KEDA/CN=keda-operator.keda" \
-          -addext "subjectAltName = DNS:keda-operator.keda" \
+          -addext "subjectAltName = DNS:keda-operator.keda, IP:127.0.0.1" \
           -keyout ${{ runner.temp }}/certs/client.key \
           -out ${{ runner.temp }}/certs/client.csr
 
@@ -174,6 +174,7 @@ runs:
           --create-namespace \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set logging.level=debug \
           --wait \
           --timeout 30s \
           plaintext-dtfx-scaler \
@@ -187,6 +188,7 @@ runs:
           --create-namespace \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set logging.level=debug \
           --set tls.caSecret=self-signed-ca \
           --set tls.secret=server-tls \
           --wait \
@@ -234,6 +236,7 @@ runs:
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          -vv \
           127.0.0.1:10003 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
@@ -244,6 +247,7 @@ runs:
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          -vv \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
