@@ -49,7 +49,7 @@ runs:
   using: composite
   steps:
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
     - name: Lint Helm Chart
       shell: bash
