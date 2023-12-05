@@ -15,6 +15,6 @@ internal static class WebApplicationExtensions
     {
         ArgumentNullException.ThrowIfNull(app);
 
-        return string.IsNullOrWhiteSpace(app.Services.GetRequiredService<IOptions<TlsClientOptions>>().Value.CaCertificatePath);
+        return !string.IsNullOrWhiteSpace(app.Services.GetRequiredService<IOptions<TlsClientOptions>>().Value.CaCertificatePath);
     }
 }
