@@ -13,7 +13,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
 
 [TestClass]
-public sealed class CertificateFileTest
+public class CertificateFileMonitorTest
 {
     private string _tempPath = "";
 
@@ -32,10 +32,10 @@ public sealed class CertificateFileTest
     public void ReadFailure()
     {
         string certPath = Path.Combine(_tempPath, "tls.crt");
+        using CertificateFile file = new(certPath);
 
         // Does not exist yet
-
-        _ = Assert.That.ThrowsDerivedException<CryptographicException>(() => CertificateFile.From(certPath));
+        _ = Assert.That.ThrowsDerivedException<CryptographicException>(() => new CertificateFile(certPath).Monitor());
 
         // Attempt to fail the read later
         using ManualResetEventSlim resetEvent = new();
@@ -44,9 +44,9 @@ public sealed class CertificateFileTest
         using X509Certificate2 cert1 = CreateCertificate(key1);
         WriteCertificate(cert1, certPath);
 
-        using CertificateFile certFile = CertificateFile.From(certPath);
-        using IDisposable receipt = ChangeToken.OnChange(certFile.Watch, resetEvent.Set);
-        Assert.AreEqual(cert1.Thumbprint, certFile.Current.Thumbprint);
+        using CertificateFileMonitor monitor = file.Monitor();
+        using IDisposable subscription = ChangeToken.OnChange(monitor.GetReloadToken, resetEvent.Set);
+        Assert.AreEqual(cert1.Thumbprint, monitor.Current.Thumbprint);
         Assert.IsFalse(resetEvent.IsSet);
 
         // Overwrite the certificate with an invalid file
@@ -54,13 +54,14 @@ public sealed class CertificateFileTest
         File.Move(certPath + ".bad", certPath, overwrite: true);
 
         Assert.IsTrue(resetEvent.Wait(TimeSpan.FromSeconds(10)));
-        _ = Assert.That.ThrowsDerivedException<CryptographicException>(() => certFile.Current);
+        _ = Assert.That.ThrowsDerivedException<CryptographicException>(() => monitor.Current);
     }
 
     [TestMethod]
     public void Reload()
     {
         string certPath = Path.Combine(_tempPath, "tls.crt");
+        using CertificateFile file = new(certPath);
 
         using ManualResetEventSlim resetEvent = new();
 
@@ -69,9 +70,9 @@ public sealed class CertificateFileTest
         using X509Certificate2 cert1 = CreateCertificate(key1);
         WriteCertificate(cert1, certPath);
 
-        using CertificateFile certFile = CertificateFile.From(certPath);
-        using IDisposable receipt = ChangeToken.OnChange(certFile.Watch, resetEvent.Set);
-        Assert.AreEqual(cert1.Thumbprint, certFile.Current.Thumbprint);
+        using CertificateFileMonitor monitor = file.Monitor();
+        using IDisposable subscription = ChangeToken.OnChange(monitor.GetReloadToken, resetEvent.Set);
+        Assert.AreEqual(cert1.Thumbprint, monitor.Current.Thumbprint);
         Assert.IsFalse(resetEvent.IsSet);
 
         // Overwrite the certificate
@@ -81,7 +82,7 @@ public sealed class CertificateFileTest
         File.Move(certPath + ".new", certPath, overwrite: true);
 
         Assert.IsTrue(resetEvent.Wait(TimeSpan.FromSeconds(10)));
-        Assert.AreEqual(cert2.Thumbprint, certFile.Current.Thumbprint);
+        Assert.AreEqual(cert2.Thumbprint, monitor.Current.Thumbprint);
     }
 
     [TestMethod]
@@ -89,6 +90,7 @@ public sealed class CertificateFileTest
     {
         string certPath = Path.Combine(_tempPath, "tls.crt");
         string keyPath = Path.Combine(_tempPath, "tls.key");
+        using CertificateFile file = CertificateFile.CreateFromPemFile(certPath, keyPath);
 
         using ManualResetEventSlim resetEvent = new();
 
@@ -98,9 +100,9 @@ public sealed class CertificateFileTest
         WritePrivateKey(key1, keyPath);
         WriteCertificate(cert1, certPath);
 
-        using CertificateFile certFile = CertificateFile.FromPemFile(certPath, keyPath);
-        using IDisposable receipt = ChangeToken.OnChange(certFile.Watch, resetEvent.Set);
-        Assert.AreEqual(cert1.Thumbprint, certFile.Current.Thumbprint);
+        using CertificateFileMonitor monitor = file.Monitor();
+        using IDisposable subscription = ChangeToken.OnChange(monitor.GetReloadToken, resetEvent.Set);
+        Assert.AreEqual(cert1.Thumbprint, monitor.Current.Thumbprint);
         Assert.IsFalse(resetEvent.IsSet);
 
         // Overwrite the certificate
@@ -112,13 +114,14 @@ public sealed class CertificateFileTest
         File.Move(certPath + ".new", certPath, overwrite: true);
 
         Assert.IsTrue(resetEvent.Wait(TimeSpan.FromSeconds(10)));
-        Assert.AreEqual(cert2.Thumbprint, certFile.Current.Thumbprint);
+        Assert.AreEqual(cert2.Thumbprint, monitor.Current.Thumbprint);
     }
 
     [TestMethod]
     public void ReloadCombinedPem()
     {
         string certPath = Path.Combine(_tempPath, "tls.crt");
+        using CertificateFile file = CertificateFile.CreateFromPemFile(certPath);
 
         using ManualResetEventSlim resetEvent = new();
 
@@ -127,9 +130,9 @@ public sealed class CertificateFileTest
         using X509Certificate2 cert1 = CreateCertificate(key1);
         WriteCombinedCertificate(cert1, key1, certPath);
 
-        using CertificateFile certFile = CertificateFile.FromPemFile(certPath);
-        using IDisposable receipt = ChangeToken.OnChange(certFile.Watch, resetEvent.Set);
-        Assert.AreEqual(cert1.Thumbprint, certFile.Current.Thumbprint);
+        using CertificateFileMonitor monitor = file.Monitor();
+        using IDisposable subscription = ChangeToken.OnChange(monitor.GetReloadToken, resetEvent.Set);
+        Assert.AreEqual(cert1.Thumbprint, monitor.Current.Thumbprint);
         Assert.IsFalse(resetEvent.IsSet);
 
         // Overwrite the certificate
@@ -139,7 +142,7 @@ public sealed class CertificateFileTest
         File.Move(certPath + ".new", certPath, overwrite: true);
 
         Assert.IsTrue(resetEvent.Wait(TimeSpan.FromSeconds(10)));
-        Assert.AreEqual(cert2.Thumbprint, certFile.Current.Thumbprint);
+        Assert.AreEqual(cert2.Thumbprint, monitor.Current.Thumbprint);
     }
 
     private static X509Certificate2 CreateCertificate(RSA key)

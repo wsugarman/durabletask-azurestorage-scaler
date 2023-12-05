@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
@@ -17,19 +18,21 @@ internal sealed class TlsConfigure :
     IOptionsChangeTokenSource<CertificateAuthenticationOptions>,
     IDisposable
 {
-    private readonly CertificateFile? _ca;
-    private readonly CertificateFile? _server;
+    private readonly CertificateFileMonitor? _ca;
+    private readonly CertificateFileMonitor? _server;
 
-    public TlsConfigure(IOptions<TlsClientOptions> clientOptions, IOptions<TlsServerOptions> serverOptions)
+    public TlsConfigure(ILoggerFactory factory, IOptions<TlsClientOptions> clientOptions, IOptions<TlsServerOptions> serverOptions)
     {
+        ArgumentNullException.ThrowIfNull(factory);
         ArgumentNullException.ThrowIfNull(serverOptions?.Value, nameof(serverOptions));
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
 
+        ILogger logger = factory.CreateLogger(LogCategories.Security);
         if (!string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
-            _ca = CertificateFile.From(clientOptions.Value.CaCertificatePath);
+            _ca = new CertificateFile(clientOptions.Value.CaCertificatePath).Monitor(logger);
 
         if (!string.IsNullOrWhiteSpace(serverOptions.Value.CertificatePath))
-            _server = CertificateFile.FromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath);
+            _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath).Monitor(logger);
     }
 
     public string? Name => Options.DefaultName;
@@ -61,5 +64,5 @@ internal sealed class TlsConfigure :
     }
 
     public IChangeToken GetChangeToken()
-        => _ca?.Watch() ?? NullChangeToken.Singleton;
+        => _ca?.GetReloadToken() ?? NullChangeToken.Singleton;
 }

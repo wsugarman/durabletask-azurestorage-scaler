@@ -16,7 +16,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services
     .AddDurableTaskScaler()
-    .AddTlsSupport(builder.Configuration)
+    .AddTlsSupport()
     .AddGrpcReflection()
     .AddGrpc(o =>
     {

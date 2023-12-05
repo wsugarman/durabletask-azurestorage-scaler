@@ -9,6 +9,4 @@ internal static class LogCategories
     public const string Default = "DurableTask.AzureStorage.Keda";
 
     public const string Security = Default + ".Security";
-
-    public const string Kestrel = Default + ".Kestrel";
 }

@@ -28,8 +28,6 @@ internal static class AssertExtensions
         try
         {
             _ = func();
-            Assert.Fail("Expected an exception of type '{0}' but no exception was thrown", typeof(T).Name);
-            return default;
         }
         catch (T expected)
         {
@@ -40,5 +38,8 @@ internal static class AssertExtensions
             Assert.Fail("Expected an exception of type '{0}' but an exception of type '{1}' was thrown instead", typeof(T).Name, other.GetType().Name);
             throw;
         }
+
+        Assert.Fail("Expected an exception of type '{0}' but no exception was thrown", typeof(T).Name);
+        return default;
     }
 }

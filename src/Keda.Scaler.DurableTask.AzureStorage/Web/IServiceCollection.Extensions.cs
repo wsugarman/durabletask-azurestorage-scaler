@@ -9,7 +9,6 @@ using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.AspNetCore.Authentication.Certificate;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -31,14 +30,22 @@ internal static class IServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddTlsSupport(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddTlsSupport(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
-        ArgumentNullException.ThrowIfNull(configuration);
+
+        _ = services
+            .AddOptions<CertificateAuthenticationOptions>()
+            .BindConfiguration(TlsClientOptions.DefaultAuthenticationKey);
+
+        _ = services
+            .AddOptions<CertificateValidationCacheOptions>()
+            .BindConfiguration(TlsClientOptions.DefaultCachingKey);
 
         _ = services
             .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
-            .AddCertificate();
+            .AddCertificate()
+            .AddCertificateCache();
 
         _ = services
             .AddOptions<TlsClientOptions>()
