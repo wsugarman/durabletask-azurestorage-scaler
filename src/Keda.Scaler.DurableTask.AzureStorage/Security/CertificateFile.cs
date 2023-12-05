@@ -13,6 +13,8 @@ internal class CertificateFile : IDisposable
 {
     public string Path { get; }
 
+    public virtual string? KeyPath => null;
+
     private readonly PhysicalFileProvider _fileProvider;
 
     public CertificateFile(string fileName)
@@ -50,7 +52,7 @@ internal class CertificateFile : IDisposable
     private sealed class CertificatePemFile(string certPemFilePath, string? keyPemFilePath = default)
         : CertificateFile(certPemFilePath)
     {
-        public string? KeyPath { get; } = keyPemFilePath;
+        public override string? KeyPath { get; } = keyPemFilePath;
 
         public override X509Certificate2 Load()
             => X509Certificate2.CreateFromPemFile(Path, KeyPath);

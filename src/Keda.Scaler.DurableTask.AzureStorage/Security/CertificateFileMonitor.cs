@@ -16,14 +16,14 @@ internal sealed class CertificateFileMonitor : IDisposable
 {
     public X509Certificate2 Current => UpdateCertificate(force: false);
 
-    private readonly CertificateFile _file;
+    public CertificateFile File { get; }
 
     private X509Certificate2? _certificate;
     private IDisposable? _subscription;
     private ConfigurationReloadToken _changeToken = new(); // Reuse ConfigurationReloadToken for simplicity
 
     private CertificateFileMonitor(CertificateFile file)
-        => _file = file ?? throw new ArgumentNullException(nameof(file));
+        => File = file ?? throw new ArgumentNullException(nameof(file));
 
     public void Dispose()
     {
@@ -40,7 +40,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         {
             expected?.Dispose();
             _subscription?.Dispose();
-            _file.Dispose();
+            File.Dispose();
 
             _subscription = null;
 
@@ -65,7 +65,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         // Configure the monitor before load the file so we do not miss any changes
         // Note: Users cannot Dispose this instance before this method exits,
         // so do not worry about concurrency related to setting _subscription
-        _subscription = ChangeToken.OnChange(_file.Watch, Reload);
+        _subscription = ChangeToken.OnChange(File.Watch, Reload);
         _ = UpdateCertificate(force: false);
 
         return _subscription;
@@ -75,11 +75,11 @@ internal sealed class CertificateFileMonitor : IDisposable
             try
             {
                 X509Certificate2 latest = UpdateCertificate(force: true);
-                logger.LoadedCertificate(_file.Path, latest.Thumbprint);
+                logger.LoadedCertificate(File.Path, latest.Thumbprint);
             }
             catch (Exception ex)
             {
-                logger.FailedLoadingCertificate(ex, _file.Path);
+                logger.FailedLoadingCertificate(ex, File.Path);
             }
         }
     }
@@ -92,7 +92,7 @@ internal sealed class CertificateFileMonitor : IDisposable
             X509Certificate2 latest;
             try
             {
-                latest = _file.Load();
+                latest = File.Load();
             }
             catch (Exception)
             {

@@ -18,6 +18,7 @@ internal sealed class TlsConfigure :
     IOptionsChangeTokenSource<CertificateAuthenticationOptions>,
     IDisposable
 {
+    private readonly ILogger _logger;
     private readonly CertificateFileMonitor? _ca;
     private readonly CertificateFileMonitor? _server;
 
@@ -27,12 +28,12 @@ internal sealed class TlsConfigure :
         ArgumentNullException.ThrowIfNull(serverOptions?.Value, nameof(serverOptions));
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
 
-        ILogger logger = factory.CreateLogger(LogCategories.Security);
+        _logger = factory.CreateLogger(LogCategories.Security);
         if (!string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
-            _ca = new CertificateFile(clientOptions.Value.CaCertificatePath).Monitor(logger);
+            _ca = new CertificateFile(clientOptions.Value.CaCertificatePath).Monitor(_logger);
 
         if (!string.IsNullOrWhiteSpace(serverOptions.Value.CertificatePath))
-            _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath).Monitor(logger);
+            _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath).Monitor(_logger);
     }
 
     public string? Name => Options.DefaultName;
@@ -41,8 +42,17 @@ internal sealed class TlsConfigure :
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        options.ClientCertificateMode = _ca is null ? ClientCertificateMode.NoCertificate : ClientCertificateMode.RequireCertificate;
-        options.ServerCertificateSelector = _server is null ? null : (c, s) => _server.Current;
+        if (_ca is not null)
+        {
+            options.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+            _logger.RequiredClientCertificate();
+        }
+
+        if (_server is not null)
+        {
+            options.ServerCertificateSelector = (c, s) => _server.Current;
+            _logger.ConfiguredServerCertificate(_server.File.Path, _server.File.KeyPath);
+        }
     }
 
     public void Configure(CertificateAuthenticationOptions options)
@@ -53,6 +63,8 @@ internal sealed class TlsConfigure :
         {
             options.CustomTrustStore.Clear();
             _ = options.CustomTrustStore.Add(_ca.Current);
+
+            _logger.ConfiguredClientCertificateValidation(_ca.File.Path);
         }
     }
 
