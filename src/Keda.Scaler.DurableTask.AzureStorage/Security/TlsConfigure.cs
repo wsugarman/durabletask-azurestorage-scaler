@@ -45,6 +45,8 @@ internal sealed class TlsConfigure :
         if (_ca is not null)
         {
             options.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+            options.AllowAnyClientCertificate();
+
             _logger.RequiredClientCertificate();
         }
 
