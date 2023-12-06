@@ -45,9 +45,7 @@ internal sealed class TlsConfigure :
 
         if (_ca is not null)
         {
-            options.CheckCertificateRevocation = false; // Rely on the middleware for revocation
             options.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
-
             _logger.RequiredClientCertificate();
         }
 

@@ -23,11 +23,6 @@ internal static class IServiceCollectionExtensions
             .BindConfiguration(TlsClientOptions.DefaultCachingKey);
 
         _ = services
-            .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
-            .AddCertificate()
-            .AddCertificateCache();
-
-        _ = services
             .AddOptions<TlsClientOptions>()
             .BindConfiguration(TlsClientOptions.DefaultKey)
             .ValidateDataAnnotations();
@@ -37,7 +32,13 @@ internal static class IServiceCollectionExtensions
             .BindConfiguration(TlsServerOptions.DefaultKey)
             .ValidateDataAnnotations();
 
+        _ = services
+            .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
+            .AddCertificate()
+            .AddCertificateCache();
+
         return services
+            .AddAuthorization()
             .AddSingleton<TlsConfigure>()
             .AddSingleton<IConfigureOptions<CertificateAuthenticationOptions>>(p => p.GetRequiredService<TlsConfigure>())
             .AddSingleton<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>(p => p.GetRequiredService<TlsConfigure>());
