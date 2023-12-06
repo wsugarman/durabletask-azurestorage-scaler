@@ -14,7 +14,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 [ExcludeFromCodeCoverage]
 internal sealed class TlsConfigure :
-    IConfigureOptions<CertificateAuthenticationOptions>,
+    IConfigureNamedOptions<CertificateAuthenticationOptions>,
     IOptionsChangeTokenSource<CertificateAuthenticationOptions>,
     IDisposable
 {
@@ -36,7 +36,7 @@ internal sealed class TlsConfigure :
             _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath).Monitor(_logger);
     }
 
-    public string? Name => Options.DefaultName;
+    string? IOptionsChangeTokenSource<CertificateAuthenticationOptions>.Name => CertificateAuthenticationDefaults.AuthenticationScheme;
 
     public void Configure(HttpsConnectionAdapterOptions options)
     {
@@ -62,6 +62,19 @@ internal sealed class TlsConfigure :
         ArgumentNullException.ThrowIfNull(options);
 
         if (_ca is not null)
+        {
+            options.CustomTrustStore.Clear();
+            _ = options.CustomTrustStore.Add(_ca.Current);
+
+            _logger.ConfiguredClientCertificateValidation(_ca.File.Path);
+        }
+    }
+
+    public void Configure(string? name, CertificateAuthenticationOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _ca is not null)
         {
             options.CustomTrustStore.Clear();
             _ = options.CustomTrustStore.Add(_ca.Current);
