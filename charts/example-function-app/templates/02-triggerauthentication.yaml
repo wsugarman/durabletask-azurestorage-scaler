@@ -1,0 +1,23 @@
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  labels:
+    app.kubernetes.io/name: {{ template "example-function-app.fullname" . }}
+    {{- include "example-function-app.labels" . | indent 4 }}
+  name: {{ template "example-function-app.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretTargetRef:
+  {{- if .Values.scaledObject.caCertSecret }}
+  - parameter: caCert
+    name: {{ .Values.scaledObject.caCertSecret }}
+    key: tls.crt
+  {{- end }}
+  {{- if .Values.scaledObject.tlsClientCertSecret }}
+  - parameter: tlsClientCert
+    name: {{ .Values.scaledObject.tlsClientCertSecret }}
+    key: tls.crt
+  - parameter: tlsClientKey
+    name: {{ .Values.scaledObject.tlsClientCertSecret }}
+    key: tls.key
+  {{- end }}

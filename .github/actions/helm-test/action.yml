@@ -156,11 +156,6 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
-          --set grpcTLSCertsSecret=self-signed-ca \
-          --set volumes.keda.extraVolumes[0].name=client-grpc-certs \
-          --set volumes.keda.extraVolumes[0].secret.secretName=client-tls \
-          --set volumes.keda.extraVolumeMounts[0].name=client-grpc-certs \
-          --set volumes.keda.extraVolumeMounts[0].mountPath=/clientgrpccerts \
           --wait \
           --timeout 2m \
           keda \
@@ -211,10 +206,9 @@ runs:
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
           --set image.tag=${{ inputs.imageTag }} \
-          --set scaledObject.caCert=/grpccerts/tls.crt \
+          --set scaledObject.caCertSecret=self-signed-ca \
           --set scaledObject.pollingInterval=2 \
-          --set scaledObject.tlsClientCert=/clientgrpccerts/tls.crt \
-          --set scaledObject.tlsClientKey=/clientgrpccerts/tls.key \
+          --set scaledObject.tlsClientCertSecret=client-tls \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \
@@ -233,6 +227,7 @@ runs:
         export PATH=$PATH:$(go env GOPATH)/bin
         go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
+        # Test without TLS
         grpcurl \
           -plaintext \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
@@ -242,6 +237,7 @@ runs:
           127.0.0.1:10003 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
+        # Test with TLS
         grpcurl \
           -cacert "${{ runner.temp }}/certs/root.pem" \
           -cert "${{ runner.temp }}/certs/client.pem" \
