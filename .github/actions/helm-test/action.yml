@@ -79,6 +79,8 @@ runs:
         mkdir -p ${{ runner.temp }}/certs
 
         # Create CA Root Certificate
+        # Note that the secret is both in the KEDA namespace and in the function app namespace
+        # as both KEDA and the function app validate each other's TLS certificate
         openssl req \
           -x509 \
           -noenc \
@@ -91,6 +93,11 @@ runs:
 
         kubectl create secret tls self-signed-ca \
           -n keda \
+          --cert=${{ runner.temp }}/certs/root.pem \
+          --key=${{ runner.temp }}/certs/root.key
+
+        kubectl create secret tls self-signed-ca \
+          -n ${{ inputs.functionAppNamespace }} \
           --cert=${{ runner.temp }}/certs/root.pem \
           --key=${{ runner.temp }}/certs/root.key
 
@@ -117,7 +124,7 @@ runs:
           -out ${{ runner.temp }}/certs/client.pem
 
         kubectl create secret tls client-tls \
-          -n keda \
+          -n ${{ inputs.functionAppNamespace }} \
           --cert=${{ runner.temp }}/certs/client.pem \
           --key=${{ runner.temp }}/certs/client.key
 
