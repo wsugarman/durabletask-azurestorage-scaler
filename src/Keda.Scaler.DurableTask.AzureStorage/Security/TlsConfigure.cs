@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.FileProviders;
@@ -63,6 +64,7 @@ internal sealed class TlsConfigure :
 
         if (_ca is not null)
         {
+            options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
             options.CustomTrustStore.Clear();
             _ = options.CustomTrustStore.Add(_ca.Current);
 
