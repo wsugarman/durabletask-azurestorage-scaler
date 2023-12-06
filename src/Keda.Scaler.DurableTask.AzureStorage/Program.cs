@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
+using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
