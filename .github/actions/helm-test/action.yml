@@ -189,6 +189,8 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
+          --set env[0].name=Security__Transport__Client__Authentication__RevocationMode \
+          --set env[0].value=NoCheck \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
           --set logging.level=debug \
