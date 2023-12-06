@@ -59,18 +59,7 @@ internal sealed class TlsConfigure :
     }
 
     public void Configure(CertificateAuthenticationOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-
-        if (_ca is not null)
-        {
-            options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
-            options.CustomTrustStore.Clear();
-            _ = options.CustomTrustStore.Add(_ca.Current);
-
-            _logger.ConfiguredClientCertificateValidation(_ca.File.Path);
-        }
-    }
+         => Configure(Options.DefaultName, options);
 
     public void Configure(string? name, CertificateAuthenticationOptions options)
     {
@@ -78,6 +67,7 @@ internal sealed class TlsConfigure :
 
         if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _ca is not null)
         {
+            options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
             options.CustomTrustStore.Clear();
             _ = options.CustomTrustStore.Add(_ca.Current);
 
