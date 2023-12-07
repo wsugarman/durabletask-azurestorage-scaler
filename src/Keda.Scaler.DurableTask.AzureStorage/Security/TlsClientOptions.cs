@@ -15,4 +15,6 @@ internal class TlsClientOptions
 
     [FileExists]
     public string? CaCertificatePath { get; set; }
+
+    public bool ValidateCertificate { get; set; } = true;
 }

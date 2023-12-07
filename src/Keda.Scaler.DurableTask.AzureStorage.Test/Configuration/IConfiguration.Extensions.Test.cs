@@ -14,10 +14,10 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Configuration;
 public class IConfigurationExtensionsTest
 {
     [TestMethod]
-    public void GetOrDefault()
+    public void GetOrCreate()
     {
         // Exception
-        _ = Assert.ThrowsException<ArgumentNullException>(() => IConfigurationExtensions.GetOrDefault<ScalerMetadata>(null!));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => IConfigurationExtensions.GetOrCreate<ScalerMetadata>(null!));
 
         ScalerMetadata actual;
 
@@ -28,7 +28,7 @@ public class IConfigurationExtensionsTest
             { nameof(ScalerMetadata.UseManagedIdentity), "true" },
         };
 
-        actual = map.ToConfiguration().GetOrDefault<ScalerMetadata>();
+        actual = map.ToConfiguration().GetOrCreate<ScalerMetadata>();
         Assert.IsNotNull(actual);
         Assert.AreEqual("unittest", actual.AccountName);
         Assert.IsTrue(actual.UseManagedIdentity);
@@ -37,7 +37,7 @@ public class IConfigurationExtensionsTest
         // (Get<T> would return null)
         IConfiguration empty = new MapField<string, string>().ToConfiguration();
 
-        actual = empty.GetOrDefault<ScalerMetadata>();
+        actual = empty.GetOrCreate<ScalerMetadata>();
         Assert.IsNotNull(actual);
         Assert.IsNull(empty.Get<ScalerMetadata>());
     }

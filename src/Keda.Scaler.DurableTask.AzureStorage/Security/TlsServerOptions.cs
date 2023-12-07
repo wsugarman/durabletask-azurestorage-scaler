@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
@@ -10,6 +11,9 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 internal class TlsServerOptions : IValidatableObject
 {
     public const string DefaultKey = "Security:Transport:Server";
+
+    [MemberNotNullWhen(true, nameof(CertificatePath))]
+    public bool EnforceTls => !string.IsNullOrWhiteSpace(CertificatePath);
 
     [FileExists]
     public string? CertificatePath { get; set; }

@@ -34,7 +34,7 @@ internal static class IServiceCollectionExtensions
             .BindConfiguration(TlsServerOptions.DefaultKey)
             .ValidateDataAnnotations();
 
-        if (configuration.HasClientValidation())
+        if (configuration.EnforceMutualTls())
         {
             _ = services
                 .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
@@ -42,10 +42,7 @@ internal static class IServiceCollectionExtensions
                 .AddCertificateCache();
 
             _ = services
-                .AddAuthorization(o => o
-                    .AddPolicy("default", b => b
-                        .AddAuthenticationSchemes(CertificateAuthenticationDefaults.AuthenticationScheme)
-                        .RequireAuthenticatedUser()));
+                .AddAuthorization();
         }
 
         return services

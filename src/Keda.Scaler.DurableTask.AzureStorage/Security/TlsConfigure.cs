@@ -20,6 +20,7 @@ internal sealed class TlsConfigure :
     IDisposable
 {
     private readonly ILogger _logger;
+    private readonly bool _validateClientCertificate;
     private readonly CertificateFileMonitor? _ca;
     private readonly CertificateFileMonitor? _server;
 
@@ -30,7 +31,9 @@ internal sealed class TlsConfigure :
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
 
         _logger = factory.CreateLogger(LogCategories.Security);
-        if (!string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
+        _validateClientCertificate = clientOptions.Value.ValidateCertificate;
+
+        if (_validateClientCertificate && !string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
             _ca = new CertificateFile(clientOptions.Value.CaCertificatePath).Monitor(_logger);
 
         if (!string.IsNullOrWhiteSpace(serverOptions.Value.CertificatePath))
@@ -43,17 +46,17 @@ internal sealed class TlsConfigure :
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        if (_ca is not null)
-        {
-            options.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
-            options.AllowAnyClientCertificate(); // Use certitificate middleware for validation
-            _logger.RequiredClientCertificate();
-        }
-
         if (_server is not null)
         {
+            options.AllowAnyClientCertificate(); // Use certitificate middleware for validation
             options.ServerCertificateSelector = (c, s) => _server.Current;
             _logger.ConfiguredServerCertificate(_server.File.Path, _server.File.KeyPath);
+
+            if (_validateClientCertificate)
+            {
+                options.ClientCertificateMode = ClientCertificateMode.RequireCertificate;
+                _logger.RequiredClientCertificate();
+            }
         }
     }
 
@@ -64,7 +67,7 @@ internal sealed class TlsConfigure :
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _ca is not null)
+        if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _server is not null && _ca is not null)
         {
             options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
             options.CustomTrustStore.Clear();

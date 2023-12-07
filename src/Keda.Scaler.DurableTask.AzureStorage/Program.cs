@@ -31,12 +31,12 @@ WebApplication app = builder
     .Build();
 
 // Configure the HTTP request pipeline.
-if (app.Configuration.HasClientValidation())
+if (app.Configuration.EnforceMutualTls())
     _ = app.UseAuthentication();
 
 GrpcServiceEndpointConventionBuilder grpcBuilder = app.MapGrpcService<DurableTaskAzureStorageScalerService>();
-if (app.Configuration.HasClientValidation())
-    _ = grpcBuilder.RequireAuthorization("default");
+if (app.Configuration.EnforceMutualTls())
+    _ = grpcBuilder.RequireAuthorization();
 
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 

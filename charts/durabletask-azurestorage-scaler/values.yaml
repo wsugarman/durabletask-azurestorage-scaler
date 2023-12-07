@@ -104,6 +104,7 @@ serviceAccount:
 tls:
   caSecret: ""
   secret: ""
+  unsafe: false
 
 # Optional topology spread constraints when replicas > 1
 topologySpreadConstraints: {}
