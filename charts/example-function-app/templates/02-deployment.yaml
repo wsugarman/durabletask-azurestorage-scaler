@@ -50,10 +50,10 @@ spec:
             value: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
           - name: AzureFunctionsJobHost__Extensions__DurableTask__StorageProvider__PartitionCount
             value: {{ .Values.taskHub.partitionCount | quote }}
-          - name: AzureWebJobsKubernetesSecretName
-            value: /secrets/functions-keys
           - name: AzureWebJobsSecretStorageType
             value: kubernetes
+          - name: AzureWebJobsKubernetesSecretName
+            value: "secrets/{{ template "example-function-app.fullname" . }}"
           - name: FUNCTIONS_LOG_PATH
             value: /logs
           {{- with .Values.resources }}
@@ -72,11 +72,6 @@ spec:
           volumeMounts:
             - name: logs
               mountPath: /logs
-            - name: secrets
-              mountPath: /secrets/functions-keys
       volumes:
         - name: logs
           emptyDir: {}
-        - name: secrets # Secret values do not matter as our test web API is not authenticated
-          emptyDir:
-            medium: Memory
