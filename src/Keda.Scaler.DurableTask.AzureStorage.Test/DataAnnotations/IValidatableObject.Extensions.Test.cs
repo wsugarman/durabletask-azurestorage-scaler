@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
+using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.DataAnnotations;
 
 [TestClass]
 public class IValidatableObjectExtensionsTest

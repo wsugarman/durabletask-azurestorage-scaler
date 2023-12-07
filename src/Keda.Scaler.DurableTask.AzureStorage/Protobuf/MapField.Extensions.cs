@@ -2,10 +2,9 @@
 // Licensed under the MIT License.
 
 using Google.Protobuf.Collections;
-using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 using Microsoft.Extensions.Configuration;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 
 internal static class MapFieldExtensions
 {

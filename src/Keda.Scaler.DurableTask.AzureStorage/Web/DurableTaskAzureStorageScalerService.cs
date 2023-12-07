@@ -6,12 +6,14 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
+using Keda.Scaler.DurableTask.AzureStorage.Configuration;
+using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
+using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Keda.Scaler.DurableTask.AzureStorage;
+namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 
 /// <summary>
 /// Implements the KEDA external scaler gRPC service for the Durable Task framework with an Azure Storage backend provider.
@@ -85,7 +87,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .ScaledObjectRef
             .ScalerMetadata
             .ToConfiguration()
-            .GetOrDefault<ScalerMetadata>()
+            .GetOrCreate<ScalerMetadata>()
             .EnsureValidated(_serviceProvider);
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
@@ -132,7 +134,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ScalerMetadata? metadata = request
             .ScalerMetadata
             .ToConfiguration()
-            .GetOrDefault<ScalerMetadata>()
+            .GetOrCreate<ScalerMetadata>()
             .EnsureValidated(_serviceProvider);
 
         _logger.ComputedScalerMetricTarget(metadata.TaskHubName, metadata.MaxActivitiesPerWorker);
@@ -172,7 +174,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ScalerMetadata? metadata = request
             .ScalerMetadata
             .ToConfiguration()
-            .GetOrDefault<ScalerMetadata>()
+            .GetOrCreate<ScalerMetadata>()
             .EnsureValidated(_serviceProvider);
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);

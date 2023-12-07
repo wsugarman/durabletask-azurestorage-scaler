@@ -4,10 +4,9 @@
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
 [TestClass]
 public class CloudEndpointsExtensionsTest
@@ -17,9 +16,9 @@ public class CloudEndpointsExtensionsTest
     {
         // Exceptions
         _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(null!, "foo", AzureStorageService.Blob));
-        _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, null!, AzureStorageService.Blob));
-        _ = Assert.ThrowsException<ArgumentException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, "", AzureStorageService.Blob));
-        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpointsExtensions.GetStorageServiceUri(CloudEndpoints.Public, "foo", (AzureStorageService)42));
+        _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpoints.Public.GetStorageServiceUri(null!, AzureStorageService.Blob));
+        _ = Assert.ThrowsException<ArgumentException>(() => CloudEndpoints.Public.GetStorageServiceUri("", AzureStorageService.Blob));
+        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpoints.Public.GetStorageServiceUri("foo", (AzureStorageService)42));
 
         // Successful test cases
         Assert.AreEqual(new Uri("https://foo.blob.core.windows.net", UriKind.Absolute), CloudEndpoints.Public.GetStorageServiceUri("foo", AzureStorageService.Blob));

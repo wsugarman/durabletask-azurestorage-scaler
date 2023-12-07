@@ -7,9 +7,10 @@ using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace Microsoft.Extensions.DependencyInjection;
+namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 
 internal static class IServiceCollectionExtensions
 {

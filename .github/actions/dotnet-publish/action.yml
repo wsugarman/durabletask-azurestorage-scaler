@@ -57,7 +57,7 @@ runs:
   using: composite
   steps:
     - name: Setup
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
     - name: Build
       shell: bash

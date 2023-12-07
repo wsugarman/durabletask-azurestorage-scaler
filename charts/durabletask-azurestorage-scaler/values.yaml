@@ -10,6 +10,17 @@ additionalLabels: {}
 additionalAnnotations: {}
   # key: value
 
+# Additional environment variables that will be passed into the scaler pods
+env:
+# - name: ENV_NAME
+#   value: 'ENV-VALUE'
+
+envFrom:
+# - secretRef:
+#     name: secret-name
+# - configMapRef:
+#     name: config-map-name
+
 # Docker image metadata
 image:
   repository: ghcr.io/wsugarman/durabletask-azurestorage-scaler
@@ -17,57 +28,21 @@ image:
   pullPolicy: IfNotPresent
   pullSecrets: []
 
-# gRPC port
-port: 4370
-
-# Scaler replicas
-# TODO: Enable auto-scaling
-replicaCount: 1
-
-# Optional upgrade strategy for > 1 replicas
-upgradeStrategy: {}
-  # type: RollingUpdate
-  # rollingUpdate:
-  #   maxUnavailable: 1
-  #   maxSurge: 1
-
-# Container resource requests and limits
-resources:
-  requests:
-    cpu: 50m
-    memory: 128M
-  limits:
-    cpu: "1"
-    memory: 512M
+# logging contains settings related to the diagnostic output.
+logging:
+  # format is the name of the formatter for the console logger. Acceptable values are `json`, `simple`, or 'systemd'.
+  format: systemd
+  # level is the minimal log level emitted by the pods. Acceptable values are `trace`, `debug`, `information`, `warning`, `error`, `critical`, or `none`.
+  level: information
+  # timestampFormat is either a standard or customer .NET date and time format string. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings for more information.
+  timestampFormat: O
 
 # Optional node selector for scaler pods
 nodeSelector: {}
 
-# Optional topology spread constraints when replicas > 1
-topologySpreadConstraints: {}
-
-# Optional scaler pod priority class
-priorityClassName: ""
-
-# Optional labels for only the scaler pods
-podLabels: {}
-  # key: value
-
 # Optional annotations for only the scaler pods
 podAnnotations: {}
   # key: value
-
-# Optional service account for Azure Workload Identity
-serviceAccount:
-  create: true
-  name: ""
-  automountServiceAccountToken: true
-  annotations: {}
-    # key: value
-
-# Optional TLS information
-tls:
-  secret: ""
 
 # Optional values for configuring the identity for the scaler pods
 # Note: Names are meant to parallel the KEDA helm chart
@@ -80,16 +55,34 @@ podIdentity:
     tenantId: ""
     tokenExpiration: 3600
 
-## Additional environment variables that will be passed into the scaler pods
-env:
-# - name: ENV_NAME
-#   value: 'ENV-VALUE'
+# Optional labels for only the scaler pods
+podLabels: {}
+  # key: value
 
-envFrom:
-# - secretRef:
-#     name: secret-name
-# - configMapRef:
-#     name: config-map-name
+# Security context for all containers in the scaler pods
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# gRPC port
+port: 4370
+
+# Optional scaler pod priority class
+priorityClassName: ""
+
+# Scaler replicas
+# TODO: Enable auto-scaling
+replicaCount: 1
+
+# Container resource requests and limits
+resources:
+  requests:
+    cpu: 50m
+    memory: 128M
+  limits:
+    cpu: "1"
+    memory: 512M
 
 # Security context for the scaler container
 securityContext:
@@ -99,8 +92,26 @@ securityContext:
     - ALL
   readOnlyRootFilesystem: true
 
-# Security context for all containers in the scaler pods
-podSecurityContext:
-  runAsNonRoot: true
-  seccompProfile:
-    type: RuntimeDefault
+# Optional service account for Azure Workload Identity
+serviceAccount:
+  create: true
+  name: ""
+  automountServiceAccountToken: true
+  annotations: {}
+    # key: value
+
+# Optional TLS information
+tls:
+  caSecret: ""
+  secret: ""
+  unsafe: false
+
+# Optional topology spread constraints when replicas > 1
+topologySpreadConstraints: {}
+
+# Optional upgrade strategy for > 1 replicas
+upgradeStrategy: {}
+  # type: RollingUpdate
+  # rollingUpdate:
+  #   maxUnavailable: 1
+  #   maxSurge: 1

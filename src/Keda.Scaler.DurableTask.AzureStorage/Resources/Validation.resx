@@ -126,8 +126,17 @@
   <data name="BlankConnectionVarFormat" xml:space="preserve">
     <value>Unable to resolve the connection string from environment variable '{0}'.</value>
   </data>
+  <data name="FileNotFoundMessage" xml:space="preserve">
+    <value>Unable to find the specified file.</value>
+  </data>
   <data name="InvalidAadFieldFormat" xml:space="preserve">
     <value>{0} should not be specified if using managed identity.</value>
+  </data>
+  <data name="InvalidPropertyTypeFormat" xml:space="preserve">
+    <value>Property must be of type {0}.</value>
+  </data>
+  <data name="MissingCertificateMessage" xml:space="preserve">
+    <value>A certificate must be specified with a key.</value>
   </data>
   <data name="OptionalBlankValueFormat" xml:space="preserve">
     <value>If specified, {0} cannot be empty or consist entirely of white space characters.</value>

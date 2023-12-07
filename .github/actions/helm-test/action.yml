@@ -49,7 +49,7 @@ runs:
   using: composite
   steps:
     - name: Setup dotnet
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
 
     - name: Lint Helm Chart
       shell: bash
@@ -76,9 +76,12 @@ runs:
       shell: bash
       run: |
         kubectl create namespace keda
+        kubectl create namespace ${{ inputs.functionAppNamespace }}
         mkdir -p ${{ runner.temp }}/certs
 
         # Create CA Root Certificate
+        # Note that the secret is both in the KEDA namespace and in the function app namespace
+        # as both KEDA and the function app validate each other's TLS certificate
         openssl req \
           -x509 \
           -noenc \
@@ -91,10 +94,42 @@ runs:
 
         kubectl create secret tls self-signed-ca \
           -n keda \
-          --key=${{ runner.temp }}/certs/root.key \
-          --cert=${{ runner.temp }}/certs/root.pem
+          --cert=${{ runner.temp }}/certs/root.pem \
+          --key=${{ runner.temp }}/certs/root.key
 
-        # Create a server TLS certificate
+        kubectl create secret tls self-signed-ca \
+          -n ${{ inputs.functionAppNamespace }} \
+          --cert=${{ runner.temp }}/certs/root.pem \
+          --key=${{ runner.temp }}/certs/root.key
+
+        # Create a client TLS certificate for KEDA
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:keda-operator.keda,IP:127.0.0.1\n" >> ${{ runner.temp }}/certs/client.ext
+
+        openssl req \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -subj "/C=US/ST=Washington/L=Redmond/O=KEDA/CN=keda-operator.keda" \
+          -addext "subjectAltName = DNS:keda-operator.keda, IP:127.0.0.1" \
+          -keyout ${{ runner.temp }}/certs/client.key \
+          -out ${{ runner.temp }}/certs/client.csr
+
+        openssl x509 \
+          -req \
+          -in ${{ runner.temp }}/certs/client.csr \
+          -extfile ${{ runner.temp }}/certs/client.ext \
+          -CA ${{ runner.temp }}/certs/root.pem \
+          -CAkey ${{ runner.temp }}/certs/root.key \
+          -CAcreateserial \
+          -days 1 \
+          -out ${{ runner.temp }}/certs/client.pem
+
+        kubectl create secret tls client-tls \
+          -n ${{ inputs.functionAppNamespace }} \
+          --cert=${{ runner.temp }}/certs/client.pem \
+          --key=${{ runner.temp }}/certs/client.key
+
+        # Create a server TLS certificate for the DTFx scaler
         printf "basicConstraints=CA:FALSE\nsubjectAltName=DNS:dtfx-scaler.keda,IP:127.0.0.1\n" >> ${{ runner.temp }}/certs/server.ext
 
         openssl req \
@@ -129,7 +164,6 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
-          --set grpcTLSCertsSecret=self-signed-ca \
           --wait \
           --timeout 2m \
           keda \
@@ -143,6 +177,7 @@ runs:
           --create-namespace \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set logging.level=debug \
           --wait \
           --timeout 30s \
           plaintext-dtfx-scaler \
@@ -154,8 +189,12 @@ runs:
         helm install \
           -n keda \
           --create-namespace \
+          --set env[0].name=Security__Transport__Client__Authentication__RevocationMode \
+          --set env[0].value=NoCheck \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set logging.level=debug \
+          --set tls.caSecret=self-signed-ca \
           --set tls.secret=server-tls \
           --wait \
           --timeout 30s \
@@ -175,8 +214,9 @@ runs:
           --set externalScaler.serviceName=dtfx-scaler \
           --set image.repository=example-function-app \
           --set image.tag=${{ inputs.imageTag }} \
-          --set scaledObject.enableTls=true \
+          --set scaledObject.caCertSecret=self-signed-ca \
           --set scaledObject.pollingInterval=2 \
+          --set scaledObject.tlsClientCertSecret=client-tls \
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \
@@ -195,19 +235,25 @@ runs:
         export PATH=$PATH:$(go env GOPATH)/bin
         go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
+        # Test without TLS
         grpcurl \
           -plaintext \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          -vv \
           127.0.0.1:10003 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
+        # Test with TLS
         grpcurl \
           -cacert "${{ runner.temp }}/certs/root.pem" \
+          -cert "${{ runner.temp }}/certs/client.pem" \
+          -key "${{ runner.temp }}/certs/client.key" \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          -vv \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 

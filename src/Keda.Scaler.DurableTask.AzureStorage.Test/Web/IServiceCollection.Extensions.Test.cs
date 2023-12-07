@@ -8,10 +8,11 @@ using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
+using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Extensions;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 
 [TestClass]
 public class IServiceCollectionExtensionsTest

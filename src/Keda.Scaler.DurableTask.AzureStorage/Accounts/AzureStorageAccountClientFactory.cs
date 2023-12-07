@@ -5,7 +5,6 @@ using System;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Storage.Blobs;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 

@@ -38,7 +38,7 @@ public class AzureStorageTaskHubBrowser
     {
         _blobServiceClientFactory = blobServiceClientFactory ?? throw new ArgumentNullException(nameof(blobServiceClientFactory));
         _queueServiceClientFactory = queueServiceClientFactory ?? throw new ArgumentNullException(nameof(queueServiceClientFactory));
-        _logger = loggerFactory?.CreateLogger(Diagnostics.LoggerCategory) ?? throw new ArgumentNullException(nameof(loggerFactory));
+        _logger = loggerFactory?.CreateLogger(LogCategories.Default) ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
     /// <summary>

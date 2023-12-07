@@ -1,8 +1,9 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using Keda.Scaler.DurableTask.AzureStorage;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
+using Keda.Scaler.DurableTask.AzureStorage.Security;
+using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,6 +17,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services
     .AddDurableTaskScaler()
+    .AddTlsSupport("default", builder.Configuration)
     .AddGrpcReflection()
     .AddGrpc(o =>
     {
@@ -29,7 +31,13 @@ WebApplication app = builder
     .Build();
 
 // Configure the HTTP request pipeline.
-app.MapGrpcService<DurableTaskAzureStorageScalerService>();
+if (app.Configuration.EnforceMutualTls())
+    _ = app.UseAuthentication();
+
+GrpcServiceEndpointConventionBuilder grpcBuilder = app.MapGrpcService<DurableTaskAzureStorageScalerService>();
+if (app.Configuration.EnforceMutualTls())
+    _ = grpcBuilder.RequireAuthorization("default");
+
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 // Only enable reflection endpoints when developing
