@@ -23,6 +23,8 @@ annotations:
   artifacthub.io/changes: |
     - kind: added
       description: Added support for validating the client's TLS certificate authority
+    - kind: added
+      description: Added Helm values for customizing the scaler's logging
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler
