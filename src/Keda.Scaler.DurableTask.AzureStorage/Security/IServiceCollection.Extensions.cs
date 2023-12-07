@@ -11,7 +11,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 internal static class IServiceCollectionExtensions
 {
-    public static IServiceCollection AddTlsSupport(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddTlsSupport(this IServiceCollection services, string policyName, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(configuration);
@@ -42,7 +42,10 @@ internal static class IServiceCollectionExtensions
                 .AddCertificateCache();
 
             _ = services
-                .AddAuthorization();
+                .AddAuthorization(o => o
+                    .AddPolicy(policyName, b => b
+                        .AddAuthenticationSchemes(CertificateAuthenticationDefaults.AuthenticationScheme)
+                        .RequireAuthenticatedUser()));
         }
 
         return services
