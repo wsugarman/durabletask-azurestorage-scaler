@@ -23,7 +23,7 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
     {
         _taskHubInfo = taskHubInfo ?? throw new ArgumentNullException(nameof(taskHubInfo));
         if (taskHubInfo.PartitionCount < 1)
-            throw new ArgumentException(SR.InvalidPartitionCountFormat, nameof(taskHubInfo));
+            throw new ArgumentException(SR.Format(SR.InvalidPartitionCountFormat, taskHubInfo.PartitionCount), nameof(taskHubInfo));
 
         _queueServiceClient = queueServiceClient ?? throw new ArgumentNullException(nameof(queueServiceClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

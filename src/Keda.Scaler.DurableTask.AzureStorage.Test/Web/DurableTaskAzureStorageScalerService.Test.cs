@@ -12,14 +12,14 @@ using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
-using Keda.Scaler.DurableTask.AzureStorage.Extensions;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
+using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 
 [TestClass]
 public class DurableTaskAzureStorageScalerServiceTest

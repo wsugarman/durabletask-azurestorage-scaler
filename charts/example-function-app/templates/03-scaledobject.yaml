@@ -22,6 +22,5 @@ spec:
         maxActivitiesPerWorker: {{ .Values.taskHub.maxActivitiesPerWorker | quote }}
         maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
         taskHubName: {{ .Values.taskHub.name }}
-        {{- if .Values.scaledObject.enableTls }}
-        tlsCertFile: /grpccerts/tls.crt
-        {{- end }}
+      authenticationRef:
+        name: {{ template "example-function-app.fullname" . }}

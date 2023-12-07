@@ -1,7 +1,7 @@
 syntax: glob
 
-# Custom files
-*.tt.out
+### Pipelines ###
+certs/
 
 ### VisualStudio ###
 
