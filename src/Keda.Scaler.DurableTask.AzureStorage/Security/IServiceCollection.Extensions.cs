@@ -3,6 +3,7 @@
 
 using System;
 using Microsoft.AspNetCore.Authentication.Certificate;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -10,9 +11,10 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 internal static class IServiceCollectionExtensions
 {
-    public static IServiceCollection AddTlsSupport(this IServiceCollection services)
+    public static IServiceCollection AddTlsSupport(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configuration);
 
         _ = services
             .AddOptions<CertificateAuthenticationOptions>(CertificateAuthenticationDefaults.AuthenticationScheme)
@@ -32,13 +34,21 @@ internal static class IServiceCollectionExtensions
             .BindConfiguration(TlsServerOptions.DefaultKey)
             .ValidateDataAnnotations();
 
-        _ = services
-            .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
-            .AddCertificate()
-            .AddCertificateCache();
+        if (configuration.HasClientValidation())
+        {
+            _ = services
+                .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
+                .AddCertificate()
+                .AddCertificateCache();
+
+            _ = services
+                .AddAuthorization(o => o
+                    .AddPolicy("default", b => b
+                        .AddAuthenticationSchemes(CertificateAuthenticationDefaults.AuthenticationScheme)
+                        .RequireAuthenticatedUser()));
+        }
 
         return services
-            .AddAuthorization()
             .AddSingleton<TlsConfigure>()
             .AddSingleton<IConfigureOptions<CertificateAuthenticationOptions>>(p => p.GetRequiredService<TlsConfigure>())
             .AddSingleton<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>(p => p.GetRequiredService<TlsConfigure>());

@@ -17,7 +17,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services
     .AddDurableTaskScaler()
-    .AddTlsSupport()
+    .AddTlsSupport(builder.Configuration)
     .AddGrpcReflection()
     .AddGrpc(o =>
     {
@@ -31,9 +31,13 @@ WebApplication app = builder
     .Build();
 
 // Configure the HTTP request pipeline.
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapGrpcService<DurableTaskAzureStorageScalerService>();
+if (app.Configuration.HasClientValidation())
+    _ = app.UseAuthentication();
+
+GrpcServiceEndpointConventionBuilder grpcBuilder = app.MapGrpcService<DurableTaskAzureStorageScalerService>();
+if (app.Configuration.HasClientValidation())
+    _ = grpcBuilder.RequireAuthorization("default");
+
 app.MapGet("/", () => "Communication with gRPC endpoints must be made through a gRPC client. To learn how to create a client, visit: https://go.microsoft.com/fwlink/?linkid=2086909");
 
 // Only enable reflection endpoints when developing
