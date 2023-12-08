@@ -52,6 +52,8 @@ spec:
             value: {{ .Values.taskHub.partitionCount | quote }}
           - name: AzureWebJobsSecretStorageType
             value: kubernetes
+          - name: AzureWebJobsKubernetesSecretName
+            value: "secrets/{{ template "example-function-app.fullname" . }}"
           - name: FUNCTIONS_LOG_PATH
             value: /logs
           {{- with .Values.resources }}
@@ -70,12 +72,7 @@ spec:
           volumeMounts:
             - name: logs
               mountPath: /logs
-            - name: function-keys
-              mountPath: /run/secrets/functions-keys
-              readOnly: true
       volumes:
         - name: logs
           emptyDir: {}
-        - name: function-keys
-          secret:
-            secretName: {{ template "example-function-app.fullname" . }}
+      serviceAccountName: {{ template "example-function-app.fullname" . }}
