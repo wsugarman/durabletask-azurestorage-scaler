@@ -39,7 +39,7 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.0-cbl-mariner2.0-distroless-amd64@sha256:89cdc39f421ad61d42022aaae5409ab5ba0b04e76f56b3d802cedfc19f3c5653 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.0-cbl-mariner2.0-distroless-amd64@sha256:ec8c308902b0de9d57052bbd7036208e6300c2ab02906fa81216369731e75d1e AS runtime
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0
 USER $APP_UID
