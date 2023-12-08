@@ -193,7 +193,6 @@ runs:
           --set env[0].value=NoCheck \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
-          --set logging.level=debug \
           --set tls.caSecret=self-signed-ca \
           --set tls.secret=server-tls \
           --wait \
@@ -241,7 +240,6 @@ runs:
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
-          -vv \
           127.0.0.1:10003 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
@@ -253,7 +251,6 @@ runs:
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
-          -vv \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
