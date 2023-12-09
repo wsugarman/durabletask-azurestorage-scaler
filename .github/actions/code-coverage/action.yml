@@ -1,6 +1,9 @@
 name: Check Code Coverage
 description: Validates code coverage and uploads the results.
 inputs:
+  codecovToken:
+    description: The Codecov upload token
+    required: true
   reportPath:
     description: The path to the cobertura coverage file.
     required: true
@@ -24,4 +27,5 @@ runs:
       with:
         files: coverage.cobertura.xml
         fail_ci_if_error: true
+        token: ${{ inputs.codecovToken }}
         working-directory: ${{ runner.temp }}/codecoverage

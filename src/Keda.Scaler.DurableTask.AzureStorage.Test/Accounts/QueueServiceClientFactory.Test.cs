@@ -5,11 +5,10 @@ using System;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
-[TestClass]
 public class QueueServiceClientFactoryTest : AzureStorageAccountClientFactoryTest<QueueServiceClient>
 {
     protected override IStorageAccountClientFactory<QueueServiceClient> GetFactory()
@@ -23,7 +22,7 @@ public class QueueServiceClientFactoryTest : AzureStorageAccountClientFactoryTes
 
     private static void Validate(QueueServiceClient actual, string accountName, Uri serviceUrl)
     {
-        Assert.AreEqual(accountName, actual?.AccountName);
-        Assert.AreEqual(serviceUrl, actual?.Uri);
+        Assert.Equal(accountName, actual?.AccountName);
+        Assert.Equal(serviceUrl, actual?.Uri);
     }
 }

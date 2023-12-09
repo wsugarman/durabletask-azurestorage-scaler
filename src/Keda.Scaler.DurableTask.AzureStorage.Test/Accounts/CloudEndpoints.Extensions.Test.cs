@@ -4,26 +4,36 @@
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
-[TestClass]
 public class CloudEndpointsExtensionsTest
 {
-    [TestMethod]
-    public void GetStorageServiceUri()
-    {
-        // Exceptions
-        _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(null!, "foo", AzureStorageService.Blob));
-        _ = Assert.ThrowsException<ArgumentNullException>(() => CloudEndpoints.Public.GetStorageServiceUri(null!, AzureStorageService.Blob));
-        _ = Assert.ThrowsException<ArgumentException>(() => CloudEndpoints.Public.GetStorageServiceUri("", AzureStorageService.Blob));
-        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => CloudEndpoints.Public.GetStorageServiceUri("foo", (AzureStorageService)42));
+    [Fact]
+    public void GivenNullEndpoints_WhenGettingStorageServiceUri_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => CloudEndpointsExtensions.GetStorageServiceUri(null!, "foo", AzureStorageService.Blob));
 
-        // Successful test cases
-        Assert.AreEqual(new Uri("https://foo.blob.core.windows.net", UriKind.Absolute), CloudEndpoints.Public.GetStorageServiceUri("foo", AzureStorageService.Blob));
-        Assert.AreEqual(new Uri("https://bar.queue.core.chinacloudapi.cn", UriKind.Absolute), CloudEndpoints.China.GetStorageServiceUri("bar", AzureStorageService.Queue));
-        Assert.AreEqual(new Uri("https://baz.table.core.cloudapi.de", UriKind.Absolute), CloudEndpoints.Germany.GetStorageServiceUri("baz", AzureStorageService.Table));
-        Assert.AreEqual(new Uri("https://test.file.core.usgovcloudapi.net", UriKind.Absolute), CloudEndpoints.USGovernment.GetStorageServiceUri("test", AzureStorageService.File));
-    }
+    [Fact]
+    public void GivenNullAccount_WhenGettingStorageServiceUri_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => CloudEndpoints.Public.GetStorageServiceUri(null!, AzureStorageService.Blob));
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("    \t\r\n")]
+
+    public void GivenEmptyAccount_WhenGettingStorageServiceUri_ThenThrowArgumentException(string accountName)
+        => Assert.Throws<ArgumentException>(() => CloudEndpoints.Public.GetStorageServiceUri(accountName, AzureStorageService.Table));
+
+    [Fact]
+    public void GivenUnknownService_WhenGettingStorageServiceUri_ThenThrowArgumentOutOfRangeException()
+        => Assert.Throws<ArgumentException>(() => CloudEndpoints.Public.GetStorageServiceUri("foo", (AzureStorageService)42));
+
+    [Theory]
+    [InlineData("https://foo.blob.core.windows.net", CloudEnvironment.AzurePublicCloud, "foo", AzureStorageService.Blob)]
+    [InlineData("https://bar.queue.core.chinacloudapi.cn", CloudEnvironment.AzureChinaCloud, "bar", AzureStorageService.Queue)]
+    [InlineData("https://baz.table.core.cloudapi.de", CloudEnvironment.AzureGermanCloud, "baz", AzureStorageService.Table)]
+    [InlineData("https://test.file.core.usgovcloudapi.net", CloudEnvironment.AzureUSGovernmentCloud, "test", AzureStorageService.File)]
+    public void GivenStorageAccount_WhenGettingStorageServiceUri_ThenReturnExpectedValue(string expected, CloudEnvironment cloud, string accountName, AzureStorageService service)
+        => Assert.Equal(new Uri(expected, UriKind.Absolute), CloudEndpoints.ForEnvironment(cloud).GetStorageServiceUri(accountName, service));
 }
