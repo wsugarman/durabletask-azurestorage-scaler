@@ -15,6 +15,6 @@ internal sealed class EnvironmentCache : IProcessEnvironment
         => _environment = environment ?? throw new ArgumentNullException(nameof(environment));
 
     /// <inheritdoc/>
-    public string? GetEnvironmentVariable(string variable)
-        => _cache.GetOrAdd(variable, _ => _environment.GetEnvironmentVariable(variable));
+    public string? GetVariable(string variable)
+        => _cache.GetOrAdd(variable, _ => _environment.GetVariable(variable));
 }

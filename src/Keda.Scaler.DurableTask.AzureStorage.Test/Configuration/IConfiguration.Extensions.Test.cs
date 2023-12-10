@@ -2,43 +2,57 @@
 // Licensed under the MIT License.
 
 using System;
-using Google.Protobuf.Collections;
+using System.Collections.Generic;
 using Keda.Scaler.DurableTask.AzureStorage.Configuration;
-using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Configuration;
 
-[TestClass]
 public class IConfigurationExtensionsTest
 {
-    [TestMethod]
-    public void GetOrCreate()
+    [Fact]
+    public void GivenNullConfiguration_WhenGettingSection_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => IConfigurationExtensions.GetOrCreate<Example>(null!));
+
+    [Fact]
+    public void GivenEmptyConfiguration_WhenGettingSection_ThenReturnNewObject()
     {
-        // Exception
-        _ = Assert.ThrowsException<ArgumentNullException>(() => IConfigurationExtensions.GetOrCreate<ScalerMetadata>(null!));
+        IConfiguration config = new ConfigurationBuilder().AddInMemoryCollection().Build();
+        Example actual = config.GetOrCreate<Example>();
 
-        ScalerMetadata actual;
+        Assert.NotNull(actual);
+        Assert.Equal(default, actual.Duration);
+        Assert.Equal(default, actual.Number);
+        Assert.Equal(default, actual.Word);
+    }
 
-        // Configuration contains some members
-        MapField<string, string> map = new()
-        {
-            { nameof(ScalerMetadata.AccountName), "unittest" },
-            { nameof(ScalerMetadata.UseManagedIdentity), "true" },
-        };
+    [Fact]
+    public void GivenKnownKeys_WhenGettingSection_ThenBindFoundKeys()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+            .AddInMemoryCollection(
+                new KeyValuePair<string, string?>[]
+                {
+                    new("section:duration", "01:00:00"),
+                    new("section:number", "42"),
+                })
+            .Build();
 
-        actual = map.ToConfiguration().GetOrCreate<ScalerMetadata>();
-        Assert.IsNotNull(actual);
-        Assert.AreEqual("unittest", actual.AccountName);
-        Assert.IsTrue(actual.UseManagedIdentity);
+        Example actual = config.GetSection("section").GetOrCreate<Example>();
 
-        // No members
-        // (Get<T> would return null)
-        IConfiguration empty = new MapField<string, string>().ToConfiguration();
+        Assert.NotNull(actual);
+        Assert.Equal(TimeSpan.FromHours(1), actual.Duration);
+        Assert.Equal(42, actual.Number);
+        Assert.Equal(default, actual.Word);
+    }
 
-        actual = empty.GetOrCreate<ScalerMetadata>();
-        Assert.IsNotNull(actual);
-        Assert.IsNull(empty.Get<ScalerMetadata>());
+    private sealed class Example
+    {
+        public TimeSpan? Duration { get; set; }
+
+        public int Number { get; set; }
+
+        public string? Word { get; set; }
     }
 }

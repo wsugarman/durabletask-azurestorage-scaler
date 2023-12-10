@@ -16,18 +16,18 @@ public class CloudEndpointsExtensionsTest
 
     [Fact]
     public void GivenNullAccount_WhenGettingStorageServiceUri_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => CloudEndpoints.Public.GetStorageServiceUri(null!, AzureStorageService.Blob));
+        => Assert.Throws<ArgumentNullException>(() => AzureCloudEndpoints.Public.GetStorageServiceUri(null!, AzureStorageService.Blob));
 
     [Theory]
     [InlineData("")]
     [InlineData("    \t\r\n")]
 
-    public void GivenEmptyAccount_WhenGettingStorageServiceUri_ThenThrowArgumentException(string accountName)
-        => Assert.Throws<ArgumentException>(() => CloudEndpoints.Public.GetStorageServiceUri(accountName, AzureStorageService.Table));
+    public void GivenEmptyOrWhiteSpaceAccount_WhenGettingStorageServiceUri_ThenThrowArgumentException(string accountName)
+        => Assert.Throws<ArgumentException>(() => AzureCloudEndpoints.Public.GetStorageServiceUri(accountName, AzureStorageService.Table));
 
     [Fact]
     public void GivenUnknownService_WhenGettingStorageServiceUri_ThenThrowArgumentOutOfRangeException()
-        => Assert.Throws<ArgumentException>(() => CloudEndpoints.Public.GetStorageServiceUri("foo", (AzureStorageService)42));
+        => Assert.Throws<ArgumentException>(() => AzureCloudEndpoints.Public.GetStorageServiceUri("foo", (AzureStorageService)42));
 
     [Theory]
     [InlineData("https://foo.blob.core.windows.net", CloudEnvironment.AzurePublicCloud, "foo", AzureStorageService.Blob)]
@@ -35,5 +35,5 @@ public class CloudEndpointsExtensionsTest
     [InlineData("https://baz.table.core.cloudapi.de", CloudEnvironment.AzureGermanCloud, "baz", AzureStorageService.Table)]
     [InlineData("https://test.file.core.usgovcloudapi.net", CloudEnvironment.AzureUSGovernmentCloud, "test", AzureStorageService.File)]
     public void GivenStorageAccount_WhenGettingStorageServiceUri_ThenReturnExpectedValue(string expected, CloudEnvironment cloud, string accountName, AzureStorageService service)
-        => Assert.Equal(new Uri(expected, UriKind.Absolute), CloudEndpoints.ForEnvironment(cloud).GetStorageServiceUri(accountName, service));
+        => Assert.Equal(new Uri(expected, UriKind.Absolute), AzureCloudEndpoints.ForEnvironment(cloud).GetStorageServiceUri(accountName, service));
 }

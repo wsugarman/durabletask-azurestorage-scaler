@@ -14,7 +14,7 @@ public class QueueServiceClientFactoryTest : AzureStorageAccountClientFactoryTes
     protected override IStorageAccountClientFactory<QueueServiceClient> GetFactory()
         => new QueueServiceClientFactory();
 
-    protected override void ValidateAccountName(QueueServiceClient actual, string accountName, CloudEndpoints cloud)
+    protected override void ValidateAccountName(QueueServiceClient actual, string accountName, AzureCloudEndpoints cloud)
         => Validate(actual, accountName, cloud.GetStorageServiceUri(accountName, AzureStorageService.Queue));
 
     protected override void ValidateEmulator(QueueServiceClient actual)

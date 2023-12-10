@@ -7,11 +7,10 @@ using System.IO;
 using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.DataAnnotations;
 
-[TestClass]
 public sealed class FileExistsAttributeTests : IDisposable
 {
     private readonly string _tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -19,39 +18,47 @@ public sealed class FileExistsAttributeTests : IDisposable
     public FileExistsAttributeTests()
         => Directory.CreateDirectory(_tempPath);
 
-    [TestMethod]
-    public void IsValid()
+    [Fact]
+    public void GivenIncorrectMemberType_WhenValidatingFileExists_ThenThrowOptionsValidationException()
     {
-        string filePath = Path.Combine(_tempPath, "file.txt");
-        File.WriteAllText(filePath, "Hello, World!");
-
         ServiceCollection services = new();
         _ = services
             .AddOptions<InvalidExampleOptions>()
             .Configure(o => o.Number = 42)
             .ValidateDataAnnotations();
 
+        using ServiceProvider provider = services.BuildServiceProvider();
+        _ = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<InvalidExampleOptions>>().Value);
+    }
+
+    [Fact]
+    public void GivenMissingFile_WhenValidatingFileExists_ThenThrowOptionsValidationException()
+    {
+        ServiceCollection services = new();
         _ = services
-            .AddOptions<ExampleOptions>("Bad")
+            .AddOptions<ExampleOptions>()
             .Configure(o => o.FilePath = Path.Combine(_tempPath, Guid.NewGuid().ToString()))
             .ValidateDataAnnotations();
 
+        using ServiceProvider provider = services.BuildServiceProvider();
+        _ = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<ExampleOptions>>().Value);
+    }
+
+    [Fact]
+    public void GivenPresentFile_WhenValidatingFileExists_ThenDoNotThrowException()
+    {
+        string filePath = Path.Combine(_tempPath, "file.txt");
+        File.WriteAllText(filePath, "Hello, World!");
+
+        ServiceCollection services = new();
         _ = services
-            .AddOptions<ExampleOptions>("Good")
+            .AddOptions<ExampleOptions>()
             .Configure(o => o.FilePath = filePath)
             .ValidateDataAnnotations();
 
-        IServiceProvider provider = services.BuildServiceProvider();
-
-        // Wrong type
-        _ = Assert.ThrowsException<OptionsValidationException>(() => provider.GetRequiredService<IOptions<InvalidExampleOptions>>().Value);
-
-        // File not found
-        _ = Assert.ThrowsException<OptionsValidationException>(() => provider.GetRequiredService<IOptionsSnapshot<ExampleOptions>>().Get("Bad"));
-
-        // Valid file
-        ExampleOptions actual = provider.GetRequiredService<IOptionsSnapshot<ExampleOptions>>().Get("Good");
-        Assert.AreEqual(filePath, actual.FilePath);
+        using ServiceProvider provider = services.BuildServiceProvider();
+        ExampleOptions actual = provider.GetRequiredService<IOptions<ExampleOptions>>().Value;
+        Assert.Equal(filePath, actual.FilePath);
     }
 
     public void Dispose()

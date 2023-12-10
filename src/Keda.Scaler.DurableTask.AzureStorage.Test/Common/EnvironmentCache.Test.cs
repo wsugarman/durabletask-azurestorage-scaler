@@ -3,27 +3,28 @@
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Common;
 
-[TestClass]
 public class EnvironmentCacheTest
 {
-    [TestMethod]
-    public void CtorExceptions()
-        => Assert.ThrowsException<ArgumentNullException>(() => new EnvironmentCache(null!));
+    [Fact]
+    public void GivenNullEnvironment_WhenCreatingEnvironmentCache_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new EnvironmentCache(null!));
 
-    [TestMethod]
-    public void GetEnvironmentVariable()
+    [Fact]
+    public void GivenEnvironmentCacheWithChangingVariable_WhenGettingVariable_ThenReturnSameValue()
     {
         MockEnvironment env = new();
         EnvironmentCache cache = new(env);
 
         env.SetEnvironmentVariable("2", "two");
-        Assert.AreEqual("two", cache.GetEnvironmentVariable("2"));
+        Assert.Equal("two", env.GetVariable("2"));
+        Assert.Equal("two", cache.GetVariable("2"));
 
         env.SetEnvironmentVariable("2", "deux");
-        Assert.AreEqual("two", cache.GetEnvironmentVariable("2"));
+        Assert.Equal("deux", env.GetVariable("2"));
+        Assert.Equal("two", cache.GetVariable("2"));
     }
 }

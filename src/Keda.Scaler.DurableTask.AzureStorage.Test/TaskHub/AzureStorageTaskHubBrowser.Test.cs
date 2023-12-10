@@ -63,7 +63,7 @@ public class AzureStorageTaskHubBrowserTest
         AzureStorageAccountInfo accountInfo = new()
         {
             AccountName = "testaccount",
-            Cloud = CloudEndpoints.Public,
+            Cloud = AzureCloudEndpoints.Public,
         };
         AzureStorageTaskHubInfo taskHubInfo = new()
         {

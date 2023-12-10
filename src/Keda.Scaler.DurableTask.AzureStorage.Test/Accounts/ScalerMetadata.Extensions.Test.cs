@@ -59,7 +59,7 @@ public class ScalerMetadataExtensionsTest
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
-        Assert.Same(CloudEndpoints.ForEnvironment(cloud.GetValueOrDefault(CloudEnvironment.AzurePublicCloud)), actual.Cloud);
+        Assert.Same(AzureCloudEndpoints.ForEnvironment(cloud.GetValueOrDefault(CloudEnvironment.AzurePublicCloud)), actual.Cloud);
         Assert.Null(actual.Credential);
     }
 
@@ -77,7 +77,7 @@ public class ScalerMetadataExtensionsTest
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
-        Assert.Same(CloudEndpoints.Public, actual.Cloud);
+        Assert.Same(AzureCloudEndpoints.Public, actual.Cloud);
         Assert.Equal(Credential.ManagedIdentity, actual.Credential);
     }
 

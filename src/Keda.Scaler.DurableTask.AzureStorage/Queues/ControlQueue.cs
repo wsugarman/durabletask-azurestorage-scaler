@@ -11,8 +11,9 @@ internal static class ControlQueue
 {
     // See: https://learn.microsoft.com/en-us/rest/api/storageservices/naming-queues-and-metadata#queue-names
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Queue names must be lowercase.")]
-    public static string GetName(string? taskHub, int partition)
+    public static string GetName(string taskHub, int partition)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(taskHub);
         return partition is < 0 or > 15
             ? throw new ArgumentOutOfRangeException(nameof(partition))
             : string.Format(CultureInfo.InvariantCulture, "{0}-control-{1:D2}", taskHub?.ToLowerInvariant(), partition);

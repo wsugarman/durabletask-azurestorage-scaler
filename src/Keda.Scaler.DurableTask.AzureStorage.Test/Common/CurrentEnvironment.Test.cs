@@ -1,34 +1,28 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Common;
 
-[TestClass]
-public class CurrentEnvironmentTest
+public sealed class CurrentEnvironmentTest : IDisposable
 {
-    [TestMethod]
-    public void GetEnvironmentVariable()
+    private readonly string _key = Guid.NewGuid().ToString();
+    private readonly string _value = Guid.NewGuid().ToString();
+    private readonly string? _previous;
+
+    public CurrentEnvironmentTest()
     {
-        IProcessEnvironment environment = ProcessEnvironment.Current;
-
-        // Setup environment
-        string variable = Guid.NewGuid().ToString();
-        string value = Guid.NewGuid().ToString();
-        string? previous = Environment.GetEnvironmentVariable(variable, EnvironmentVariableTarget.Process);
-        Environment.SetEnvironmentVariable(variable, value, EnvironmentVariableTarget.Process);
-
-        try
-        {
-            // Fetch variable
-            Assert.AreEqual(value, environment.GetEnvironmentVariable(variable));
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable(variable, previous, EnvironmentVariableTarget.Process);
-        }
+        _previous = Environment.GetEnvironmentVariable(_key, EnvironmentVariableTarget.Process);
+        Environment.SetEnvironmentVariable(_key, _value, EnvironmentVariableTarget.Process);
     }
+
+    public void Dispose()
+        => Environment.SetEnvironmentVariable(_key, _previous);
+
+    [Fact]
+    public void GivenEnvironmentVariableInProcess_WhenGettingTheVariable_ThenReturnTheExpectedValue()
+        => Assert.Equal(_value, ProcessEnvironment.Current.GetVariable(_key));
 }

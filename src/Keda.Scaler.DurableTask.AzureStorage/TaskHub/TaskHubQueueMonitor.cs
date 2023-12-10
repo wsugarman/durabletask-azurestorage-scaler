@@ -21,12 +21,16 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
 
     public TaskHubQueueMonitor(AzureStorageTaskHubInfo taskHubInfo, QueueServiceClient queueServiceClient, ILogger logger)
     {
-        _taskHubInfo = taskHubInfo ?? throw new ArgumentNullException(nameof(taskHubInfo));
+        ArgumentNullException.ThrowIfNull(taskHubInfo);
+        ArgumentNullException.ThrowIfNull(queueServiceClient);
+        ArgumentNullException.ThrowIfNull(logger);
+
         if (taskHubInfo.PartitionCount < 1)
             throw new ArgumentException(SR.Format(SR.InvalidPartitionCountFormat, taskHubInfo.PartitionCount), nameof(taskHubInfo));
 
-        _queueServiceClient = queueServiceClient ?? throw new ArgumentNullException(nameof(queueServiceClient));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _taskHubInfo = taskHubInfo;
+        _queueServiceClient = queueServiceClient;
+        _logger = logger;
     }
 
     public virtual async ValueTask<TaskHubQueueUsage> GetUsageAsync(CancellationToken cancellationToken = default)

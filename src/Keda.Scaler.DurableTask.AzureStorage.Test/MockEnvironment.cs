@@ -10,7 +10,7 @@ internal sealed class MockEnvironment : IProcessEnvironment
 {
     private readonly ConcurrentDictionary<string, string> _env = [];
 
-    public string? GetEnvironmentVariable(string variable)
+    public string? GetVariable(string variable)
         => _env.TryGetValue(variable, out string? value) ? value : null;
 
     public void SetEnvironmentVariable(string variable, string? value)

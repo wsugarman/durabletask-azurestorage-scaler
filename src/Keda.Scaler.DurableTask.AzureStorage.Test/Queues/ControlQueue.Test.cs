@@ -2,24 +2,34 @@
 // Licensed under the MIT License.
 
 using System;
+using Keda.Scaler.DurableTask.AzureStorage.Blobs;
 using Keda.Scaler.DurableTask.AzureStorage.Queues;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Queues;
 
-[TestClass]
 public class ControlQueueTest
 {
-    [TestMethod]
-    public void GetName()
-    {
-        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", -2));
-        _ = Assert.ThrowsException<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", 19));
+    [Fact]
+    public void GivenNullTaskHub_WhenGettingControlQueueName_ThenThrowArgumentException()
+        => Assert.Throws<ArgumentNullException>(() => LeasesContainer.GetName(null!));
 
-        Assert.AreEqual("-control-01", ControlQueue.GetName(null, 1));
-        Assert.AreEqual("foo-control-00", ControlQueue.GetName("foo", 0));
-        Assert.AreEqual("bar-control-03", ControlQueue.GetName("bar", 3));
-        Assert.AreEqual("baz-control-12", ControlQueue.GetName("baz", 12));
-        Assert.AreEqual("an-other-control-15", ControlQueue.GetName("an-OTHer", 15));
-    }
+    [Theory]
+    [InlineData("")]
+    [InlineData("  \t  ")]
+    public void GivenEmptyOrWhiteSpaceTaskHub_WhenGettingControlQueueName_ThenThrowArgumentException(string taskHub)
+        => Assert.Throws<ArgumentException>(() => LeasesContainer.GetName(taskHub));
+
+    [Theory]
+    [InlineData(-2)]
+    [InlineData(19)]
+    public void GivenInvalidPartition_WhenGettingControlQueueName_ThenThrowArgumentOutOfRangeException(int partition)
+        => Assert.Throws<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", partition));
+
+    [Theory]
+    [InlineData("foo-control-00", "foo", 0)]
+    [InlineData("bar-control-07", "Bar", 7)]
+    [InlineData("baz-control-15", "BAZ", 15)]
+    public void GivenTaskHub_WhenGettingControlQueueName_ThenReturnExpectedValue(string expected, string taskHub, int partition)
+        => Assert.Equal(expected, ControlQueue.GetName(taskHub, partition));
 }

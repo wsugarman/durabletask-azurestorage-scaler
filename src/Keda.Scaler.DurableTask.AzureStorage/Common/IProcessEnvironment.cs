@@ -1,4 +1,4 @@
-﻿// Copyright © William Sugarman.
+// Copyright © William Sugarman.
 // Licensed under the MIT License.
 
 using System;
@@ -11,5 +11,5 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Common;
 public interface IProcessEnvironment
 {
     /// <inheritdoc cref="Environment.GetEnvironmentVariable(string)"/>
-    string? GetEnvironmentVariable(string variable);
+    string? GetVariable(string variable);
 }

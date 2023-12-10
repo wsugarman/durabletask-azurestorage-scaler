@@ -14,7 +14,7 @@ public class BlobServiceClientFactoryTest : AzureStorageAccountClientFactoryTest
     protected override IStorageAccountClientFactory<BlobServiceClient> GetFactory()
         => new BlobServiceClientFactory();
 
-    protected override void ValidateAccountName(BlobServiceClient actual, string accountName, CloudEndpoints cloud)
+    protected override void ValidateAccountName(BlobServiceClient actual, string accountName, AzureCloudEndpoints cloud)
         => Validate(actual, accountName, cloud.GetStorageServiceUri(accountName, AzureStorageService.Blob));
 
     protected override void ValidateEmulator(BlobServiceClient actual)

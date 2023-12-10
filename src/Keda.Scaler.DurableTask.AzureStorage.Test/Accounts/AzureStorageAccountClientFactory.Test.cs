@@ -26,9 +26,9 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     [InlineData("", "")]
     [InlineData("  ", "\t")]
     [InlineData("", null)]
-    public void GivenEmptyAccountInfo_WhenGettingServiceClient_ThenThrowArgumentException(string? accountName, string? connectionString)
+    public void GivenEmptyOrWhiteSpaceAccountInfo_WhenGettingServiceClient_ThenThrowArgumentException(string? accountName, string? connectionString)
     {
-        AzureStorageAccountInfo info = new() { AccountName = accountName, ConnectionString = connectionString, Cloud = CloudEndpoints.Public };
+        AzureStorageAccountInfo info = new() { AccountName = accountName, ConnectionString = connectionString, Cloud = AzureCloudEndpoints.Public };
         IStorageAccountClientFactory<TClient> factory = GetFactory();
         _ = Assert.Throws<ArgumentException>(() => factory.GetServiceClient(info));
     }
@@ -53,7 +53,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     public void GivenServiceUri_WhenGettingServiceClient_ThenReturnValidClient()
     {
         IStorageAccountClientFactory<TClient> factory = GetFactory();
-        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = CloudEndpoints.Public });
+        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = AzureCloudEndpoints.Public });
         ValidateEmulator(actual);
     }
 
@@ -61,15 +61,15 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     public void GivenServiceUriWithManagedIdentity_WhenGettingServiceClient_ThenReturnValidClient()
     {
         IStorageAccountClientFactory<TClient> factory = GetFactory();
-        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = CloudEndpoints.Public });
-        ValidateAccountName(actual, "test", CloudEndpoints.Public);
+        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = AzureCloudEndpoints.Public });
+        ValidateAccountName(actual, "test", AzureCloudEndpoints.Public);
         AssertTokenCredential<ManagedIdentityCredential>(actual);
     }
 
     // Note: We use a method here to avoid exposing the internal implementation classes
     protected abstract IStorageAccountClientFactory<TClient> GetFactory();
 
-    protected abstract void ValidateAccountName(TClient actual, string accountName, CloudEndpoints cloud);
+    protected abstract void ValidateAccountName(TClient actual, string accountName, AzureCloudEndpoints cloud);
 
     protected abstract void ValidateEmulator(TClient actual);
 

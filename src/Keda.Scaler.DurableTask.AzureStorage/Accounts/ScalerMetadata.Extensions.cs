@@ -21,8 +21,8 @@ internal static class ScalerMetadataExtensions
             Cloud = scalerMetadata.CloudEnvironment switch
             {
                 CloudEnvironment.Unknown => null,
-                CloudEnvironment.Private => new CloudEndpoints(scalerMetadata.ActiveDirectoryEndpoint!, scalerMetadata.EndpointSuffix!),
-                _ => CloudEndpoints.ForEnvironment(scalerMetadata.CloudEnvironment),
+                CloudEnvironment.Private => new AzureCloudEndpoints(scalerMetadata.ActiveDirectoryEndpoint!, scalerMetadata.EndpointSuffix!),
+                _ => AzureCloudEndpoints.ForEnvironment(scalerMetadata.CloudEnvironment),
             },
             ConnectionString = scalerMetadata.ResolveConnectionString(environment),
             Credential = scalerMetadata.UseManagedIdentity ? Credential.ManagedIdentity : null,

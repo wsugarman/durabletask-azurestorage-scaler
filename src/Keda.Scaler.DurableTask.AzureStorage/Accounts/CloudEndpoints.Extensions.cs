@@ -9,7 +9,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 
 internal static class CloudEndpointsExtensions
 {
-    public static Uri GetStorageServiceUri(this CloudEndpoints endpoints, string account, AzureStorageService service)
+    public static Uri GetStorageServiceUri(this AzureCloudEndpoints endpoints, string account, AzureStorageService service)
     {
         ArgumentNullException.ThrowIfNull(endpoints);
         ArgumentException.ThrowIfNullOrWhiteSpace(account);
