@@ -2,47 +2,35 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using Google.Protobuf.Collections;
-using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
-using Microsoft.Extensions.Configuration;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Protobuf;
 
-[TestClass]
 public class MapFieldExtensionsTest
 {
-    [TestMethod]
-    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Validating case-insensitivity")]
-    public void ToConfiguration()
+    [Fact]
+    public void GivenNullMapField_WhenCreatingAConfiguration_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => MapFieldExtensions.ToConfiguration(null!));
+
+    [Theory]
+    [InlineData("key", "value", "key", "value")]
+    [InlineData("upperCASE", "VALUE", "UPPERcase", "VALUE")]
+    [InlineData("missing", null, "key", "unused")]
+    [InlineData("looks:like:a:section", "another-value", "looks:LIKE:a:section", "another-value")]
+    public void GivenMapField_WhenCreatingAConfiguration_ThenReturnEquivalentConfiguration(string expectedKey, string? expectedValue, string key, string value)
     {
-        _ = Assert.ThrowsException<ArgumentNullException>(() => MapFieldExtensions.ToConfiguration(null!));
+        MapField<string, string> mapField = new() { { key, value } };
+        Assert.Equal(expectedValue, mapField.ToConfiguration()[expectedKey]);
+    }
 
-        // We already ensure that the parsing into a configuration works in MapFieldConfiguration.Test.cs,
-        // so we'll demonstrate the usage inside of the KEDA scaler code below.
-        MapField<string, string> raw = new()
-        {
-            { nameof(ScalerMetadata.AccountName), "unittest" },
-            { nameof(ScalerMetadata.Cloud).ToUpperInvariant(), "AzureUSGovernmentCloud" }, // non-default
-            { nameof(ScalerMetadata.Connection), "foo=bar;hello=world" },
-            { nameof(ScalerMetadata.ConnectionFromEnv), "MY_CONNECTION_STRING" },
-            { nameof(ScalerMetadata.MaxActivitiesPerWorker).ToLowerInvariant(), "10" },
-            { nameof(ScalerMetadata.MaxOrchestrationsPerWorker), "3" },
-            { "TaSkHubNaMe", "MyTaskHub" },
-            { nameof(ScalerMetadata.UseManagedIdentity), "true" },
-        };
-
-        ScalerMetadata? actual = raw.ToConfiguration().Get<ScalerMetadata>()!;
-        Assert.IsNotNull(actual);
-        Assert.AreEqual("unittest", actual.AccountName);
-        Assert.AreEqual(nameof(CloudEnvironment.AzureUSGovernmentCloud), actual.Cloud);
-        Assert.AreEqual("foo=bar;hello=world", actual.Connection);
-        Assert.AreEqual("MY_CONNECTION_STRING", actual.ConnectionFromEnv);
-        Assert.AreEqual(10, actual.MaxActivitiesPerWorker);
-        Assert.AreEqual(3, actual.MaxOrchestrationsPerWorker);
-        Assert.AreEqual("MyTaskHub", actual.TaskHubName);
-        Assert.IsTrue(actual.UseManagedIdentity);
+    [Theory]
+    [InlineData("section", "key", "value", "section:key", "value")]
+    [InlineData("secTion", "nested:KEY", "value", "section:NESTED:key", "value")]
+    public void GivenMapField_WhenCreatingAConfiguration_ThenReturnEquivalentConfigurationSection(string expectedSection, string expectedKey, string? expectedValue, string key, string value)
+    {
+        MapField<string, string> mapField = new() { { key, value } };
+        Assert.Equal(expectedValue, mapField.ToConfiguration().GetSection(expectedSection)[expectedKey]);
     }
 }

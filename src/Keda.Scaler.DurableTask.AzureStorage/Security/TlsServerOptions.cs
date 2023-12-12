@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
+using Keda.Scaler.DurableTask.AzureStorage.ComponentModel.DataAnnotations;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 

@@ -4,12 +4,12 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
+using Keda.Scaler.DurableTask.AzureStorage.ComponentModel.DataAnnotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.DataAnnotations;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.ComponentModel.DataAnnotations;
 
 public sealed class FileExistsAttributeTests : IDisposable
 {

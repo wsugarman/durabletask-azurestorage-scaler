@@ -51,14 +51,6 @@ internal sealed class CertificateFileMonitor : IDisposable
     public IChangeToken GetReloadToken()
         => _changeToken;
 
-    public static CertificateFileMonitor Create(CertificateFile file, ILogger? logger = null)
-    {
-        CertificateFileMonitor monitor = new(file);
-        _ = monitor.Subscribe(logger ?? NullLogger.Instance);
-
-        return monitor;
-    }
-
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Only throw exceptions on request threads.")]
     private IDisposable Subscribe(ILogger logger)
     {
@@ -132,6 +124,14 @@ internal sealed class CertificateFileMonitor : IDisposable
         // Alert any listeners of the expected change
         ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
         previousToken.OnReload();
+    }
+
+    public static CertificateFileMonitor Create(CertificateFile file, ILogger? logger = null)
+    {
+        CertificateFileMonitor monitor = new(file);
+        _ = monitor.Subscribe(logger ?? NullLogger.Instance);
+
+        return monitor;
     }
 
     private static class States

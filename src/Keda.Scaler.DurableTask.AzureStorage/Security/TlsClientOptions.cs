@@ -1,7 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
+using Keda.Scaler.DurableTask.AzureStorage.ComponentModel.DataAnnotations;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 

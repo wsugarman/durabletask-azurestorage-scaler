@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
@@ -13,31 +12,30 @@ using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
-[ExcludeFromCodeCoverage]
 internal sealed class TlsConfigure :
     IConfigureNamedOptions<CertificateAuthenticationOptions>,
     IOptionsChangeTokenSource<CertificateAuthenticationOptions>,
     IDisposable
 {
-    private readonly ILogger _logger;
     private readonly bool _validateClientCertificate;
     private readonly CertificateFileMonitor? _ca;
     private readonly CertificateFileMonitor? _server;
+    private readonly ILogger _logger;
 
-    public TlsConfigure(ILoggerFactory factory, IOptions<TlsClientOptions> clientOptions, IOptions<TlsServerOptions> serverOptions)
+    public TlsConfigure(IOptions<TlsClientOptions> clientOptions, IOptions<TlsServerOptions> serverOptions, ILoggerFactory factory)
     {
-        ArgumentNullException.ThrowIfNull(factory);
         ArgumentNullException.ThrowIfNull(serverOptions?.Value, nameof(serverOptions));
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
+        ArgumentNullException.ThrowIfNull(factory);
 
         _logger = factory.CreateLogger(LogCategories.Security);
         _validateClientCertificate = clientOptions.Value.ValidateCertificate;
 
-        if (_validateClientCertificate && !string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
-            _ca = new CertificateFile(clientOptions.Value.CaCertificatePath).Monitor(_logger);
-
         if (!string.IsNullOrWhiteSpace(serverOptions.Value.CertificatePath))
             _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath).Monitor(_logger);
+
+        if (_validateClientCertificate && _server is not null && !string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
+            _ca = new CertificateFile(clientOptions.Value.CaCertificatePath).Monitor(_logger);
     }
 
     string? IOptionsChangeTokenSource<CertificateAuthenticationOptions>.Name => CertificateAuthenticationDefaults.AuthenticationScheme;

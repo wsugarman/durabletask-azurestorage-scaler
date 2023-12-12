@@ -14,6 +14,7 @@ internal static class IServiceCollectionExtensions
     public static IServiceCollection AddTlsSupport(this IServiceCollection services, string policyName, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
+        ArgumentException.ThrowIfNullOrWhiteSpace(policyName);
         ArgumentNullException.ThrowIfNull(configuration);
 
         _ = services

@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Keda.Scaler.DurableTask.AzureStorage.ComponentModel.DataAnnotations;
 using Keda.Scaler.DurableTask.AzureStorage.Configuration;
-using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,7 +83,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(context);
 
-        ScalerMetadata? metadata = request
+        ScalerMetadata metadata = request
             .ScaledObjectRef
             .ScalerMetadata
             .ToConfiguration()
