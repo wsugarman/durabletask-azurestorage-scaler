@@ -44,7 +44,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     //             T = M
 
     private readonly IServiceProvider _serviceProvider;
-    private readonly AzureStorageTaskHubBrowser _taskHubBrowser;
+    private readonly AzureStorageTaskHubClient _taskHubBrowser;
     private readonly IProcessEnvironment _environment;
     private readonly IOrchestrationAllocator _partitionAllocator;
     private readonly ILogger<DurableTaskAzureStorageScalerService> _logger;
@@ -60,7 +60,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     public DurableTaskAzureStorageScalerService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _taskHubBrowser = _serviceProvider.GetRequiredService<AzureStorageTaskHubBrowser>();
+        _taskHubBrowser = _serviceProvider.GetRequiredService<AzureStorageTaskHubClient>();
         _environment = _serviceProvider.GetRequiredService<IProcessEnvironment>();
         _partitionAllocator = _serviceProvider.GetRequiredService<IOrchestrationAllocator>();
         _logger = _serviceProvider.GetRequiredService<ILogger<DurableTaskAzureStorageScalerService>>();

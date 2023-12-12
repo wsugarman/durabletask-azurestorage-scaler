@@ -12,7 +12,7 @@ internal static partial class Log
         EventId = 4,
         Level = LogLevel.Debug,
         Message = "Found Task Hub '{TaskHubName}' with {Partitions} partitions created at {CreatedTime:O}.")]
-    public static partial void FoundTaskHub(this ILogger logger, string? taskHubName, int partitions, DateTime createdTime);
+    public static partial void FoundTaskHub(this ILogger logger, string? taskHubName, int partitions, DateTimeOffset createdTime);
 
     [LoggerMessage(
         EventId = 5,

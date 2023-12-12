@@ -22,7 +22,7 @@ internal static class IServiceCollectionExtensions
         services.TryAddSingleton<IStorageAccountClientFactory<QueueServiceClient>, QueueServiceClientFactory>();
         services.TryAddSingleton<IOrchestrationAllocator, OptimalOrchestrationAllocator>();
         services.TryAddScoped<IProcessEnvironment>(p => new EnvironmentCache(ProcessEnvironment.Current));
-        services.TryAddScoped<AzureStorageTaskHubBrowser>();
+        services.TryAddScoped<AzureStorageTaskHubClient>();
 
         return services;
     }

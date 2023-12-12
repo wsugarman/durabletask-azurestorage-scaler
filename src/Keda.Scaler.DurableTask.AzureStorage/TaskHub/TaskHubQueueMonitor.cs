@@ -13,25 +13,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
-internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
+internal class TaskHubQueueMonitor(AzureStorageTaskHubInfo taskHubInfo, QueueServiceClient queueServiceClient, ILogger logger) : ITaskHubQueueMonitor
 {
-    private readonly AzureStorageTaskHubInfo _taskHubInfo;
-    private readonly QueueServiceClient _queueServiceClient;
-    private readonly ILogger _logger;
-
-    public TaskHubQueueMonitor(AzureStorageTaskHubInfo taskHubInfo, QueueServiceClient queueServiceClient, ILogger logger)
-    {
-        ArgumentNullException.ThrowIfNull(taskHubInfo);
-        ArgumentNullException.ThrowIfNull(queueServiceClient);
-        ArgumentNullException.ThrowIfNull(logger);
-
-        if (taskHubInfo.PartitionCount < 1)
-            throw new ArgumentException(SR.Format(SR.InvalidPartitionCountFormat, taskHubInfo.PartitionCount), nameof(taskHubInfo));
-
-        _taskHubInfo = taskHubInfo;
-        _queueServiceClient = queueServiceClient;
-        _logger = logger;
-    }
+    private readonly AzureStorageTaskHubInfo _taskHubInfo = taskHubInfo ?? throw new ArgumentNullException(nameof(taskHubInfo));
+    private readonly QueueServiceClient _queueServiceClient = queueServiceClient ?? throw new ArgumentNullException(nameof(queueServiceClient));
+    private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public virtual async ValueTask<TaskHubQueueUsage> GetUsageAsync(CancellationToken cancellationToken = default)
     {
@@ -48,7 +34,7 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
                 QueueProperties properties = await controlQueueClient.GetPropertiesAsync(cancellationToken).ConfigureAwait(false);
                 controlQueueMessages[i] = properties.ApproximateMessagesCount;
             }
-            catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
+            catch (RequestFailedException rfe) when (rfe.Status is (int)HttpStatusCode.NotFound)
             {
                 _logger.CouldNotFindControlQueue(controlQueueClient.Name);
                 return TaskHubQueueUsage.None;
@@ -63,7 +49,7 @@ internal class TaskHubQueueMonitor : ITaskHubQueueMonitor
             QueueProperties properties = await workItemQueueClient.GetPropertiesAsync(cancellationToken).ConfigureAwait(false);
             workItemQueueMessages = properties.ApproximateMessagesCount;
         }
-        catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
+        catch (RequestFailedException rfe) when (rfe.Status is (int)HttpStatusCode.NotFound)
         {
             _logger.CouldNotFindWorkItemQueue(workItemQueueClient.Name);
             return TaskHubQueueUsage.None;

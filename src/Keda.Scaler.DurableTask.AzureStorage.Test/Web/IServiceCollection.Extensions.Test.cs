@@ -38,6 +38,6 @@ public class IServiceCollectionExtensionsTest
 
         // Scoped
         Assert.AreEqual(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(IProcessEnvironment)).Lifetime);
-        Assert.AreEqual(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(AzureStorageTaskHubBrowser)).Lifetime);
+        Assert.AreEqual(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(AzureStorageTaskHubClient)).Lifetime);
     }
 }

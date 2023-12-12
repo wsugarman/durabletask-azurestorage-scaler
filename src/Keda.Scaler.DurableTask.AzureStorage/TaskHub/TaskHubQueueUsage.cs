@@ -51,9 +51,12 @@ public sealed class TaskHubQueueUsage
     /// <exception cref="ArgumentOutOfRangeException"><paramref name="workItemQueueMessages"/> is less than <c>0</c>.</exception>
     public TaskHubQueueUsage(IReadOnlyList<int> controlQueueMessages, int workItemQueueMessages)
     {
-        ControlQueueMessages = controlQueueMessages ?? throw new ArgumentNullException(nameof(controlQueueMessages));
-        WorkItemQueueMessages = workItemQueueMessages < 0
-            ? throw new ArgumentOutOfRangeException(nameof(workItemQueueMessages))
-            : workItemQueueMessages;
+        ArgumentNullException.ThrowIfNull(controlQueueMessages);
+        ArgumentOutOfRangeException.ThrowIfNegative(workItemQueueMessages);
+        foreach (int count in controlQueueMessages)
+            ArgumentOutOfRangeException.ThrowIfNegative(count, nameof(controlQueueMessages));
+
+        ControlQueueMessages = controlQueueMessages;
+        WorkItemQueueMessages = workItemQueueMessages;
     }
 }

@@ -3,21 +3,16 @@
 
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
-[TestClass]
 public class NullTaskHubQueueMonitorTest
 {
-    [TestMethod]
-    public async Task GetUsageAsync()
+    [Fact]
+    public async Task Given_GetUsageAsync()
     {
         NullTaskHubQueueMonitor monitor = NullTaskHubQueueMonitor.Instance;
-        TaskHubQueueUsage actual = await monitor.GetUsageAsync(default).ConfigureAwait(false);
-
-        Assert.IsFalse(actual.HasActivity);
-        Assert.AreEqual(0, actual.ControlQueueMessages.Count);
-        Assert.AreEqual(0, actual.WorkItemQueueMessages);
+        Assert.Same(TaskHubQueueUsage.None, await monitor.GetUsageAsync(default));
     }
 }

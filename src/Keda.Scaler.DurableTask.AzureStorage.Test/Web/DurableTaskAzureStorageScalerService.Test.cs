@@ -25,7 +25,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 public class DurableTaskAzureStorageScalerServiceTest
 {
     private readonly MockEnvironment _environment = new();
-    private readonly Mock<AzureStorageTaskHubBrowser> _mockBrowser = new(
+    private readonly Mock<AzureStorageTaskHubClient> _mockBrowser = new(
         MockBehavior.Strict,
         new Mock<IStorageAccountClientFactory<BlobServiceClient>>(MockBehavior.Strict).Object,
         new Mock<IStorageAccountClientFactory<QueueServiceClient>>(MockBehavior.Strict).Object,
