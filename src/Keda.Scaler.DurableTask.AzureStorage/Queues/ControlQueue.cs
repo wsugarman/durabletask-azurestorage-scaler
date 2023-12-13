@@ -14,8 +14,9 @@ internal static class ControlQueue
     public static string GetName(string taskHub, int partition)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(taskHub);
-        return partition is < 0 or > 15
-            ? throw new ArgumentOutOfRangeException(nameof(partition))
-            : string.Format(CultureInfo.InvariantCulture, "{0}-control-{1:D2}", taskHub?.ToLowerInvariant(), partition);
+        ArgumentOutOfRangeException.ThrowIfLessThan(partition, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(partition, 15);
+
+        return string.Format(CultureInfo.InvariantCulture, "{0}-control-{1:D2}", taskHub.ToLowerInvariant(), partition);
     }
 }

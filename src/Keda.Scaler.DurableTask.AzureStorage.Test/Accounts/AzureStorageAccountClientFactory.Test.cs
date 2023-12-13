@@ -36,7 +36,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     [Fact]
     public void GivenMissingCloudInfoForAccount_WhenGettingServiceClient_ThenThrowArgumentException()
     {
-        AzureStorageAccountInfo info = new() { ConnectionString = null, Cloud = null };
+        AzureStorageAccountInfo info = new() { AccountName = "account", ConnectionString = null, Cloud = null };
         IStorageAccountClientFactory<TClient> factory = GetFactory();
         _ = Assert.Throws<ArgumentException>(() => factory.GetServiceClient(info));
     }

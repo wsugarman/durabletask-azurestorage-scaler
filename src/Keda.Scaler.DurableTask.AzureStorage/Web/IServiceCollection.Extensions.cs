@@ -21,7 +21,7 @@ internal static class IServiceCollectionExtensions
             .AddSingleton<IStorageAccountClientFactory<BlobServiceClient>, BlobServiceClientFactory>()
             .AddSingleton<IStorageAccountClientFactory<QueueServiceClient>, QueueServiceClientFactory>()
             .AddSingleton<IOrchestrationAllocator, OptimalOrchestrationAllocator>()
-            .AddScoped<IProcessEnvironment>(p => new EnvironmentCache(ProcessEnvironment.Current))
+            .AddScoped<IProcessEnvironment, EnvironmentCache>()
             .AddScoped<AzureStorageTaskHubClient>();
     }
 }

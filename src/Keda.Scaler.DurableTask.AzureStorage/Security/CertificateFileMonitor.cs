@@ -39,7 +39,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         if (!ReferenceEquals(expected, States.Disposed))
         {
             expected?.Dispose();
-            _subscription?.Dispose();
+            _subscription!.Dispose();
             File.Dispose();
 
             _subscription = null;
@@ -76,6 +76,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         }
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Concurrent edge cases are difficult to mock.")]
     private X509Certificate2 UpdateCertificate(bool force)
     {
         X509Certificate2? expected;

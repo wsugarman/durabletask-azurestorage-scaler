@@ -40,6 +40,15 @@ public class ScalerMetadataExtensionsTest
         Assert.Equal("UseDevelopmentStorage=true", actual.ConnectionString);
     }
 
+    [Fact]
+    public void GivenUnknownCloud_WhenGettingAccountInfo_ThenReturnNull()
+    {
+        ScalerMetadata metadata = new() { Cloud = "foo" };
+
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+        Assert.Null(actual.Cloud);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData(CloudEnvironment.AzurePublicCloud)]

@@ -6,10 +6,17 @@ using System.Collections.Concurrent;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Common;
 
-internal sealed class EnvironmentCache(IProcessEnvironment environment) : IProcessEnvironment
+internal sealed class EnvironmentCache : IProcessEnvironment
 {
-    private readonly IProcessEnvironment _environment = environment ?? throw new ArgumentNullException(nameof(environment));
+    private readonly IProcessEnvironment _environment;
     private readonly ConcurrentDictionary<string, string?> _cache = new();
+
+    public EnvironmentCache()
+        : this(ProcessEnvironment.Current)
+    { }
+
+    internal EnvironmentCache(IProcessEnvironment environment)
+        => _environment = environment ?? throw new ArgumentNullException(nameof(environment));
 
     /// <inheritdoc/>
     public string? GetVariable(string variable)
