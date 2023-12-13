@@ -70,6 +70,7 @@ runs:
     - name: Test
       shell: bash
       run: |
+        DOTNET_USE_POLLING_FILE_WATCHER="false"
         dotnet test "./src/Scaler.sln" \
           -c "${{ inputs.buildConfiguration }}" \
           "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
