@@ -10,34 +10,35 @@ using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 
-[TestClass]
 public class IServiceCollectionExtensionsTest
 {
-    [TestMethod]
-    public void AddScaler()
+    [Fact]
+    public void GivenNullServiceCollection_WhenAddingDurableTaskScalerServices_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => IServiceCollectionExtensions.AddDurableTaskScaler(null!));
+
+    [Fact]
+    public void GivenServiceCollection_WhenAddingDurableTaskScalerServices_ThenAddExpectedServices()
     {
-        _ = Assert.ThrowsException<ArgumentNullException>(() => IServiceCollectionExtensions.AddDurableTaskScaler(null!));
-
         IServiceCollection services = new ServiceCollection().AddDurableTaskScaler();
-        Assert.AreEqual(5, services.Count);
+        Assert.Equal(5, services.Count);
 
-        // Singletons
-        Assert.AreEqual(ServiceLifetime.Singleton, services.Single(x =>
+        // Singleton
+        Assert.Equal(ServiceLifetime.Singleton, services.Single(x =>
             x.ServiceType == typeof(IStorageAccountClientFactory<BlobServiceClient>) &&
             x.ImplementationType == typeof(BlobServiceClientFactory)).Lifetime);
-        Assert.AreEqual(ServiceLifetime.Singleton, services.Single(x =>
+        Assert.Equal(ServiceLifetime.Singleton, services.Single(x =>
             x.ServiceType == typeof(IStorageAccountClientFactory<QueueServiceClient>) &&
             x.ImplementationType == typeof(QueueServiceClientFactory)).Lifetime);
-        Assert.AreEqual(ServiceLifetime.Singleton, services.Single(x =>
+        Assert.Equal(ServiceLifetime.Singleton, services.Single(x =>
             x.ServiceType == typeof(IOrchestrationAllocator) &&
             x.ImplementationType == typeof(OptimalOrchestrationAllocator)).Lifetime);
 
         // Scoped
-        Assert.AreEqual(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(IProcessEnvironment)).Lifetime);
-        Assert.AreEqual(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(AzureStorageTaskHubClient)).Lifetime);
+        Assert.Equal(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(IProcessEnvironment)).Lifetime);
+        Assert.Equal(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(AzureStorageTaskHubClient)).Lifetime);
     }
 }
