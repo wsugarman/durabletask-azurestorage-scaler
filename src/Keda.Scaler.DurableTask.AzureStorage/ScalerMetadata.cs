@@ -173,24 +173,12 @@ public sealed class ScalerMetadata : IValidatableObject
             : Connection;
     }
 
-    /// <summary>
-    /// Enumerates of the errors associated with the state of the <see cref="ScalerMetadata"/>, if any,
-    /// based on a combination of members.
-    /// </summary>
-    /// <remarks>
-    /// <see cref="Validate(ValidationContext)"/> does not return all possible errors with this instance.
-    /// Instead, users should use the <see cref="Validator"/> class to determine if an object is valid.
-    /// </remarks>
-    /// <param name="validationContext">The context for the validation.</param>
-    /// <returns>Zero or more errors based on the state of this instance.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="validationContext"/> is <see langword="null"/>.</exception>
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext)
     {
         ArgumentNullException.ThrowIfNull(validationContext);
-        return ValidateCloudMetadata()
-            .Concat(AccountName is null
-                ? ValidateConnectionStringMetadata(validationContext)
-                : ValidateAccountMetadata());
+        IProcessEnvironment environment = validationContext.GetRequiredService<IProcessEnvironment>();
+
+        return ValidateCloudMetadata().Concat(AccountName is null ? ValidateConnectionStringMetadata(environment) : ValidateAccountMetadata());
     }
 
     private IEnumerable<ValidationResult> ValidateCloudMetadata()
@@ -234,7 +222,7 @@ public sealed class ScalerMetadata : IValidatableObject
             yield return new ValidationResult(SR.Format(SR.MissingIdentityCredentialOptionFormat, nameof(ClientId)));
     }
 
-    private IEnumerable<ValidationResult> ValidateConnectionStringMetadata(ValidationContext validationContext)
+    private IEnumerable<ValidationResult> ValidateConnectionStringMetadata(IProcessEnvironment environment)
     {
         if (ClientId is not null)
             yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(ClientId)));
@@ -245,7 +233,6 @@ public sealed class ScalerMetadata : IValidatableObject
         if (UseManagedIdentity)
             yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(UseManagedIdentity)));
 
-        IProcessEnvironment environment = validationContext.GetRequiredService<IProcessEnvironment>();
         if (Connection is not null && string.IsNullOrWhiteSpace(Connection))
             yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(Connection)));
         else if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))

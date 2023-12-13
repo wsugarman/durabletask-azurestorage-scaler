@@ -47,9 +47,9 @@ public class ExceptionInterceptorTest
 
         Request request = new();
         ServerCallContext context = Substitute.For<ServerCallContext>();
-        context.CancellationToken.Returns(tokenSource.Token);
+        _ = context.CancellationToken.Returns(tokenSource.Token);
 
-        RpcException actual = await Assert.ThrowsAsync<RpcException>(() => _interceptor.UnaryServerHandler(request, context, GetContinuation());
+        RpcException actual = await Assert.ThrowsAsync<RpcException>(() => _interceptor.UnaryServerHandler(request, context, GetContinuation()));
         Assert.Equal(expected, actual.Status.StatusCode);
 
         UnaryServerMethod<Request, Response> GetContinuation()
