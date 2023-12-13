@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,6 +32,7 @@ public class AzureStorageTaskHubClient
     /// <param name="queueServiceClientFactory">A factory for creating Azure Queue service clients.</param>
     /// <param name="loggerFactory">A factory for creating loggers.</param>
     /// <exception cref="ArgumentNullException"><paramref name="loggerFactory"/> is <see langword="null"/>.</exception>
+    [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Preserve XML doc for class and ctor.")]
     public AzureStorageTaskHubClient(
         IStorageAccountClientFactory<BlobServiceClient> blobServiceClientFactory,
         IStorageAccountClientFactory<QueueServiceClient> queueServiceClientFactory,

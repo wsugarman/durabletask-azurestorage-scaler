@@ -27,7 +27,7 @@ public class CloudEndpointsExtensionsTest
 
     [Fact]
     public void GivenUnknownService_WhenGettingStorageServiceUri_ThenThrowArgumentOutOfRangeException()
-        => Assert.Throws<ArgumentException>(() => AzureCloudEndpoints.Public.GetStorageServiceUri("foo", (AzureStorageService)42));
+        => Assert.Throws<ArgumentOutOfRangeException>(() => AzureCloudEndpoints.Public.GetStorageServiceUri("foo", (AzureStorageService)42));
 
     [Theory]
     [InlineData("https://foo.blob.core.windows.net", CloudEnvironment.AzurePublicCloud, "foo", AzureStorageService.Blob)]

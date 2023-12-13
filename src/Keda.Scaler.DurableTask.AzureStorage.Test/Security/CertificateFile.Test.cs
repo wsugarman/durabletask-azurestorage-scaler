@@ -42,7 +42,7 @@ public sealed class CertificateFileTest : IDisposable
 
         Assert.Equal(certPath, certificateFile.Path);
         Assert.Null(certificateFile.KeyPath);
-        _ = Assert.Throws<FileNotFoundException>(certificateFile.Load);
+        _ = Assert.Throws<CryptographicException>(certificateFile.Load);
     }
 
     [Fact]
@@ -53,9 +53,8 @@ public sealed class CertificateFileTest : IDisposable
         File.WriteAllText(filePath, "Hello world!");
 
         using CertificateFile certificateFile = new(filePath);
-        using X509Certificate2 actual = certificateFile.Load();
 
-        Assert.Equal(FileName, certificateFile.Path);
+        Assert.Equal(filePath, certificateFile.Path);
         Assert.Null(certificateFile.KeyPath);
         _ = Assert.Throws<CryptographicException>(certificateFile.Load);
     }
@@ -78,10 +77,8 @@ public sealed class CertificateFileTest : IDisposable
         Assert.Equal(expected.Thumbprint, actual.Thumbprint);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public void GivenPemFile_WhenLoadingCertificateFile_ThenSuccessfullyLoadFromDisk(bool singleFile)
+    [Fact]
+    public void GivenPemFile_WhenLoadingCertificateFile_ThenSuccessfullyLoadFromDisk()
     {
         const string CertName = "example.crt";
         const string KeyName = "example.key";
@@ -90,18 +87,28 @@ public sealed class CertificateFileTest : IDisposable
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-
-        if (singleFile)
-        {
-            expected.WriteFile(key, certPath);
-        }
-        else
-        {
-            expected.WriteFile(certPath);
-            key.WriteFile(keyPath);
-        }
+        expected.WriteFile(certPath);
+        key.WriteFile(keyPath);
 
         using CertificateFile certificateFile = CertificateFile.CreateFromPemFile(certPath, keyPath);
+        using X509Certificate2 actual = certificateFile.Load();
+
+        Assert.Equal(certPath, certificateFile.Path);
+        Assert.Equal(keyPath, certificateFile.KeyPath);
+        Assert.Equal(expected.Thumbprint, actual.Thumbprint);
+    }
+
+    [Fact]
+    public void GivenCombinedPemFile_WhenLoadingCertificateFile_ThenSuccessfullyLoadFromDisk()
+    {
+        const string CertName = "example.crt";
+        string certPath = Path.Combine(_tempFolder, CertName);
+
+        using RSA key = RSA.Create();
+        using X509Certificate2 expected = key.CreateSelfSignedCertificate();
+        expected.WriteFile(key, certPath);
+
+        using CertificateFile certificateFile = CertificateFile.CreateFromPemFile(certPath);
         using X509Certificate2 actual = certificateFile.Load();
 
         Assert.Equal(certPath, certificateFile.Path);

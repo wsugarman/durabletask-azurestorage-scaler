@@ -19,13 +19,21 @@ internal static class CertificateExtensions
 
         byte[] serialNumber = new byte[20];
         rng.NextBytes(serialNumber);
-        return certRequest.Create(issuer, DateTimeOffset.Now, DateTimeOffset.Now.AddHours(1), serialNumber);
+        return certRequest.Create(issuer, DateTimeOffset.UtcNow.AddHours(-1), DateTimeOffset.UtcNow.AddHours(1), serialNumber);
     }
 
     public static X509Certificate2 CreateSelfSignedCertificate(this RSA key)
     {
-        CertificateRequest certRequest = new("cn=unittest", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        return certRequest.CreateSelfSigned(DateTimeOffset.Now, DateTimeOffset.Now.AddHours(1));
+        CertificateRequest certRequest = new("cn=unittest", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1)
+        {
+            CertificateExtensions =
+            {
+                { new X509BasicConstraintsExtension(true, true, 10, false) },
+                { new X509KeyUsageExtension(X509KeyUsageFlags.KeyCertSign, false) },
+            }
+        };
+
+        return certRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddHours(-2), DateTimeOffset.UtcNow.AddHours(2));
     }
 
     public static void WriteFile(this X509Certificate2 certificate, string path)

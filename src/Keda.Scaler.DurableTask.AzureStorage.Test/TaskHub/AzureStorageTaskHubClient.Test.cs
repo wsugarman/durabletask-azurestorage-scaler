@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Linq.Expressions;
 using System.Net;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,13 +32,15 @@ public class AzureStorageTaskHubClientTest
     private readonly BlobClient _blobClient = Substitute.For<BlobClient>();
     private readonly QueueServiceClient _queueServiceClient = Substitute.For<QueueServiceClient>();
 
+    private static readonly Func<BinaryData, BlobDownloadResult> BlobDownloadResultFactory = CreateBlobDownloadResultFactory();
+
     public AzureStorageTaskHubClientTest()
     {
-        _ = _blobServiceClientFactory.GetServiceClient(Arg.Any<AzureStorageAccountInfo>()).Returns(_blobServiceClient);
-        _ = _blobServiceClient.GetBlobContainerClient(Arg.Any<string>()).Returns(_blobContainerClient);
-        _ = _blobContainerClient.GetBlobClient(Arg.Any<string>()).Returns(_blobClient);
+        _ = _blobServiceClientFactory.GetServiceClient(default!).ReturnsForAnyArgs(_blobServiceClient);
+        _ = _blobServiceClient.GetBlobContainerClient(default!).ReturnsForAnyArgs(_blobContainerClient);
+        _ = _blobContainerClient.GetBlobClient(default!).ReturnsForAnyArgs(_blobClient);
 
-        _ = _queueServiceClientFactory.GetServiceClient(Arg.Any<AzureStorageAccountInfo>()).Returns(_queueServiceClient);
+        _ = _queueServiceClientFactory.GetServiceClient(default!).ReturnsForAnyArgs(_queueServiceClient);
     }
 
     [Fact]
@@ -55,7 +59,7 @@ public class AzureStorageTaskHubClientTest
     public void GivenNullLogger_WhenCreatingAzureStorageTaskHubClient_ThenThrowArgumentNullException()
     {
         ILoggerFactory factory = Substitute.For<ILoggerFactory>();
-        _ = factory.CreateLogger(Arg.Any<string>()).Returns((ILogger)null!);
+        _ = factory.CreateLogger(default!).ReturnsForAnyArgs((ILogger)null!);
 
         _ = Assert.Throws<ArgumentNullException>(() => new AzureStorageTaskHubClient(_blobServiceClientFactory, _queueServiceClientFactory, factory));
     }
@@ -90,8 +94,8 @@ public class AzureStorageTaskHubClientTest
         using CancellationTokenSource tokenSource = new();
 
         _ = _blobClient
-            .DownloadContentAsync(Arg.Any<CancellationToken>())
-            .ThrowsAsync(new RequestFailedException((int)HttpStatusCode.NotFound, "Blob not found"));
+            .DownloadContentAsync(default)
+            .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Blob not found"));
 
         AzureStorageAccountInfo accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, NullLoggerFactory.Instance);
@@ -113,10 +117,9 @@ public class AzureStorageTaskHubClientTest
 
         AzureStorageTaskHubInfo taskHubInfo = new(DateTimeOffset.UtcNow, 4, TaskHubName);
 
-        BlobDownloadResult downloadResult = Substitute.For<BlobDownloadResult>();
-        _ = downloadResult.Content.Returns(BinaryData.FromString(JsonSerializer.Serialize(taskHubInfo)));
+        BlobDownloadResult downloadResult = BlobDownloadResultFactory(BinaryData.FromString(JsonSerializer.Serialize(taskHubInfo)));
         Response<BlobDownloadResult> response = Response.FromValue(downloadResult, Substitute.For<Response>());
-        _ = _blobClient.DownloadContentAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult(response));
+        _ = _blobClient.DownloadContentAsync(default).ReturnsForAnyArgs(Task.FromResult(response));
 
         AzureStorageAccountInfo accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, NullLoggerFactory.Instance);
@@ -129,5 +132,25 @@ public class AzureStorageTaskHubClientTest
         _ = _queueServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));
 
         _ = Assert.IsType<TaskHubQueueMonitor>(actual);
+    }
+
+    private static Func<BinaryData, BlobDownloadResult> CreateBlobDownloadResultFactory()
+    {
+        ParameterExpression param = Expression.Parameter(typeof(BinaryData), "data");
+        ParameterExpression variable = Expression.Variable(typeof(BlobDownloadResult), "result");
+        MethodInfo? contentSetter = typeof(BlobDownloadResult)
+            .GetProperty(nameof(BlobDownloadResult.Content))?
+            .GetSetMethod(nonPublic: true);
+
+        return (Func<BinaryData, BlobDownloadResult>)Expression
+            .Lambda(
+                Expression.Block(
+                    typeof(BlobDownloadResult),
+                    [variable],
+                    Expression.Assign(variable, Expression.New(typeof(BlobDownloadResult))),
+                    Expression.Call(variable, contentSetter!, param),
+                    variable),
+                param)
+            .Compile();
     }
 }

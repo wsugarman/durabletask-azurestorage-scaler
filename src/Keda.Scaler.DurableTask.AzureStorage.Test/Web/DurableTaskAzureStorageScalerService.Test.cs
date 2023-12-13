@@ -8,7 +8,8 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Grpc.Core;
+using Azure.Storage.Blobs;
+using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
@@ -25,12 +26,19 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 public class DurableTaskAzureStorageScalerServiceTest
 {
     private readonly MockEnvironment _environment = new();
-    private readonly AzureStorageTaskHubClient _taskHubClient = Substitute.For<AzureStorageTaskHubClient>();
+    private readonly IStorageAccountClientFactory<BlobServiceClient> _blobServiceClientFactory = Substitute.For<IStorageAccountClientFactory<BlobServiceClient>>();
+    private readonly IStorageAccountClientFactory<QueueServiceClient> _queueServiceClientFactory = Substitute.For<IStorageAccountClientFactory<QueueServiceClient>>();
+    private readonly AzureStorageTaskHubClient _taskHubClient;
     private readonly IOrchestrationAllocator _allocator = Substitute.For<IOrchestrationAllocator>();
     private readonly DurableTaskAzureStorageScalerService _service;
 
     public DurableTaskAzureStorageScalerServiceTest()
     {
+        _taskHubClient = Substitute.For<AzureStorageTaskHubClient>(
+            _blobServiceClientFactory,
+            _queueServiceClientFactory,
+            NullLoggerFactory.Instance);
+
         IServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton(_taskHubClient)
             .AddSingleton<IProcessEnvironment>(_environment)
@@ -50,7 +58,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     {
         IServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton<IProcessEnvironment>(_environment)
-            .AddSingleton(Substitute.For<IOrchestrationAllocator>())
+            .AddSingleton(_allocator)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 
@@ -61,8 +69,8 @@ public class DurableTaskAzureStorageScalerServiceTest
     public void GivenMissingProcessEnvironmentService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
     {
         IServiceProvider serviceProvider = new ServiceCollection()
-            .AddSingleton(Substitute.For<AzureStorageTaskHubClient>())
-            .AddSingleton(Substitute.For<IOrchestrationAllocator>())
+            .AddSingleton(_taskHubClient)
+            .AddSingleton(_allocator)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 
@@ -73,7 +81,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     public void GivenMissingOrchestrationAllocatorService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
     {
         IServiceProvider serviceProvider = new ServiceCollection()
-            .AddSingleton(Substitute.For<AzureStorageTaskHubClient>())
+            .AddSingleton(_taskHubClient)
             .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
@@ -85,9 +93,9 @@ public class DurableTaskAzureStorageScalerServiceTest
     public void GivenMissingLoggerFactoryService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
     {
         IServiceProvider serviceProvider = new ServiceCollection()
-            .AddSingleton(Substitute.For<AzureStorageTaskHubClient>())
+            .AddSingleton(_taskHubClient)
             .AddSingleton<IProcessEnvironment>(_environment)
-            .AddSingleton(Substitute.For<IOrchestrationAllocator>())
+            .AddSingleton(_allocator)
             .BuildServiceProvider();
 
         _ = Assert.Throws<InvalidOperationException>(() => new DurableTaskAzureStorageScalerService(serviceProvider));
@@ -95,7 +103,7 @@ public class DurableTaskAzureStorageScalerServiceTest
 
     [Fact]
     public Task GivenNullRequest_WhenGettingMetrics_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetrics(null!, Substitute.For<ServerCallContext>()));
+        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetrics(null!, new MockServerCallContext()));
 
     [Fact]
     public Task GivenNullContext_WhenGettingMetrics_ThenThrowArgumentNullException()
@@ -115,7 +123,7 @@ public class DurableTaskAzureStorageScalerServiceTest
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);
 
         GetMetricsRequest request = new() { ScaledObjectRef = scaledObjectRef };
-        return Assert.ThrowsAsync<ValidationException>(() => _service.GetMetrics(request, Substitute.For<ServerCallContext>()));
+        return Assert.ThrowsAsync<ValidationException>(() => _service.GetMetrics(request, new MockServerCallContext()));
     }
 
     [Fact]
@@ -143,16 +151,15 @@ public class DurableTaskAzureStorageScalerServiceTest
 
         ITaskHubQueueMonitor monitor = Substitute.For<ITaskHubQueueMonitor>();
         TaskHubQueueUsage usage = new([1, 2, 3, 4], 1);
-        IOrchestrationAllocator allocator = Substitute.For<IOrchestrationAllocator>();
         _ = _taskHubClient
-            .GetMonitorAsync(Arg.Any<AzureStorageAccountInfo>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(monitor);
+            .GetMonitorAsync(default!, default!, default)
+            .ReturnsForAnyArgs(monitor);
         _ = monitor
-            .GetUsageAsync(Arg.Any<CancellationToken>())
-            .Returns(usage);
-        _ = allocator
-            .GetWorkerCount(Arg.Any<IReadOnlyList<int>>(), Arg.Any<int>())
-            .Returns(WorkerCount);
+            .GetUsageAsync(default)
+            .ReturnsForAnyArgs(usage);
+        _ = _allocator
+            .GetWorkerCount(default!, default)
+            .ReturnsForAnyArgs(WorkerCount);
 
         GetMetricsResponse actual = await _service.GetMetrics(request, context);
 
@@ -165,10 +172,10 @@ public class DurableTaskAzureStorageScalerServiceTest
         _ = await monitor
             .Received(1)
             .GetUsageAsync(Arg.Is(tokenSource.Token));
-        _ = allocator
+        _ = _allocator
             .Received(1)
             .GetWorkerCount(
-                Arg.Is<IReadOnlyList<int>>(t => t.SequenceEqual(new List<int>() { 1, 2, 3 })),
+                Arg.Is<IReadOnlyList<int>>(t => t.SequenceEqual(new List<int>() { 1, 2, 3, 4 })),
                 Arg.Is(MaxOrchestrations));
 
         int expected = usage.WorkItemQueueMessages + (WorkerCount * MaxActivities);
@@ -178,7 +185,7 @@ public class DurableTaskAzureStorageScalerServiceTest
 
     [Fact]
     public Task GivenNullScaledObjectRef_WhenGettingMetricSpec_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetricSpec(null!, Substitute.For<ServerCallContext>()));
+        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetricSpec(null!, new MockServerCallContext()));
 
     [Fact]
     public Task GivenNullContext_WhenGettingMetricSpec_ThenThrowArgumentNullException()
@@ -196,7 +203,7 @@ public class DurableTaskAzureStorageScalerServiceTest
         };
 
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);
-        return Assert.ThrowsAsync<ValidationException>(() => _service.GetMetricSpec(scaledObjectRef, Substitute.For<ServerCallContext>()));
+        return Assert.ThrowsAsync<ValidationException>(() => _service.GetMetricSpec(scaledObjectRef, new MockServerCallContext()));
     }
 
     [Fact]
@@ -225,7 +232,7 @@ public class DurableTaskAzureStorageScalerServiceTest
 
     [Fact]
     public Task GivenNullRequest_WhenCheckingIfActive_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.IsActive(null!, Substitute.For<ServerCallContext>()));
+        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.IsActive(null!, new MockServerCallContext()));
 
     [Fact]
     public Task GivenNullContext_WhenCheckingIfActive_ThenThrowArgumentNullException()
@@ -243,7 +250,7 @@ public class DurableTaskAzureStorageScalerServiceTest
         };
 
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);
-        return Assert.ThrowsAsync<ValidationException>(() => _service.IsActive(scaledObjectRef, Substitute.For<ServerCallContext>()));
+        return Assert.ThrowsAsync<ValidationException>(() => _service.IsActive(scaledObjectRef, new MockServerCallContext()));
     }
 
     [Theory]
@@ -269,11 +276,11 @@ public class DurableTaskAzureStorageScalerServiceTest
         ITaskHubQueueMonitor monitor = Substitute.For<ITaskHubQueueMonitor>();
         TaskHubQueueUsage usage = hasActivity ? new([1, 2, 3, 4], 1) : new([0, 0, 0, 0], 0);
         _ = _taskHubClient
-            .GetMonitorAsync(Arg.Any<AzureStorageAccountInfo>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(monitor);
+            .GetMonitorAsync(default!, default!, default)
+            .ReturnsForAnyArgs(monitor);
         _ = monitor
-            .GetUsageAsync(Arg.Any<CancellationToken>())
-            .Returns(usage);
+            .GetUsageAsync(default)
+            .ReturnsForAnyArgs(usage);
 
         IsActiveResponse actual = await _service.IsActive(scaledObjectRef, context);
 
@@ -327,36 +334,5 @@ public class DurableTaskAzureStorageScalerServiceTest
             result.ScalerMetadata[nameof(ScalerMetadata.Cloud)] = metadata.Cloud;
 
         return result;
-    }
-
-    private sealed class MockServerCallContext(CancellationToken cancellationToken) : ServerCallContext
-    {
-        protected override CancellationToken CancellationTokenCore { get; } = cancellationToken;
-
-        #region Unimplemented
-
-        protected override string MethodCore => throw new NotImplementedException();
-
-        protected override string HostCore => throw new NotImplementedException();
-
-        protected override string PeerCore => throw new NotImplementedException();
-
-        protected override DateTime DeadlineCore => throw new NotImplementedException();
-
-        protected override Metadata RequestHeadersCore => throw new NotImplementedException();
-
-        protected override Metadata ResponseTrailersCore => throw new NotImplementedException();
-
-        protected override Status StatusCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-        protected override WriteOptions? WriteOptionsCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-
-        protected override AuthContext AuthContextCore => throw new NotImplementedException();
-
-        protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions? options) => throw new NotImplementedException();
-
-        protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders) => throw new NotImplementedException();
-
-        #endregion
     }
 }

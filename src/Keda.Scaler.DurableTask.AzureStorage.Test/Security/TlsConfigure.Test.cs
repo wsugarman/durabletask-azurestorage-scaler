@@ -99,7 +99,7 @@ public sealed class TlsConfigureTest : IDisposable
     public void GivenTls_WhenConfiguringHttpsConnectionAdapterOptions_ThenConfigureClientValidationAppropriately(ClientCertificateMode expected, bool validate)
     {
         TlsClientOptions clientOptions = new() { ValidateCertificate = validate };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath };
+        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
         using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), NullLoggerFactory.Instance);
 
         HttpsConnectionAdapterOptions options = new();
@@ -121,7 +121,7 @@ public sealed class TlsConfigureTest : IDisposable
     public void GivenInvalidName_WhenConfiguringCertificateAuthenticationOptions_ThenSkipConfiguring()
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath };
+        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
         using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), NullLoggerFactory.Instance);
 
         CertificateAuthenticationOptions options = new();
@@ -142,7 +142,7 @@ public sealed class TlsConfigureTest : IDisposable
     public void GivenUnsafeTls_WhenConfiguringCertificateAuthenticationOptions_ThenSkipCustomCertificate(bool specifyServerCert, bool validateClientCert, bool customCertAuthority)
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = customCertAuthority ? _caCertPath : null, ValidateCertificate = validateClientCert };
-        TlsServerOptions serverOptions = new() { CertificatePath = specifyServerCert ? _serverCertPath : null };
+        TlsServerOptions serverOptions = specifyServerCert ? new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath } : new();
         using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), NullLoggerFactory.Instance);
 
         CertificateAuthenticationOptions options = new();
@@ -156,7 +156,7 @@ public sealed class TlsConfigureTest : IDisposable
     public void GivenExpectedNameAndCustomCa_WhenConfiguringCertificateAuthenticationOptions_ThenUpdateOptions()
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath };
+        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
         using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), NullLoggerFactory.Instance);
 
         CertificateAuthenticationOptions options = new();
@@ -176,7 +176,7 @@ public sealed class TlsConfigureTest : IDisposable
     public void GivenNoCustomCa_WhenMonitoringChangesForOptions_ThenReturnNullToken(bool specifyServerCert, bool validateClientCert, bool customCertAuthority)
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = customCertAuthority ? _caCertPath : null, ValidateCertificate = validateClientCert };
-        TlsServerOptions serverOptions = new() { CertificatePath = specifyServerCert ? _serverCertPath : null };
+        TlsServerOptions serverOptions = specifyServerCert ? new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath } : new();
         using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), NullLoggerFactory.Instance);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);
@@ -189,7 +189,7 @@ public sealed class TlsConfigureTest : IDisposable
     public void GivenCustomCa_WhenMonitoringChangesForOptions_ThenReturnVaidToken()
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath };
+        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
         using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), NullLoggerFactory.Instance);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);

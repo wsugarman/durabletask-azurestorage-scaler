@@ -12,7 +12,7 @@ public class AzureStorageTaskHubInfoTest
     [Theory]
     [InlineData(-1)]
     [InlineData(0)]
-    [InlineData(15)]
+    [InlineData(16)]
     [InlineData(42)]
     public void GivenInvalidPartitionCount_WhenCreatingAzureStorageTaskHubInfo_ThenThrowArgumentOutOfRangeException(int partitionCount)
         => Assert.Throws<ArgumentOutOfRangeException>(() => new AzureStorageTaskHubInfo(DateTimeOffset.UtcNow, partitionCount, "foo"));

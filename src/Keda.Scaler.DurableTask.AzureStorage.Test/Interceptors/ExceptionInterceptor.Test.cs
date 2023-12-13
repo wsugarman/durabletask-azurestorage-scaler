@@ -26,7 +26,7 @@ public class ExceptionInterceptorTest
     public void GivenNullLogger_WhenCreatingInterceptor_ThenThrowArgumentNullException()
     {
         ILoggerFactory factory = Substitute.For<ILoggerFactory>();
-        _ = factory.CreateLogger(Arg.Any<string>()).Returns((ILogger)null!);
+        _ = factory.CreateLogger(default!).ReturnsForAnyArgs((ILogger)null!);
 
         _ = Assert.Throws<ArgumentNullException>(() => new ExceptionInterceptor(factory));
     }
@@ -46,8 +46,7 @@ public class ExceptionInterceptorTest
             await tokenSource.CancelAsync();
 
         Request request = new();
-        ServerCallContext context = Substitute.For<ServerCallContext>();
-        _ = context.CancellationToken.Returns(tokenSource.Token);
+        MockServerCallContext context = new(tokenSource.Token);
 
         RpcException actual = await Assert.ThrowsAsync<RpcException>(() => _interceptor.UnaryServerHandler(request, context, GetContinuation()));
         Assert.Equal(expected, actual.Status.StatusCode);
@@ -61,7 +60,7 @@ public class ExceptionInterceptorTest
     {
         Request request = new();
         Response response = new();
-        ServerCallContext context = Substitute.For<ServerCallContext>();
+        MockServerCallContext context = new();
 
         Assert.Same(response, await _interceptor.UnaryServerHandler(request, context, GetContinuation()));
 

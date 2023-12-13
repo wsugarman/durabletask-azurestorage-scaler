@@ -38,7 +38,7 @@ public class AzureCloudEndpointsTest
     [InlineData("")]
     [InlineData("\r\n  ")]
     public void GivenEmptyOrWhiteSpaceStorageSuffix_WhenCreatingCloudEndpoints_ThenThrowArgumentException(string suffix)
-        => Assert.Throws<ArgumentNullException>(() => new AzureCloudEndpoints(new Uri("https://test"), suffix));
+        => Assert.Throws<ArgumentException>(() => new AzureCloudEndpoints(new Uri("https://test"), suffix));
 
     [Theory]
     [InlineData(CloudEnvironment.Unknown)]
