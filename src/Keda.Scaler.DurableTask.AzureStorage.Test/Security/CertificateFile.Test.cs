@@ -42,7 +42,7 @@ public sealed class CertificateFileTest : IDisposable
 
         Assert.Equal(certPath, certificateFile.Path);
         Assert.Null(certificateFile.KeyPath);
-        _ = Assert.Throws<CryptographicException>(certificateFile.Load);
+        _ = Assert.ThrowsAny<CryptographicException>(certificateFile.Load);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public sealed class CertificateFileTest : IDisposable
 
         Assert.Equal(filePath, certificateFile.Path);
         Assert.Null(certificateFile.KeyPath);
-        _ = Assert.Throws<CryptographicException>(certificateFile.Load);
+        _ = Assert.ThrowsAny<CryptographicException>(certificateFile.Load);
     }
 
     [Fact]

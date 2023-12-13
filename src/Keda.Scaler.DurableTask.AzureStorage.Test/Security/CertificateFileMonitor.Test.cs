@@ -52,7 +52,7 @@ public sealed class CertificateFileMonitorTest : IDisposable
         File.Move(certPath + ".tmp", certPath, overwrite: true);
 
         Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(10)));
-        _ = Assert.Throws<CryptographicException>(() => monitor.Current);
+        _ = Assert.ThrowsAny<CryptographicException>(() => monitor.Current);
     }
 
     [Fact]
