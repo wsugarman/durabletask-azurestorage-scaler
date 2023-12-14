@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -12,6 +13,7 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Blobs;
+using Keda.Scaler.DurableTask.AzureStorage.Json;
 using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
@@ -77,7 +79,15 @@ public class AzureStorageTaskHubClient
         try
         {
             BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken).ConfigureAwait(false);
-            AzureStorageTaskHubInfo info = result.Content.ToObjectFromJson<AzureStorageTaskHubInfo>();
+            AzureStorageTaskHubInfo? info = JsonSerializer.Deserialize(
+                result.Content.ToMemory().Span,
+                SourceGenerationContext.Default.AzureStorageTaskHubInfo);
+
+            if (info is null)
+            {
+                _logger.CouldNotFindTaskHub(taskHub, client.Name, client.BlobContainerName);
+                return NullTaskHubQueueMonitor.Instance;
+            }
 
             _logger.FoundTaskHub(info.TaskHubName, info.PartitionCount, info.CreatedAt);
             return new TaskHubQueueMonitor(info, _queueServiceClientFactory.GetServiceClient(accountInfo), _logger);

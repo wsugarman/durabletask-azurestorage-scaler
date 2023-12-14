@@ -6,7 +6,6 @@ using System.Linq;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
-using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +23,7 @@ public class IServiceCollectionExtensionsTest
     public void GivenServiceCollection_WhenAddingDurableTaskScalerServices_ThenAddExpectedServices()
     {
         IServiceCollection services = new ServiceCollection().AddDurableTaskScaler();
-        Assert.Equal(5, services.Count);
+        Assert.Equal(4, services.Count);
 
         // Singleton
         Assert.Equal(ServiceLifetime.Singleton, services.Single(x =>
@@ -38,7 +37,6 @@ public class IServiceCollectionExtensionsTest
             x.ImplementationType == typeof(OptimalOrchestrationAllocator)).Lifetime);
 
         // Scoped
-        Assert.Equal(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(IProcessEnvironment)).Lifetime);
         Assert.Equal(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(AzureStorageTaskHubClient)).Lifetime);
     }
 }

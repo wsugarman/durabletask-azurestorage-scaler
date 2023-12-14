@@ -5,7 +5,6 @@ using System;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
-using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,7 +20,6 @@ internal static class IServiceCollectionExtensions
             .AddSingleton<IStorageAccountClientFactory<BlobServiceClient>, BlobServiceClientFactory>()
             .AddSingleton<IStorageAccountClientFactory<QueueServiceClient>, QueueServiceClientFactory>()
             .AddSingleton<IOrchestrationAllocator, OptimalOrchestrationAllocator>()
-            .AddScoped<IProcessEnvironment, EnvironmentCache>()
             .AddScoped<AzureStorageTaskHubClient>();
     }
 }

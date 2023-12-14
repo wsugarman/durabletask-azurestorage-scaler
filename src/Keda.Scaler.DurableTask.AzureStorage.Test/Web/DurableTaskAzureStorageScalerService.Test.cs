@@ -12,7 +12,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +25,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 
 public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
 {
-    private readonly MockEnvironment _environment = new();
     private readonly IStorageAccountClientFactory<BlobServiceClient> _blobServiceClientFactory = Substitute.For<IStorageAccountClientFactory<BlobServiceClient>>();
     private readonly IStorageAccountClientFactory<QueueServiceClient> _queueServiceClientFactory = Substitute.For<IStorageAccountClientFactory<QueueServiceClient>>();
     private readonly AzureStorageTaskHubClient _taskHubClient;
@@ -43,7 +41,6 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
 
         _serviceProvider = new ServiceCollection()
             .AddSingleton(_taskHubClient)
-            .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton(_allocator)
             .AddLogging(x => x.AddXUnit(outputHelper))
             .BuildServiceProvider();
@@ -62,19 +59,6 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
     public void GivenMissingAzureStorageTaskHubClientService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
     {
         using ServiceProvider serviceProvider = new ServiceCollection()
-            .AddSingleton<IProcessEnvironment>(_environment)
-            .AddSingleton(_allocator)
-            .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
-            .BuildServiceProvider();
-
-        _ = Assert.Throws<InvalidOperationException>(() => new DurableTaskAzureStorageScalerService(serviceProvider));
-    }
-
-    [Fact]
-    public void GivenMissingProcessEnvironmentService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
-    {
-        IServiceProvider serviceProvider = new ServiceCollection()
-            .AddSingleton(_taskHubClient)
             .AddSingleton(_allocator)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
@@ -87,7 +71,6 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
     {
         using ServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton(_taskHubClient)
-            .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
             .BuildServiceProvider();
 
@@ -99,7 +82,6 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
     {
         using ServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton(_taskHubClient)
-            .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton(_allocator)
             .BuildServiceProvider();
 
@@ -148,7 +130,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
             TaskHubName = TaskHubName,
         };
 
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
+        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
 
         using CancellationTokenSource tokenSource = new();
         GetMetricsRequest request = CreateGetMetricsRequest(metadata);
@@ -272,7 +254,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
             TaskHubName = TaskHubName,
         };
 
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
+        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
 
         using CancellationTokenSource tokenSource = new();
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);

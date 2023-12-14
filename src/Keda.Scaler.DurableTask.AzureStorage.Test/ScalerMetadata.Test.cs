@@ -4,25 +4,12 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Common;
-using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
-using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 
 public class ScalerMetadataTest
 {
-    private readonly MockEnvironment _environment = new();
-    private readonly IServiceProvider _serviceProvider;
-
-    public ScalerMetadataTest()
-    {
-        _serviceProvider = new ServiceCollection()
-            .AddSingleton<IProcessEnvironment>(_environment)
-            .BuildServiceProvider();
-    }
-
     [Theory]
     [InlineData(CloudEnvironment.AzurePublicCloud, null)]
     [InlineData(CloudEnvironment.AzurePublicCloud, nameof(CloudEnvironment.AzurePublicCloud))]
@@ -33,29 +20,29 @@ public class ScalerMetadataTest
     public void GivenCloudString_WhenGettingCloudEnvironment_ThenReturnCorrespondingValue(CloudEnvironment expected, string? cloud)
         => Assert.Equal(expected, new ScalerMetadata { Cloud = cloud }.CloudEnvironment);
 
-    [Fact]
-    public void GivenNullEnvironment_WhenResolvingConnectionString_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new ScalerMetadata().ResolveConnectionString(null!));
-
     [Theory]
     [InlineData(null, ScalerMetadata.DefaultConnectionEnvironmentVariable, "one=1")]
-    [InlineData("MY_CONNECTION", "MY_CONNECTION", "one=1")]
+    [InlineData("MY_CONNECTION_1", "MY_CONNECTION_1", "one=1")]
     public void GivenConnectionEnvironmentVariable_WhenResolvingConnectionString_ThenLookUpCorrectValue(string? connectionFromEnv, string key, string value)
     {
-        _environment.SetEnvironmentVariable(key, value);
-
         ScalerMetadata metadata = new() { ConnectionFromEnv = connectionFromEnv };
-        Assert.Equal(value, metadata.ResolveConnectionString(_environment));
+        using (TestEnvironment.SetVariable(key, value))
+            Assert.Equal(value, metadata.ConnectionString);
+
+        // Ensure cached
+        using (TestEnvironment.SetVariable(key, value + ";more=values"))
+            Assert.Equal(value, metadata.ConnectionString);
+
     }
 
     [Fact]
     public void GivenProvidedConnectionString_WhenResolvingConnectionString_ThenUseInsteadOfEnvironmentVariable()
     {
-        _environment.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, "one=1");
-        _environment.SetEnvironmentVariable("MY_CONNECTION", "two=2");
+        using IDisposable replacement1 = TestEnvironment.SetVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, "one=1");
+        using IDisposable replacement2 = TestEnvironment.SetVariable("MY_CONNECTION_2", "two=2");
 
-        ScalerMetadata metadata = new() { Connection = "three=3", ConnectionFromEnv = "MY_CONNECTION" };
-        Assert.Equal("three=3", metadata.ResolveConnectionString(_environment));
+        ScalerMetadata metadata = new() { Connection = "three=3", ConnectionFromEnv = "MY_CONNECTION_2" };
+        Assert.Equal("three=3", metadata.ConnectionString);
     }
 
     [Fact]
@@ -63,14 +50,6 @@ public class ScalerMetadataTest
     {
         ScalerMetadata metadata = new();
         _ = Assert.Throws<ArgumentNullException>(() => ((IValidatableObject)metadata).Validate(null!));
-    }
-
-    [Fact]
-    public void GivenMissingProcessEnvironmentService_WhenValidating_ThenThrowInvalidOperationException()
-    {
-        ScalerMetadata metadata = new();
-        ValidationContext context = new(metadata, new ServiceCollection().BuildServiceProvider(), null);
-        _ = Assert.Throws<InvalidOperationException>(() => ((IValidatableObject)metadata).Validate(context));
     }
 
     [Fact]
@@ -82,7 +61,7 @@ public class ScalerMetadataTest
             Cloud = nameof(CloudEnvironment.AzurePublicCloud),
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -94,7 +73,7 @@ public class ScalerMetadataTest
             EndpointSuffix = "example",
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -107,7 +86,7 @@ public class ScalerMetadataTest
             EndpointSuffix = "example",
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Theory]
@@ -123,7 +102,7 @@ public class ScalerMetadataTest
             EndpointSuffix = suffix,
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Theory]
@@ -137,7 +116,7 @@ public class ScalerMetadataTest
             Cloud = nameof(CloudEnvironment.Private),
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -149,7 +128,7 @@ public class ScalerMetadataTest
             Cloud = "other",
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -161,7 +140,7 @@ public class ScalerMetadataTest
             Connection = "Connection=property",
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -173,7 +152,7 @@ public class ScalerMetadataTest
             ConnectionFromEnv = "CONNECTION",
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -186,7 +165,7 @@ public class ScalerMetadataTest
             UseManagedIdentity = false,
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -198,7 +177,7 @@ public class ScalerMetadataTest
             ClientId = Guid.NewGuid().ToString(),
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -210,7 +189,7 @@ public class ScalerMetadataTest
             Cloud = nameof(CloudEnvironment.AzureUSGovernmentCloud),
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Fact]
@@ -222,7 +201,7 @@ public class ScalerMetadataTest
             UseManagedIdentity = true,
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Theory]
@@ -236,7 +215,7 @@ public class ScalerMetadataTest
             Connection = connection,
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Theory]
@@ -250,7 +229,7 @@ public class ScalerMetadataTest
             ConnectionFromEnv = connectionFromEnv,
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 
     [Theory]
@@ -262,7 +241,7 @@ public class ScalerMetadataTest
     [InlineData("INVALID", "    ")]
     public void GivenNullOrWhiteSpaceResolvedConnection_WhenValidating_ThenThrowValidationException(string? connectionFromEnv, string? value)
     {
-        _environment.SetEnvironmentVariable(connectionFromEnv ?? ScalerMetadata.DefaultConnectionEnvironmentVariable, value);
+        using IDisposable replacement = TestEnvironment.SetVariable(connectionFromEnv ?? ScalerMetadata.DefaultConnectionEnvironmentVariable, value);
 
         ScalerMetadata metadata = new()
         {
@@ -270,6 +249,6 @@ public class ScalerMetadataTest
             ConnectionFromEnv = connectionFromEnv,
         };
 
-        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
     }
 }
