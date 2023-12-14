@@ -34,7 +34,7 @@ public sealed class AzureStorageAccountInfo
     /// Gets the optional metadata for the Azure cloud that contains the Azure Storage account.
     /// </summary>
     /// <value>The Azure cloud endpoints if a known cloud; otherwise, <see langword="null"/>.</value>
-    public CloudEndpoints? Cloud { get; init; }
+    public AzureCloudEndpoints? Cloud { get; init; }
 
     /// <summary>
     /// Gets the optional connection string for the Azure Storage account.

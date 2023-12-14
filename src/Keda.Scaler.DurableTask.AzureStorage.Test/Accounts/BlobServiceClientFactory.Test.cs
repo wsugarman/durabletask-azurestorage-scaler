@@ -5,17 +5,16 @@ using System;
 using Azure.Storage.Blobs;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
-[TestClass]
 public class BlobServiceClientFactoryTest : AzureStorageAccountClientFactoryTest<BlobServiceClient>
 {
     protected override IStorageAccountClientFactory<BlobServiceClient> GetFactory()
         => new BlobServiceClientFactory();
 
-    protected override void ValidateAccountName(BlobServiceClient actual, string accountName, CloudEndpoints cloud)
+    protected override void ValidateAccountName(BlobServiceClient actual, string accountName, AzureCloudEndpoints cloud)
         => Validate(actual, accountName, cloud.GetStorageServiceUri(accountName, AzureStorageService.Blob));
 
     protected override void ValidateEmulator(BlobServiceClient actual)
@@ -23,7 +22,7 @@ public class BlobServiceClientFactoryTest : AzureStorageAccountClientFactoryTest
 
     private static void Validate(BlobServiceClient actual, string accountName, Uri serviceUrl)
     {
-        Assert.AreEqual(accountName, actual?.AccountName);
-        Assert.AreEqual(serviceUrl, actual?.Uri);
+        Assert.Equal(accountName, actual?.AccountName);
+        Assert.Equal(serviceUrl, actual?.Uri);
     }
 }

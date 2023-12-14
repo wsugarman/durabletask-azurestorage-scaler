@@ -41,7 +41,8 @@ FROM publish-copy-${COPY} AS publish-app
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0.0-cbl-mariner2.0-distroless-amd64@sha256:ec8c308902b0de9d57052bbd7036208e6300c2ab02906fa81216369731e75d1e AS runtime
 ENV ASPNETCORE_URLS=http://+:8080 \
-    DOTNET_EnableDiagnostics=0
+    DOTNET_EnableDiagnostics=0 \
+    DOTNET_USE_POLLING_FILE_WATCHER=true
 USER $APP_UID
 EXPOSE 8080
 

@@ -18,7 +18,7 @@ public static class ProcessEnvironment
 
     private sealed class CurrentEnvironment : IProcessEnvironment
     {
-        public string? GetEnvironmentVariable(string variable)
+        public string? GetVariable(string variable)
             => Environment.GetEnvironmentVariable(variable);
     }
 }

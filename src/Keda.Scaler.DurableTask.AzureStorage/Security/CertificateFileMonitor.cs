@@ -7,7 +7,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
@@ -25,6 +24,7 @@ internal sealed class CertificateFileMonitor : IDisposable
     private CertificateFileMonitor(CertificateFile file)
         => File = file ?? throw new ArgumentNullException(nameof(file));
 
+    [ExcludeFromCodeCoverage(Justification = "Concurrent edge cases are difficult to mock.")]
     public void Dispose()
     {
         // Attempt to set the disposed flag
@@ -39,7 +39,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         if (!ReferenceEquals(expected, States.Disposed))
         {
             expected?.Dispose();
-            _subscription?.Dispose();
+            _subscription!.Dispose();
             File.Dispose();
 
             _subscription = null;
@@ -50,14 +50,6 @@ internal sealed class CertificateFileMonitor : IDisposable
 
     public IChangeToken GetReloadToken()
         => _changeToken;
-
-    public static CertificateFileMonitor Create(CertificateFile file, ILogger? logger = null)
-    {
-        CertificateFileMonitor monitor = new(file);
-        _ = monitor.Subscribe(logger ?? NullLogger.Instance);
-
-        return monitor;
-    }
 
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Only throw exceptions on request threads.")]
     private IDisposable Subscribe(ILogger logger)
@@ -84,6 +76,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         }
     }
 
+    [ExcludeFromCodeCoverage(Justification = "Concurrent edge cases are difficult to mock.")]
     private X509Certificate2 UpdateCertificate(bool force)
     {
         X509Certificate2? expected;
@@ -132,6 +125,16 @@ internal sealed class CertificateFileMonitor : IDisposable
         // Alert any listeners of the expected change
         ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
         previousToken.OnReload();
+    }
+
+    public static CertificateFileMonitor Create(CertificateFile file, ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(logger);
+
+        CertificateFileMonitor monitor = new(file);
+        _ = monitor.Subscribe(logger);
+
+        return monitor;
     }
 
     private static class States

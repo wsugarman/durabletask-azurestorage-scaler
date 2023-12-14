@@ -8,7 +8,6 @@ using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 
@@ -18,12 +17,11 @@ internal static class IServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.TryAddSingleton<IStorageAccountClientFactory<BlobServiceClient>, BlobServiceClientFactory>();
-        services.TryAddSingleton<IStorageAccountClientFactory<QueueServiceClient>, QueueServiceClientFactory>();
-        services.TryAddSingleton<IOrchestrationAllocator, OptimalOrchestrationAllocator>();
-        services.TryAddScoped<IProcessEnvironment>(p => new EnvironmentCache(ProcessEnvironment.Current));
-        services.TryAddScoped<AzureStorageTaskHubBrowser>();
-
-        return services;
+        return services
+            .AddSingleton<IStorageAccountClientFactory<BlobServiceClient>, BlobServiceClientFactory>()
+            .AddSingleton<IStorageAccountClientFactory<QueueServiceClient>, QueueServiceClientFactory>()
+            .AddSingleton<IOrchestrationAllocator, OptimalOrchestrationAllocator>()
+            .AddScoped<IProcessEnvironment, EnvironmentCache>()
+            .AddScoped<AzureStorageTaskHubClient>();
     }
 }

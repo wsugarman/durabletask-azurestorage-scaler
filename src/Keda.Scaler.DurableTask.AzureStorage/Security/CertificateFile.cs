@@ -31,7 +31,7 @@ internal class CertificateFile : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    public CertificateFileMonitor Monitor(ILogger? logger = default)
+    public CertificateFileMonitor Monitor(ILogger logger)
         => CertificateFileMonitor.Create(this, logger);
 
     public virtual X509Certificate2 Load()

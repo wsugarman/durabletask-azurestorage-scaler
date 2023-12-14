@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure;
@@ -12,118 +12,187 @@ using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Moq;
+using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
+using Microsoft.Extensions.Logging;
+using NSubstitute;
+using NSubstitute.ExceptionExtensions;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
-[TestClass]
-public sealed class TaskHubQueueMonitorTest
+public sealed class TaskHubQueueMonitorTest : IDisposable
 {
     private readonly AzureStorageTaskHubInfo _taskHubInfo;
-    private readonly Mock<QueueServiceClient> _mockQueueServiceClient;
-    private readonly TaskHubQueueMonitor _monitor;
+    private readonly QueueServiceClient _queueServiceClient = Substitute.For<QueueServiceClient>();
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger _logger;
 
-    private static readonly Action<QueueProperties, int> SetApproximateMessagesCount = CreateSetter();
+    private const string TaskHubName = "unit-test";
+    private const int PartitionCount = 3;
 
-    public TaskHubQueueMonitorTest()
+    private static readonly Func<int, QueueProperties> QueuePropertiesFactory = CreateQueuePropertiesFactory();
+
+    public TaskHubQueueMonitorTest(ITestOutputHelper outputHelper)
     {
-        _taskHubInfo = new AzureStorageTaskHubInfo { PartitionCount = 5, TaskHubName = "unit-test" };
-        _mockQueueServiceClient = new Mock<QueueServiceClient>(MockBehavior.Strict);
-        _monitor = new TaskHubQueueMonitor(_taskHubInfo, _mockQueueServiceClient.Object, NullLogger.Instance);
+        _taskHubInfo = new AzureStorageTaskHubInfo(DateTimeOffset.UtcNow, PartitionCount, TaskHubName);
+        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
+        _logger = _loggerFactory.CreateLogger(LogCategories.Default);
     }
 
-    [TestMethod]
-    public void CtorExceptions()
-    {
-        _ = Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(null!, _mockQueueServiceClient.Object, NullLogger.Instance));
-        _ = Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, null!, NullLogger.Instance));
-        _ = Assert.ThrowsException<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, _mockQueueServiceClient.Object, null!));
-        _ = Assert.ThrowsException<ArgumentException>(() => new TaskHubQueueMonitor(new AzureStorageTaskHubInfo { PartitionCount = -1 }, _mockQueueServiceClient.Object, NullLogger.Instance));
-    }
+    public void Dispose()
+        => _loggerFactory.Dispose();
 
-    [TestMethod]
-    public async Task GetUsageAsync()
+    [Fact]
+    public void GivenNullTaskHubInfo_WhenCreatingTaskHubQueueMonitor_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new TaskHubQueueMonitor(null!, _queueServiceClient, _logger));
+
+    [Fact]
+    public void GivenNullQueueServiceClien_WhenCreatingTaskHubQueueMonitor_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, null!, _logger));
+
+    [Fact]
+    public void GivenNullLogger_WhenCreatingTaskHubQueueMonitor_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, _queueServiceClient, null!));
+
+    [Fact]
+    public async Task GivenMissingControlQueue_WhenGettingUsage_ThenReturnNullMonitor()
     {
         using CancellationTokenSource tokenSource = new();
+        QueueClient controlQueue0 = Substitute.For<QueueClient>();
+        QueueClient controlQueue1 = Substitute.For<QueueClient>();
 
-        // Set up
-        Mock<QueueClient>[] mockControlQueueClients = new Mock<QueueClient>[_taskHubInfo.PartitionCount];
-        for (int i = 0; i < mockControlQueueClients.Length; i++)
-        {
-            string name = ControlQueue.GetName(_taskHubInfo.TaskHubName, i);
-            QueueProperties properties = new();
-            SetApproximateMessagesCount(properties, i);
+        _ = _queueServiceClient
+            .GetQueueClient(default!)
+            .ReturnsForAnyArgs(controlQueue0, controlQueue1);
+        _ = controlQueue0
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(5)));
+        _ = controlQueue1
+            .GetPropertiesAsync(default)
+            .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found"));
 
-            mockControlQueueClients[i] = new Mock<QueueClient>(MockBehavior.Strict);
-            _ = mockControlQueueClients[i]
-                .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
-                .Returns(Task.FromResult(Response.FromValue(properties, null!)));
-            _ = _mockQueueServiceClient
-                .Setup(c => c.GetQueueClient(name))
-                .Returns(mockControlQueueClients[i].Object);
-        }
+        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, _logger);
+        TaskHubQueueUsage actual = await monitor.GetUsageAsync(tokenSource.Token);
 
-        QueueProperties workItemProperties = new();
-        SetApproximateMessagesCount(workItemProperties, 30);
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 1)));
+        _ = _queueServiceClient.Received(0).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 2)));
+        _ = await controlQueue0.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+        _ = await controlQueue1.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
 
-        Mock<QueueClient> mockWorkItemsQueueClient = new(MockBehavior.Strict);
-        _ = mockWorkItemsQueueClient
-            .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
-            .Returns(Task.FromResult(Response.FromValue(workItemProperties, null!)));
-        _ = _mockQueueServiceClient
-            .Setup(c => c.GetQueueClient(WorkItemQueue.GetName(_taskHubInfo.TaskHubName)))
-            .Returns(mockWorkItemsQueueClient.Object);
-
-        // Test successful measurement
-        TaskHubQueueUsage actual = await _monitor.GetUsageAsync(tokenSource.Token).ConfigureAwait(false);
-        Assert.IsTrue(actual.HasActivity);
-        Assert.IsTrue(actual.ControlQueueMessages.Select((x, i) => (Count: x, Index: i)).All(p => p.Count == p.Index));
-        Assert.AreEqual(30, actual.WorkItemQueueMessages);
-
-        // Test missing work item queue
-        mockWorkItemsQueueClient.Reset();
-        _ = mockWorkItemsQueueClient
-            .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
-            .Returns(Task.FromException<Response<QueueProperties>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found")));
-        _ = mockWorkItemsQueueClient
-            .Setup(c => c.Name)
-            .Returns(WorkItemQueue.GetName(_taskHubInfo.TaskHubName));
-
-        actual = await _monitor.GetUsageAsync(tokenSource.Token).ConfigureAwait(false);
-        Assert.IsFalse(actual.HasActivity);
-        Assert.AreEqual(0, actual.ControlQueueMessages.Count);
-        Assert.AreEqual(0, actual.WorkItemQueueMessages);
-
-        // Test missing control queue
-        mockControlQueueClients[^1].Reset();
-        _ = mockControlQueueClients[^1]
-            .Setup(c => c.GetPropertiesAsync(tokenSource.Token))
-            .Returns(Task.FromException<Response<QueueProperties>>(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found")));
-        _ = mockControlQueueClients[^1]
-            .Setup(c => c.Name)
-            .Returns(ControlQueue.GetName(_taskHubInfo.TaskHubName, mockControlQueueClients.Length - 1));
-
-        actual = await _monitor.GetUsageAsync(tokenSource.Token).ConfigureAwait(false);
-        Assert.IsFalse(actual.HasActivity);
-        Assert.AreEqual(0, actual.ControlQueueMessages.Count);
-        Assert.AreEqual(0, actual.WorkItemQueueMessages);
+        Assert.Same(TaskHubQueueUsage.None, actual);
     }
 
-    private static Action<QueueProperties, int> CreateSetter()
+    [Fact]
+    public async Task GivenMissingWorkItemQueue_WhenGettingUsage_ThenReturnNullMonitor()
     {
-        ParameterExpression propertiesParam = Expression.Parameter(typeof(QueueProperties), "properties");
-        ParameterExpression countParam = Expression.Parameter(typeof(int), "count");
+        using CancellationTokenSource tokenSource = new();
+        QueueClient controlQueue0 = Substitute.For<QueueClient>();
+        QueueClient controlQueue1 = Substitute.For<QueueClient>();
+        QueueClient controlQueue2 = Substitute.For<QueueClient>();
+        QueueClient workItemQueue = Substitute.For<QueueClient>();
 
-        return Expression
-            .Lambda<Action<QueueProperties, int>>(
-                Expression.Call(
-                    propertiesParam,
-                    typeof(QueueProperties).GetProperty(nameof(QueueProperties.ApproximateMessagesCount))!.SetMethod!,
-                    countParam),
-                propertiesParam,
-                countParam)
+        _ = _queueServiceClient
+            .GetQueueClient(default)
+            .ReturnsForAnyArgs(controlQueue0, controlQueue1, controlQueue2, workItemQueue);
+        _ = controlQueue0
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(3)));
+        _ = controlQueue1
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(5)));
+        _ = controlQueue2
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(4)));
+        _ = workItemQueue
+            .GetPropertiesAsync(default)
+            .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found"));
+
+        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, _logger);
+        TaskHubQueueUsage actual = await monitor.GetUsageAsync(tokenSource.Token);
+
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 1)));
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 2)));
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(WorkItemQueue.GetName(TaskHubName)));
+        _ = await controlQueue0.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+        _ = await controlQueue1.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+        _ = await controlQueue2.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+        _ = await workItemQueue.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+
+        Assert.Same(TaskHubQueueUsage.None, actual);
+    }
+
+    [Fact]
+    public async Task GivenAvailableQueues_WhenGettingUsage_ThenReturnMessageCountSummary()
+    {
+        using CancellationTokenSource tokenSource = new();
+        QueueClient controlQueue0 = Substitute.For<QueueClient>();
+        QueueClient controlQueue1 = Substitute.For<QueueClient>();
+        QueueClient controlQueue2 = Substitute.For<QueueClient>();
+        QueueClient workItemQueue = Substitute.For<QueueClient>();
+
+        _ = _queueServiceClient
+            .GetQueueClient(default)
+            .ReturnsForAnyArgs(controlQueue0, controlQueue1, controlQueue2, workItemQueue);
+        _ = controlQueue0
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(3)));
+        _ = controlQueue1
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(5)));
+        _ = controlQueue2
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(4)));
+        _ = workItemQueue
+            .GetPropertiesAsync(default)
+            .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(1)));
+
+        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, _logger);
+        TaskHubQueueUsage actual = await monitor.GetUsageAsync(tokenSource.Token);
+
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 1)));
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 2)));
+        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(WorkItemQueue.GetName(TaskHubName)));
+        _ = await controlQueue0.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+        _ = await controlQueue1.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+        _ = await controlQueue2.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+        _ = await workItemQueue.Received(1).GetPropertiesAsync(Arg.Is(tokenSource.Token));
+
+        Assert.Equal(PartitionCount, actual.ControlQueueMessages.Count);
+        Assert.Equal(3, actual.ControlQueueMessages[0]);
+        Assert.Equal(5, actual.ControlQueueMessages[1]);
+        Assert.Equal(4, actual.ControlQueueMessages[2]);
+        Assert.Equal(1, actual.WorkItemQueueMessages);
+    }
+
+    private static Response<QueueProperties> GetResponse(int count)
+    {
+        Response response = Substitute.For<Response>();
+        _ = response.Status.Returns((int)HttpStatusCode.OK);
+
+        return Response.FromValue(QueuePropertiesFactory(count), response);
+    }
+
+    private static Func<int, QueueProperties> CreateQueuePropertiesFactory()
+    {
+        ParameterExpression param = Expression.Parameter(typeof(int), "count");
+        ParameterExpression variable = Expression.Variable(typeof(QueueProperties), "properties");
+        MethodInfo? countSetter = typeof(QueueProperties)
+            .GetProperty(nameof(QueueProperties.ApproximateMessagesCount))?
+            .GetSetMethod(nonPublic: true);
+
+        return (Func<int, QueueProperties>)Expression
+            .Lambda(
+                Expression.Block(
+                    typeof(QueueProperties),
+                    [variable],
+                    Expression.Assign(variable, Expression.New(typeof(QueueProperties))),
+                    Expression.Call(variable, countSetter!, param),
+                    variable),
+                param)
             .Compile();
     }
 }

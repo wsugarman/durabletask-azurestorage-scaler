@@ -4,76 +4,109 @@
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
-[TestClass]
 public class ScalerMetadataExtensionsTest
 {
-    [TestMethod]
-    public void GetAccountInfo()
+    private readonly MockEnvironment _environment = new();
+
+    [Fact]
+    public void GivenNullMetadata_WhenGettingAccountInfo_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!, _environment));
+
+    [Fact]
+    public void GivenNullEnvironment_WhenGettingAccountInfo_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new ScalerMetadata().GetAccountInfo(null!));
+
+    [Fact]
+    public void GivenConnectionStringScalerMetadata_WhenGettingAccountInfo_ThenPassthroughData()
     {
-        ScalerMetadata metadata;
-        AzureStorageAccountInfo actual;
-        MockEnvironment env = new();
-        env.SetEnvironmentVariable("Connection", "UseDevelopmentStorage=true");
+        ScalerMetadata metadata = new() { Connection = "UseDevelopmentStorage=true" };
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+        Assert.Equal("UseDevelopmentStorage=true", actual.ConnectionString);
+    }
 
-        // Errors
-        _ = Assert.ThrowsException<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!, env));
-        _ = Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().GetAccountInfo(null!));
+    [Fact]
+    public void GivenEnvConnectionStringScalerMetadata_WhenGettingAccountInfo_ThenLookupVariable()
+    {
+        const string ConnectionKey = "Connection";
+        ScalerMetadata metadata = new() { ConnectionFromEnv = ConnectionKey };
 
-        // No managed identity
-        // Note: Typically you don't specify values for some of these members in combination,
-        //       but in this test we will do so for the sake of simplicity
-        metadata = new ScalerMetadata
+        _environment.SetEnvironmentVariable(ConnectionKey, "UseDevelopmentStorage=true");
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+
+        Assert.Equal("UseDevelopmentStorage=true", actual.ConnectionString);
+    }
+
+    [Fact]
+    public void GivenUnknownCloud_WhenGettingAccountInfo_ThenReturnNull()
+    {
+        ScalerMetadata metadata = new() { Cloud = "foo" };
+
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+        Assert.Null(actual.Cloud);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(CloudEnvironment.AzurePublicCloud)]
+    [InlineData(CloudEnvironment.AzureUSGovernmentCloud)]
+    [InlineData(CloudEnvironment.AzureGermanCloud)]
+    [InlineData(CloudEnvironment.AzureChinaCloud)]
+    public void GivenAccountScalerMetadata_WhenGettingAccountInfo_ThenPassthroughData(CloudEnvironment? cloud)
+    {
+        ScalerMetadata metadata = new()
         {
-            AccountName = "test",
+            AccountName = "foo",
             ClientId = Guid.NewGuid().ToString(),
-            Cloud = "foo", // Unknown cloud
-            ConnectionFromEnv = "Connection",
+            Cloud = cloud?.ToString("G"),
         };
 
-        actual = metadata.GetAccountInfo(env);
-        Assert.AreEqual("test", actual.AccountName);
-        Assert.AreEqual(metadata.ClientId, actual.ClientId);
-        Assert.IsNull(actual.Cloud);
-        Assert.AreEqual("UseDevelopmentStorage=true", actual.ConnectionString);
-        Assert.AreEqual(null, actual.Credential);
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
 
-        // Use managed identity
-        metadata = new ScalerMetadata
+        Assert.Equal(metadata.AccountName, actual.AccountName);
+        Assert.Equal(metadata.ClientId, actual.ClientId);
+        Assert.Same(AzureCloudEndpoints.ForEnvironment(cloud.GetValueOrDefault(CloudEnvironment.AzurePublicCloud)), actual.Cloud);
+        Assert.Null(actual.Credential);
+    }
+
+    [Fact]
+    public void GivenManagedIdentityScalerMetadata_WhenGettingAccountInfo_ThenPopulateCredential()
+    {
+        ScalerMetadata metadata = new()
         {
-            AccountName = "test2",
+            AccountName = "foo",
             ClientId = Guid.NewGuid().ToString(),
-            Cloud = nameof(CloudEnvironment.AzureUSGovernmentCloud),
-            ConnectionFromEnv = "Connection",
             UseManagedIdentity = true,
         };
 
-        actual = metadata.GetAccountInfo(env);
-        Assert.AreEqual("test2", actual.AccountName);
-        Assert.AreEqual(metadata.ClientId, actual.ClientId);
-        Assert.AreSame(CloudEndpoints.USGovernment, actual.Cloud);
-        Assert.AreEqual("UseDevelopmentStorage=true", actual.ConnectionString);
-        Assert.AreEqual(Credential.ManagedIdentity, actual.Credential);
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
 
-        // Private cloud
-        metadata = new ScalerMetadata
+        Assert.Equal(metadata.AccountName, actual.AccountName);
+        Assert.Equal(metadata.ClientId, actual.ClientId);
+        Assert.Same(AzureCloudEndpoints.Public, actual.Cloud);
+        Assert.Equal(Credential.ManagedIdentity, actual.Credential);
+    }
+
+    [Fact]
+    public void GivenPrivateCloudScalerMetadata_WhenGettingAccountInfo_ThenCreateCustomCloudEndpoints()
+    {
+        ScalerMetadata metadata = new()
         {
-            AccountName = "test3",
+            AccountName = "foo",
+            ClientId = Guid.NewGuid().ToString(),
+            Cloud = CloudEnvironment.Private.ToString("G"),
             ActiveDirectoryEndpoint = new Uri("https://unit-test.authority", UriKind.Absolute),
-            ClientId = Guid.NewGuid().ToString(),
-            Cloud = nameof(CloudEnvironment.Private),
             EndpointSuffix = "storage.unit-test",
-            UseManagedIdentity = true,
         };
 
-        actual = metadata.GetAccountInfo(env);
-        Assert.AreEqual("test3", actual.AccountName);
-        Assert.AreEqual(metadata.ClientId, actual.ClientId);
-        Assert.AreEqual(new Uri("https://unit-test.authority", UriKind.Absolute), actual.Cloud!.AuthorityHost);
-        Assert.AreEqual("storage.unit-test", actual.Cloud.StorageSuffix);
-        Assert.AreEqual(Credential.ManagedIdentity, actual.Credential);
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+
+        Assert.Equal(metadata.AccountName, actual.AccountName);
+        Assert.Equal(metadata.ClientId, actual.ClientId);
+        Assert.Equal(metadata.ActiveDirectoryEndpoint, actual.Cloud!.AuthorityHost);
+        Assert.Equal(metadata.EndpointSuffix, actual.Cloud.StorageSuffix);
     }
 }

@@ -33,6 +33,7 @@ jobs:
       - name: Upload Code Coverage
         uses: ./.github/actions/code-coverage
         with:
+          codecovToken: ${{ secrets.CODECOV_TOKEN }}
           reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
 
       - name: Build Docker Image

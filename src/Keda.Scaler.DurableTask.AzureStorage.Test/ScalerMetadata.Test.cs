@@ -2,127 +2,274 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.Common;
+using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 
-[TestClass]
 public class ScalerMetadataTest
 {
-    [TestMethod]
-    public void CloudEnvironmentProperty()
+    private readonly MockEnvironment _environment = new();
+    private readonly IServiceProvider _serviceProvider;
+
+    public ScalerMetadataTest()
     {
-        Assert.AreEqual(CloudEnvironment.AzurePublicCloud, new ScalerMetadata { Cloud = null }.CloudEnvironment);
-        Assert.AreEqual(CloudEnvironment.AzurePublicCloud, new ScalerMetadata { Cloud = nameof(CloudEnvironment.AzurePublicCloud) }.CloudEnvironment);
-        Assert.AreEqual(CloudEnvironment.AzureUSGovernmentCloud, new ScalerMetadata { Cloud = nameof(CloudEnvironment.AzureUSGovernmentCloud) }.CloudEnvironment);
-        Assert.AreEqual(CloudEnvironment.AzureChinaCloud, new ScalerMetadata { Cloud = nameof(CloudEnvironment.AzureChinaCloud) }.CloudEnvironment);
-        Assert.AreEqual(CloudEnvironment.AzureGermanCloud, new ScalerMetadata { Cloud = nameof(CloudEnvironment.AzureGermanCloud) }.CloudEnvironment);
-        Assert.AreEqual(CloudEnvironment.Unknown, new ScalerMetadata { Cloud = "foo" }.CloudEnvironment);
-    }
-
-    [TestMethod]
-    public void ResolveConnectionString()
-    {
-        _ = Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().ResolveConnectionString(null!));
-
-        MockEnvironment env = new();
-        env.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, "one=1");
-        env.SetEnvironmentVariable("MY_CONNECTION", "two=2");
-
-        Assert.AreEqual("one=1", new ScalerMetadata().ResolveConnectionString(env));
-        Assert.AreEqual("two=2", new ScalerMetadata { ConnectionFromEnv = "MY_CONNECTION" }.ResolveConnectionString(env));
-        Assert.AreEqual("three=3", new ScalerMetadata { Connection = "three=3" }.ResolveConnectionString(env));
-    }
-
-    [TestMethod]
-    public void Validate()
-    {
-        _ = Assert.ThrowsException<ArgumentNullException>(() => new ScalerMetadata().Validate(null!).ToList());
-
-        MockEnvironment env = new();
-        env.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, "UseDevelopmentStorage=true");
-
-        IServiceProvider provider = new ServiceCollection()
-            .AddSingleton<IProcessEnvironment>(env)
+        _serviceProvider = new ServiceCollection()
+            .AddSingleton<IProcessEnvironment>(_environment)
             .BuildServiceProvider();
-
-        // Default value is valid
-        AssertValidation(new ScalerMetadata(), provider, 0);
-
-        // Negative MaxActivitiesPerWorker
-        AssertValidation(new ScalerMetadata { MaxActivitiesPerWorker = -1 }, provider, 1);
-
-        // Negative MaxOrchestrationsPerWorker
-        AssertValidation(new ScalerMetadata { MaxOrchestrationsPerWorker = -1 }, provider, 1);
-
-        // Null or white space TaskHubName
-        AssertValidation(new ScalerMetadata { TaskHubName = null! }, provider, 1);
-        AssertValidation(new ScalerMetadata { TaskHubName = "" }, provider, 1);
-        AssertValidation(new ScalerMetadata { TaskHubName = "\t" }, provider, 1);
-
-        // Private Cloud + No Suffix
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = new Uri("https://test.authority.com"), Cloud = "private", EndpointSuffix = null, UseManagedIdentity = true }, provider, 1);
-
-        // Private Cloud + Blank Suffix
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = new Uri("https://test.authority.com"), Cloud = "private", EndpointSuffix = "   ", UseManagedIdentity = true }, provider, 1);
-
-        // Private Cloud + No Authority
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = null, Cloud = "private", EndpointSuffix = "some.suffix", UseManagedIdentity = true }, provider, 1);
-
-        // Non-Private Cloud + Suffix
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Cloud = "AzurePublicCloud", EndpointSuffix = "some.suffix", UseManagedIdentity = true }, provider, 1);
-
-        // Non-Private Cloud + Authority
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ActiveDirectoryEndpoint = new Uri("https://test.authority.com"), Cloud = "AzurePublicCloud", UseManagedIdentity = true }, provider, 1);
-
-        // AAD + No Account
-        AssertValidation(new ScalerMetadata { AccountName = null, UseManagedIdentity = true }, provider, 1);
-        AssertValidation(new ScalerMetadata { AccountName = "", UseManagedIdentity = true }, provider, 1);
-        AssertValidation(new ScalerMetadata { AccountName = "\t", UseManagedIdentity = true }, provider, 1);
-
-        // AAD + Unknown Cloud
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Cloud = "foobar", UseManagedIdentity = true }, provider, 1);
-
-        // AAD + Connection
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", Connection = "UseDevelopmentStorage=true", UseManagedIdentity = true }, provider, 1);
-
-        // AAD + ConnectionFromEnv
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", ConnectionFromEnv = "MY_CONNECTION", UseManagedIdentity = true }, provider, 1);
-
-        // No AAD + Account
-        AssertValidation(new ScalerMetadata { AccountName = "mytestaccount", UseManagedIdentity = false }, provider, 1);
-
-        // No AAD + ClientId
-        AssertValidation(new ScalerMetadata { ClientId = "clientid", UseManagedIdentity = false }, provider, 1);
-
-        // No AAD + Cloud
-        AssertValidation(new ScalerMetadata { Cloud = "AzurePublicCloud", UseManagedIdentity = false }, provider, 1);
-
-        // No AAD + Invalid Connection
-        AssertValidation(new ScalerMetadata { Connection = "", UseManagedIdentity = false }, provider, 1);
-        AssertValidation(new ScalerMetadata { Connection = "\t", UseManagedIdentity = false }, provider, 1);
-
-        // No AAD + Invalid ConnectionFromEnv
-        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "", UseManagedIdentity = false }, provider, 1);
-        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "\t", UseManagedIdentity = false }, provider, 1);
-
-        // No AAD + Cannot resolve connection string
-        AssertValidation(new ScalerMetadata { ConnectionFromEnv = "MY_CONNECTION", UseManagedIdentity = false }, provider, 1);
-
-        // No AAD + Cannot resolve default connection string
-        env.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, null);
-        AssertValidation(new ScalerMetadata(), provider, 1);
     }
 
-    private static void AssertValidation(ScalerMetadata metadata, IServiceProvider provider, int expectedErrors)
+    [Theory]
+    [InlineData(CloudEnvironment.AzurePublicCloud, null)]
+    [InlineData(CloudEnvironment.AzurePublicCloud, nameof(CloudEnvironment.AzurePublicCloud))]
+    [InlineData(CloudEnvironment.AzureUSGovernmentCloud, nameof(CloudEnvironment.AzureUSGovernmentCloud))]
+    [InlineData(CloudEnvironment.AzureChinaCloud, nameof(CloudEnvironment.AzureChinaCloud))]
+    [InlineData(CloudEnvironment.AzureGermanCloud, nameof(CloudEnvironment.AzureGermanCloud))]
+    [InlineData(CloudEnvironment.Unknown, "foo")]
+    public void GivenCloudString_WhenGettingCloudEnvironment_ThenReturnCorrespondingValue(CloudEnvironment expected, string? cloud)
+        => Assert.Equal(expected, new ScalerMetadata { Cloud = cloud }.CloudEnvironment);
+
+    [Fact]
+    public void GivenNullEnvironment_WhenResolvingConnectionString_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new ScalerMetadata().ResolveConnectionString(null!));
+
+    [Theory]
+    [InlineData(null, ScalerMetadata.DefaultConnectionEnvironmentVariable, "one=1")]
+    [InlineData("MY_CONNECTION", "MY_CONNECTION", "one=1")]
+    public void GivenConnectionEnvironmentVariable_WhenResolvingConnectionString_ThenLookUpCorrectValue(string? connectionFromEnv, string key, string value)
     {
-        List<ValidationResult> errors = metadata.Validate(new ValidationContext(metadata, provider, null)).ToList();
-        Assert.AreEqual(expectedErrors, errors.Count, string.Join(Environment.NewLine, errors.Select(x => x.ErrorMessage)));
+        _environment.SetEnvironmentVariable(key, value);
+
+        ScalerMetadata metadata = new() { ConnectionFromEnv = connectionFromEnv };
+        Assert.Equal(value, metadata.ResolveConnectionString(_environment));
+    }
+
+    [Fact]
+    public void GivenProvidedConnectionString_WhenResolvingConnectionString_ThenUseInsteadOfEnvironmentVariable()
+    {
+        _environment.SetEnvironmentVariable(ScalerMetadata.DefaultConnectionEnvironmentVariable, "one=1");
+        _environment.SetEnvironmentVariable("MY_CONNECTION", "two=2");
+
+        ScalerMetadata metadata = new() { Connection = "three=3", ConnectionFromEnv = "MY_CONNECTION" };
+        Assert.Equal("three=3", metadata.ResolveConnectionString(_environment));
+    }
+
+    [Fact]
+    public void GivenNullContext_WhenValidating_ThenThrowArgumentNullException()
+    {
+        ScalerMetadata metadata = new();
+        _ = Assert.Throws<ArgumentNullException>(() => ((IValidatableObject)metadata).Validate(null!));
+    }
+
+    [Fact]
+    public void GivenMissingProcessEnvironmentService_WhenValidating_ThenThrowInvalidOperationException()
+    {
+        ScalerMetadata metadata = new();
+        ValidationContext context = new(metadata, new ServiceCollection().BuildServiceProvider(), null);
+        _ = Assert.Throws<InvalidOperationException>(() => ((IValidatableObject)metadata).Validate(context));
+    }
+
+    [Fact]
+    public void GivenPublicCloudWithAadEndpoint_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            ActiveDirectoryEndpoint = new Uri("https://example.aad"),
+            Cloud = nameof(CloudEnvironment.AzurePublicCloud),
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenPublicCloudWithEndpointSuffix_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            Cloud = nameof(CloudEnvironment.AzurePublicCloud),
+            EndpointSuffix = "example",
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenPrivateCloudWithMissingAadEndpoint_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            ActiveDirectoryEndpoint = null,
+            Cloud = nameof(CloudEnvironment.Private),
+            EndpointSuffix = "example",
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("\r\n")]
+    public void GivenPrivateCloudWithMissingEndpointSuffix_WhenValidating_ThenThrowValidationException(string? suffix)
+    {
+        ScalerMetadata metadata = new()
+        {
+            ActiveDirectoryEndpoint = new Uri("https://example.aad"),
+            Cloud = nameof(CloudEnvironment.Private),
+            EndpointSuffix = suffix,
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void GivenBlankAccountName_WhenValidating_ThenThrowValidationException(string accountName)
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = accountName,
+            Cloud = nameof(CloudEnvironment.Private),
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenAccountWithUnknownCloud_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = "example",
+            Cloud = "other",
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenAccountWithConnection_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = "example",
+            Connection = "Connection=property",
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenAccountWithConnectionFromEnv_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = "example",
+            ConnectionFromEnv = "CONNECTION",
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenAccountWithNoIdentityBasedConnectionClientId_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = "example",
+            ClientId = Guid.NewGuid().ToString(),
+            UseManagedIdentity = false,
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenConnectionWithClientId_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            ClientId = Guid.NewGuid().ToString(),
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenConnectionWithCloud_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            Cloud = nameof(CloudEnvironment.AzureUSGovernmentCloud),
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Fact]
+    public void GivenConnectionWithConnectionBasedIdentity_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            UseManagedIdentity = true,
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" \t ")]
+    public void GivenEmptyOrWhiteSpaceConnection_WhenValidating_ThenThrowValidationException(string connection)
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            Connection = connection,
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" \t ")]
+    public void GivenEmptyOrWhiteSpaceConnectionFromEnv_WhenValidating_ThenThrowValidationException(string connectionFromEnv)
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            ConnectionFromEnv = connectionFromEnv,
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData(null, "")]
+    [InlineData(null, "    ")]
+    [InlineData("INVALID", null)]
+    [InlineData("INVALID", "")]
+    [InlineData("INVALID", "    ")]
+    public void GivenNullOrWhiteSpaceResolvedConnection_WhenValidating_ThenThrowValidationException(string? connectionFromEnv, string? value)
+    {
+        _environment.SetEnvironmentVariable(connectionFromEnv ?? ScalerMetadata.DefaultConnectionEnvironmentVariable, value);
+
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            ConnectionFromEnv = connectionFromEnv,
+        };
+
+        _ = Assert.Throws<ValidationException>(() => metadata.ThrowIfInvalid(_serviceProvider));
     }
 }

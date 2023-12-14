@@ -44,10 +44,10 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     //             T = M
 
     private readonly IServiceProvider _serviceProvider;
-    private readonly AzureStorageTaskHubBrowser _taskHubBrowser;
+    private readonly AzureStorageTaskHubClient _taskHubClient;
     private readonly IProcessEnvironment _environment;
     private readonly IOrchestrationAllocator _partitionAllocator;
-    private readonly ILogger<DurableTaskAzureStorageScalerService> _logger;
+    private readonly ILogger _logger;
 
     internal const string MetricName = "TaskHubScale";
 
@@ -60,10 +60,10 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     public DurableTaskAzureStorageScalerService(IServiceProvider serviceProvider)
     {
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _taskHubBrowser = _serviceProvider.GetRequiredService<AzureStorageTaskHubBrowser>();
+        _taskHubClient = _serviceProvider.GetRequiredService<AzureStorageTaskHubClient>();
         _environment = _serviceProvider.GetRequiredService<IProcessEnvironment>();
         _partitionAllocator = _serviceProvider.GetRequiredService<IOrchestrationAllocator>();
-        _logger = _serviceProvider.GetRequiredService<ILogger<DurableTaskAzureStorageScalerService>>();
+        _logger = _serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(LogCategories.Default);
     }
 
     /// <summary>
@@ -83,16 +83,16 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(context);
 
-        ScalerMetadata? metadata = request
+        ScalerMetadata metadata = request
             .ScaledObjectRef
             .ScalerMetadata
             .ToConfiguration()
             .GetOrCreate<ScalerMetadata>()
-            .EnsureValidated(_serviceProvider);
+            .ThrowIfInvalid(_serviceProvider);
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
 
-        ITaskHubQueueMonitor monitor = await _taskHubBrowser
+        ITaskHubQueueMonitor monitor = await _taskHubClient
             .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
             .ConfigureAwait(false);
 
@@ -135,7 +135,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .ScalerMetadata
             .ToConfiguration()
             .GetOrCreate<ScalerMetadata>()
-            .EnsureValidated(_serviceProvider);
+            .ThrowIfInvalid(_serviceProvider);
 
         _logger.ComputedScalerMetricTarget(metadata.TaskHubName, metadata.MaxActivitiesPerWorker);
         return Task.FromResult(
@@ -175,11 +175,11 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
             .ScalerMetadata
             .ToConfiguration()
             .GetOrCreate<ScalerMetadata>()
-            .EnsureValidated(_serviceProvider);
+            .ThrowIfInvalid(_serviceProvider);
 
         AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo(_environment);
 
-        ITaskHubQueueMonitor monitor = await _taskHubBrowser
+        ITaskHubQueueMonitor monitor = await _taskHubClient
             .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
             .ConfigureAwait(false);
 

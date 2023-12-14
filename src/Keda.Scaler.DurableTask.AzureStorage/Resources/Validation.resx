@@ -117,11 +117,8 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AadOnlyFieldFormat" xml:space="preserve">
-    <value>{0} should only be specified if using managed identity.</value>
-  </data>
-  <data name="AadRequiredFieldFormat" xml:space="preserve">
-    <value>{0} must be specified if using managed identity.</value>
+  <data name="AmbiguousConnectionOptionFormat" xml:space="preserve">
+    <value>{0} cannot be specified in addition to AccountName.</value>
   </data>
   <data name="BlankConnectionVarFormat" xml:space="preserve">
     <value>Unable to resolve the connection string from environment variable '{0}'.</value>
@@ -129,8 +126,8 @@
   <data name="FileNotFoundMessage" xml:space="preserve">
     <value>Unable to find the specified file.</value>
   </data>
-  <data name="InvalidAadFieldFormat" xml:space="preserve">
-    <value>{0} should not be specified if using managed identity.</value>
+  <data name="InvalidConnectionStringOptionFormat" xml:space="preserve">
+    <value>{0} cannot be specified when using connection strings.</value>
   </data>
   <data name="InvalidPropertyTypeFormat" xml:space="preserve">
     <value>Property must be of type {0}.</value>
@@ -138,20 +135,17 @@
   <data name="MissingCertificateMessage" xml:space="preserve">
     <value>A certificate must be specified with a key.</value>
   </data>
+  <data name="MissingIdentityCredentialOptionFormat" xml:space="preserve">
+    <value>{0} may only be specified when using identity-based connections.</value>
+  </data>
   <data name="OptionalBlankValueFormat" xml:space="preserve">
     <value>If specified, {0} cannot be empty or consist entirely of white space characters.</value>
-  </data>
-  <data name="PositiveValueFormat" xml:space="preserve">
-    <value>{0} must be a positive number.</value>
   </data>
   <data name="PrivateCloudOnlyFieldFormat" xml:space="preserve">
     <value>{0} should only be specified if using a private cloud.</value>
   </data>
   <data name="PrivateCloudRequiredFieldFormat" xml:space="preserve">
     <value>{0} must be specified if using a private cloud.</value>
-  </data>
-  <data name="RequiredBlankValueFormat" xml:space="preserve">
-    <value>{0} is required and cannot be empty or consist entirely of white space characters.</value>
   </data>
   <data name="UnknownValueFormat" xml:space="preserve">
     <value>Unknown value '{0}' for {1}.</value>

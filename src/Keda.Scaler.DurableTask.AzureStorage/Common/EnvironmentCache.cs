@@ -11,10 +11,14 @@ internal sealed class EnvironmentCache : IProcessEnvironment
     private readonly IProcessEnvironment _environment;
     private readonly ConcurrentDictionary<string, string?> _cache = new();
 
-    public EnvironmentCache(IProcessEnvironment environment)
+    public EnvironmentCache()
+        : this(ProcessEnvironment.Current)
+    { }
+
+    internal EnvironmentCache(IProcessEnvironment environment)
         => _environment = environment ?? throw new ArgumentNullException(nameof(environment));
 
     /// <inheritdoc/>
-    public string? GetEnvironmentVariable(string variable)
-        => _cache.GetOrAdd(variable, _ => _environment.GetEnvironmentVariable(variable));
+    public string? GetVariable(string variable)
+        => _cache.GetOrAdd(variable, _ => _environment.GetVariable(variable));
 }

@@ -119,12 +119,14 @@ public sealed class ScalerMetadata : IValidatableObject
     /// Gets the maximum number of activity work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
+    [Range(1, int.MaxValue)]
     public int MaxActivitiesPerWorker { get; init; } = 10;
 
     /// <summary>
     /// Gets the maximum number of orchestration work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
+    [Range(1, int.MaxValue)]
     public int MaxOrchestrationsPerWorker { get; init; } = 5;
 
     /// <summary>
@@ -132,6 +134,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// </summary>
     /// <remarks>If unspecified, the default name is <c>"TestHubName"</c>.</remarks>
     /// <value>The name of the task hub.</value>
+    [Required]
     public string TaskHubName { get; init; } = "TestHubName";
 
     /// <summary>
@@ -166,101 +169,70 @@ public sealed class ScalerMetadata : IValidatableObject
         ArgumentNullException.ThrowIfNull(environment);
 
         return Connection is null
-            ? environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable)
+            ? environment.GetVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable)
             : Connection;
     }
 
-    /// <summary>
-    /// Enumerates all of the errors associated with the state of the <see cref="ScalerMetadata"/>, if any.
-    /// </summary>
-    /// <param name="validationContext">The context for the validation.</param>
-    /// <returns>Zero or more errors based on the state of this instance.</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="validationContext"/> is <see langword="null"/>.</exception>
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+    IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext)
     {
         ArgumentNullException.ThrowIfNull(validationContext);
+        IProcessEnvironment environment = validationContext.GetRequiredService<IProcessEnvironment>();
 
-        // Validate common fields
-        IEnumerable<ValidationResult> results = ValidateCommonMetadata();
-
-        // Validate cloud metadata
-        results = results.Concat(
-            CloudEnvironment == CloudEnvironment.Private
-                ? ValidatePrivateCloudMetadata()
-                : ValidateNonPublicCloudMetadata());
-
-        // Validate fields based on whether managed identity is used
-        results = results.Concat(
-            UseManagedIdentity
-                ? ValidateManagedIdentityMetadata()
-                : ValidateConnectionStringMetadata(validationContext));
-
-        return results;
+        return ValidateCloudMetadata().Concat(AccountName is null ? ValidateConnectionStringMetadata(environment) : ValidateAccountMetadata());
     }
 
-    private IEnumerable<ValidationResult> ValidateCommonMetadata()
+    private IEnumerable<ValidationResult> ValidateCloudMetadata()
     {
-        if (string.IsNullOrWhiteSpace(TaskHubName))
-            yield return new ValidationResult(SR.Format(SR.RequiredBlankValueFormat, nameof(TaskHubName)));
+        if (CloudEnvironment is CloudEnvironment.Private)
+        {
+            if (ActiveDirectoryEndpoint is null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(ActiveDirectoryEndpoint)));
 
-        if (MaxActivitiesPerWorker < 1)
-            yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxActivitiesPerWorker)));
+            if (EndpointSuffix is null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(EndpointSuffix)));
 
-        if (MaxOrchestrationsPerWorker < 1)
-            yield return new ValidationResult(SR.Format(SR.PositiveValueFormat, nameof(MaxOrchestrationsPerWorker)));
+            if (EndpointSuffix is not null && string.IsNullOrWhiteSpace(EndpointSuffix))
+                yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(EndpointSuffix)));
+        }
+        else
+        {
+            if (ActiveDirectoryEndpoint is not null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(ActiveDirectoryEndpoint)));
+
+            if (EndpointSuffix is not null)
+                yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(EndpointSuffix)));
+        }
     }
 
-    private IEnumerable<ValidationResult> ValidatePrivateCloudMetadata()
+    private IEnumerable<ValidationResult> ValidateAccountMetadata()
     {
-        if (ActiveDirectoryEndpoint is null)
-            yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(ActiveDirectoryEndpoint)));
-
-        if (EndpointSuffix is null)
-            yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(EndpointSuffix)));
-
-        if (EndpointSuffix is not null && string.IsNullOrWhiteSpace(EndpointSuffix))
-            yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(EndpointSuffix)));
-    }
-
-    private IEnumerable<ValidationResult> ValidateNonPublicCloudMetadata()
-    {
-        if (ActiveDirectoryEndpoint is not null)
-            yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(ActiveDirectoryEndpoint)));
-
-        if (EndpointSuffix is not null)
-            yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(EndpointSuffix)));
-    }
-
-    private IEnumerable<ValidationResult> ValidateManagedIdentityMetadata()
-    {
-        if (AccountName is null)
-            yield return new ValidationResult(SR.Format(SR.AadRequiredFieldFormat, nameof(AccountName)));
-
-        if (AccountName is not null && string.IsNullOrWhiteSpace(AccountName))
+        if (string.IsNullOrWhiteSpace(AccountName))
             yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(AccountName)));
 
-        if (CloudEnvironment == CloudEnvironment.Unknown)
+        if (CloudEnvironment is CloudEnvironment.Unknown)
             yield return new ValidationResult(SR.Format(SR.UnknownValueFormat, Cloud, nameof(Cloud)));
 
         if (Connection is not null)
-            yield return new ValidationResult(SR.Format(SR.InvalidAadFieldFormat, nameof(Connection)));
+            yield return new ValidationResult(SR.Format(SR.AmbiguousConnectionOptionFormat, nameof(Connection)));
 
         if (ConnectionFromEnv is not null)
-            yield return new ValidationResult(SR.Format(SR.InvalidAadFieldFormat, nameof(ConnectionFromEnv)));
+            yield return new ValidationResult(SR.Format(SR.AmbiguousConnectionOptionFormat, nameof(ConnectionFromEnv)));
+
+        if (!UseManagedIdentity && ClientId is not null)
+            yield return new ValidationResult(SR.Format(SR.MissingIdentityCredentialOptionFormat, nameof(ClientId)));
     }
 
-    private IEnumerable<ValidationResult> ValidateConnectionStringMetadata(ValidationContext validationContext)
+    private IEnumerable<ValidationResult> ValidateConnectionStringMetadata(IProcessEnvironment environment)
     {
-        if (AccountName is not null)
-            yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(AccountName)));
-
         if (ClientId is not null)
-            yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(ClientId)));
+            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(ClientId)));
 
         if (Cloud is not null)
-            yield return new ValidationResult(SR.Format(SR.AadOnlyFieldFormat, nameof(Cloud)));
+            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(Cloud)));
 
-        IProcessEnvironment environment = validationContext.GetRequiredService<IProcessEnvironment>();
+        if (UseManagedIdentity)
+            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(UseManagedIdentity)));
+
         if (Connection is not null && string.IsNullOrWhiteSpace(Connection))
             yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(Connection)));
         else if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))

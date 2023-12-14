@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,22 +17,23 @@ using Microsoft.Extensions.Logging;
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 /// <summary>
-/// Represents a browser over one or more Durable Task Hubs that use the Azure Storage backend provider.
+/// Represents a client for interacting with Durable Task Hubs that use the Azure Storage backend provider.
 /// </summary>
-public class AzureStorageTaskHubBrowser
+public class AzureStorageTaskHubClient
 {
     private readonly IStorageAccountClientFactory<BlobServiceClient> _blobServiceClientFactory;
     private readonly IStorageAccountClientFactory<QueueServiceClient> _queueServiceClientFactory;
     private readonly ILogger _logger;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="AzureStorageTaskHubBrowser"/> class.
+    /// Initializes a new instance of the <see cref="AzureStorageTaskHubClient"/> class.
     /// </summary>
     /// <param name="blobServiceClientFactory">A factory for creating Azure Blob Storage service clients.</param>
     /// <param name="queueServiceClientFactory">A factory for creating Azure Queue service clients.</param>
     /// <param name="loggerFactory">A factory for creating loggers.</param>
     /// <exception cref="ArgumentNullException"><paramref name="loggerFactory"/> is <see langword="null"/>.</exception>
-    public AzureStorageTaskHubBrowser(
+    [SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Preserve XML doc for class and ctor.")]
+    public AzureStorageTaskHubClient(
         IStorageAccountClientFactory<BlobServiceClient> blobServiceClientFactory,
         IStorageAccountClientFactory<QueueServiceClient> queueServiceClientFactory,
         ILoggerFactory loggerFactory)
@@ -80,7 +82,7 @@ public class AzureStorageTaskHubBrowser
             _logger.FoundTaskHub(info.TaskHubName, info.PartitionCount, info.CreatedAt);
             return new TaskHubQueueMonitor(info, _queueServiceClientFactory.GetServiceClient(accountInfo), _logger);
         }
-        catch (RequestFailedException rfe) when (rfe.Status == (int)HttpStatusCode.NotFound)
+        catch (RequestFailedException rfe) when (rfe.Status is (int)HttpStatusCode.NotFound)
         {
             _logger.CouldNotFindTaskHub(taskHub, client.Name, client.BlobContainerName);
             return NullTaskHubQueueMonitor.Instance;

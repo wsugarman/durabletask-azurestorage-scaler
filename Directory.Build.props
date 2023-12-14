@@ -49,7 +49,7 @@
   <Choose>
     <When Condition="$(MSBuildProjectName.Contains('.Test'))">
       <PropertyGroup>
-        <NoWarn>$(NoWarn);CA1707;CS1591</NoWarn>
+        <NoWarn>$(NoWarn);CA1707;CA2007;CS1591</NoWarn>
       </PropertyGroup>
     </When>
   </Choose>

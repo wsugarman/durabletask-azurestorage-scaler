@@ -10,6 +10,7 @@
     <PackageReference Include="Azure.Storage.Queues" />
     <PackageReference Include="Google.Protobuf" />
     <PackageReference Include="Grpc.Core.Api" />
+    <PackageReference Include="MartinCostello.Logging.XUnit" />
   </ItemGroup>
 
 </Project>

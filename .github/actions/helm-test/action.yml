@@ -36,6 +36,10 @@ inputs:
     default: 00:00:30
     description: The duration of each activity
     required: false
+  testStatusLoggingInterval:
+    default: 00:00:20
+    description: The logging interval when checking test conditions
+    required: false
   testStatusPollingInterval:
     default: 00:00:02
     description: The polling interval when checking test conditions
@@ -271,23 +275,24 @@ runs:
         Function__Namespace: ${{ inputs.functionAppNamespace }}
         Kubernetes__Context: kind-integration
         Scaling__ActivityDuration: ${{ inputs.testActivityDuration }}
+        Scaling__LoggingInterval: ${{ inputs.testStatusLoggingInterval }}
         Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
         Scaling__Timeout: ${{ inputs.testTimeout }}
 
-    - name: Get Keda Logs
-      shell: bash
-      if: ${{ failure() }}
+    - if: ${{ failure() }}
+      name: Get Keda Logs
+      shell: bash 
       run: kubectl logs --tail=-1 --prefix -l app=keda-operator -n keda
 
-    - name: Get Scaler Logs
+    - if: ${{ failure() }}
+      name: Get Scaler Logs
       shell: bash
-      if: ${{ failure() }}
       run: kubectl logs --tail=-1 --prefix -l app=dtfx-scaler -n keda
 
-    - name: Get Function Logs
+    - if: ${{ failure() }}
+      name: Get Function Logs
       shell: bash
-      if: ${{ failure() }}
       run: kubectl logs --tail=-1 --prefix -l app=${{ inputs.functionAppName }} -n ${{ inputs.functionAppNamespace }}
 
     - name: Uninstall Function App Helm Chart

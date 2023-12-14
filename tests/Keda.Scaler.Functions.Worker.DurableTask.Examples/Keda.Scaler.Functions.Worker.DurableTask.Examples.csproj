@@ -10,7 +10,7 @@
     <TargetFramework>net7.0</TargetFramework>
   </PropertyGroup>
 
-   <ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Functions.Worker" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.DurableTask" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" />
