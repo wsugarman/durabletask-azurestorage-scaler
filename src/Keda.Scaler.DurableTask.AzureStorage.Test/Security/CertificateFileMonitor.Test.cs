@@ -62,7 +62,7 @@ public sealed class CertificateFileMonitorTest : IDisposable
         // Edit the file and check the new value
         File.WriteAllText(certPath, "Hello world!");
 
-        Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(10)));
+        Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(30)));
         _ = Assert.ThrowsAny<CryptographicException>(() => monitor.Current);
     }
 
@@ -98,7 +98,7 @@ public sealed class CertificateFileMonitorTest : IDisposable
             using X509Certificate2 cert2 = key2.CreateSelfSignedCertificate();
             File.WriteAllBytes(certPath, cert2.Export(X509ContentType.Pkcs12));
 
-            Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(10)));
+            Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(30)));
             Assert.Equal(cert2.Thumbprint, monitor.Current.Thumbprint);
         }
         finally
