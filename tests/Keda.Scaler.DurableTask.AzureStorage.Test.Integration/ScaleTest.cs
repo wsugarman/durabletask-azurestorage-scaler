@@ -18,6 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Xunit;
+using Xunit.Abstractions;
 using Xunit.Sdk;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Integration;
@@ -29,12 +30,13 @@ public sealed class ScaleTest : IAsyncDisposable
     private readonly DurableTaskClient _durableClient;
     private readonly FunctionDeploymentOptions _deployment;
     private readonly ScaleTestOptions _options;
+    private readonly ServiceProvider _serviceProvider;
 
     private static readonly IConfiguration Configuration = new ConfigurationBuilder()
         .AddEnvironmentVariables()
         .Build();
 
-    public ScaleTest()
+    public ScaleTest(ITestOutputHelper outputHelper)
     {
         IServiceCollection services = new ServiceCollection()
             .AddSingleton(Configuration);
@@ -59,16 +61,8 @@ public sealed class ScaleTest : IAsyncDisposable
             .Bind(Configuration.GetSection(ScaleTestOptions.DefaultSectionName))
             .ValidateDataAnnotations();
 
-        IServiceProvider provider = services
-            .AddLogging(b => b
-                .AddSimpleConsole(
-                    o =>
-                    {
-                        o.IncludeScopes = true;
-                        o.SingleLine = false;
-                        o.TimestampFormat = "O";
-                        o.UseUtcTimestamp = true;
-                    }))
+        _serviceProvider = services
+            .AddLogging(b => b.AddXUnit(outputHelper))
             .AddSingleton(sp => sp
                 .GetRequiredService<IOptions<AzureStorageDurableTaskClientOptions>>()
                 .Value
@@ -82,11 +76,18 @@ public sealed class ScaleTest : IAsyncDisposable
             .AddDurableTaskClient(b => b.UseOrchestrationService())
             .BuildServiceProvider();
 
-        _logger = provider.GetRequiredService<ILogger<ScaleTest>>();
-        _kubernetes = provider.GetRequiredService<IKubernetes>();
-        _durableClient = provider.GetRequiredService<DurableTaskClient>();
-        _deployment = provider.GetRequiredService<IOptions<FunctionDeploymentOptions>>().Value;
-        _options = provider.GetRequiredService<IOptions<ScaleTestOptions>>().Value;
+        _logger = _serviceProvider.GetRequiredService<ILogger<ScaleTest>>();
+        _kubernetes = _serviceProvider.GetRequiredService<IKubernetes>();
+        _durableClient = _serviceProvider.GetRequiredService<DurableTaskClient>();
+        _deployment = _serviceProvider.GetRequiredService<IOptions<FunctionDeploymentOptions>>().Value;
+        _options = _serviceProvider.GetRequiredService<IOptions<ScaleTestOptions>>().Value;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _kubernetes.Dispose();
+        await _serviceProvider.DisposeAsync();
+        await _durableClient.DisposeAsync();
     }
 
     [Fact]
@@ -157,12 +158,6 @@ public sealed class ScaleTest : IAsyncDisposable
         // Ensure it completed successfully
         foreach (OrchestrationRuntimeStatus? actual in finalStatuses)
             Assert.Equal(OrchestrationRuntimeStatus.Completed, actual);
-    }
-
-    public ValueTask DisposeAsync()
-    {
-        _kubernetes.Dispose();
-        return _durableClient.DisposeAsync();
     }
 
     private async Task<string> StartOrchestrationAsync(int activities, CancellationToken cancellationToken)

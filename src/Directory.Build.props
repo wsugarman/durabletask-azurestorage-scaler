@@ -25,6 +25,7 @@
         <PackageReference Include="NSubstitute" />
         <PackageReference Include="NSubstitute.Analyzers.CSharp" PrivateAssets="All" />
         <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.abstractions" />
         <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
       </ItemGroup>
 

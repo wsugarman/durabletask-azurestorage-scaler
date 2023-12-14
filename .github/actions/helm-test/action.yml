@@ -37,7 +37,7 @@ inputs:
     description: The duration of each activity
     required: false
   testStatusPollingInterval:
-    default: 00:00:02
+    default: 00:01:00
     description: The polling interval when checking test conditions
     required: false
   testTimeout:
