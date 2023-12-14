@@ -48,7 +48,7 @@ public sealed class CertificateFileMonitorTest : IDisposable
 
         using RSA key1 = RSA.Create();
         using X509Certificate2 cert1 = key1.CreateSelfSignedCertificate();
-        cert1.WriteFile(certPath);
+        File.WriteAllBytes(certPath, cert1.Export(X509ContentType.Pkcs12));
 
         using ManualResetEventSlim changeEvent = new(initialState: false);
         using CertificateFile certificateFile = new(certPath);
@@ -74,7 +74,7 @@ public sealed class CertificateFileMonitorTest : IDisposable
 
         using RSA key1 = RSA.Create();
         using X509Certificate2 cert1 = key1.CreateSelfSignedCertificate();
-        cert1.WriteFile(certPath);
+        File.WriteAllBytes(certPath, cert1.Export(X509ContentType.Pkcs12));
 
         using ManualResetEventSlim changeEvent = new(initialState: false);
         using CertificateFile certificateFile = new(certPath);
@@ -96,7 +96,7 @@ public sealed class CertificateFileMonitorTest : IDisposable
             // Edit the file and check the new value
             using RSA key2 = RSA.Create();
             using X509Certificate2 cert2 = key2.CreateSelfSignedCertificate();
-            cert2.WriteFile(certPath);
+            File.WriteAllBytes(certPath, cert2.Export(X509ContentType.Pkcs12));
 
             Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(10)));
             Assert.Equal(cert2.Thumbprint, monitor.Current.Thumbprint);

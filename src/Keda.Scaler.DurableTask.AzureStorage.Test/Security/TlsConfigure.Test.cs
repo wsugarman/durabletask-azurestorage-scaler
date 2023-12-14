@@ -45,9 +45,9 @@ public sealed class TlsConfigureTest : IDisposable
         _caCertificate = _caCertKey.CreateSelfSignedCertificate();
         _serverCertificate = _serverKey.CreateCertificate(_caCertificate, nameof(TlsConfigureTest));
 
-        _caCertificate.WriteFile(_caCertPath);
-        _serverCertificate.WriteFile(_serverCertPath);
-        _serverKey.WriteFile(_serverKeyPath);
+        File.WriteAllText(_caCertPath, _caCertificate.ExportCertificatePem());
+        File.WriteAllText(_serverCertPath, _serverCertificate.ExportCertificatePem());
+        File.WriteAllText(_serverKeyPath, _serverKey.ExportRSAPrivateKeyPem());
 
         _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
     }

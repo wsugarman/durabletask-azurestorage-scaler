@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
 using System.Diagnostics.CodeAnalysis;
@@ -36,35 +35,11 @@ internal static class CertificateExtensions
         return certRequest.CreateSelfSigned(DateTimeOffset.UtcNow.AddHours(-2), DateTimeOffset.UtcNow.AddHours(2));
     }
 
-    public static void WriteFile(this X509Certificate2 certificate, string path)
-    {
-        ArgumentNullException.ThrowIfNull(certificate);
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
-        using FileStream certStream = File.Create(path);
-        using StreamWriter certWriter = new(certStream);
-        certWriter.WriteBase64Cert(certificate);
-    }
-
-    public static void WriteFile(this RSA key, string path)
-    {
-        ArgumentNullException.ThrowIfNull(key);
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
-        using FileStream certStream = File.Create(path);
-        using StreamWriter certWriter = new(certStream);
-        certWriter.WritePrivateKey(key);
-    }
-
-    public static void WriteFile(this X509Certificate2 certificate, RSA key, string path)
+    public static string? ExportCertificatePem(this X509Certificate2 certificate, RSA key)
     {
         ArgumentNullException.ThrowIfNull(certificate);
         ArgumentNullException.ThrowIfNull(key);
-        ArgumentException.ThrowIfNullOrWhiteSpace(path);
 
-        using FileStream stream = File.Create(path);
-        using StreamWriter writer = new(stream);
-        writer.WriteBase64Cert(certificate);
-        writer.WritePrivateKey(key);
+        return certificate.ExportCertificatePem() + Environment.NewLine + key.ExportRSAPrivateKeyPem();
     }
 }

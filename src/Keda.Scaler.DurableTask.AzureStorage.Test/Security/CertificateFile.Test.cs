@@ -67,7 +67,7 @@ public sealed class CertificateFileTest : IDisposable
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-        expected.WriteFile(certPath);
+        File.WriteAllBytes(certPath, expected.Export(X509ContentType.Pkcs12));
 
         using CertificateFile certificateFile = new(certPath);
         using X509Certificate2 actual = certificateFile.Load();
@@ -87,8 +87,8 @@ public sealed class CertificateFileTest : IDisposable
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-        expected.WriteFile(certPath);
-        key.WriteFile(keyPath);
+        File.WriteAllText(certPath, expected.ExportCertificatePem());
+        File.WriteAllText(keyPath, key.ExportRSAPrivateKeyPem());
 
         using CertificateFile certificateFile = CertificateFile.CreateFromPemFile(certPath, keyPath);
         using X509Certificate2 actual = certificateFile.Load();
@@ -106,7 +106,7 @@ public sealed class CertificateFileTest : IDisposable
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-        expected.WriteFile(key, certPath);
+        File.WriteAllText(certPath, expected.ExportCertificatePem(key));
 
         using CertificateFile certificateFile = CertificateFile.CreateFromPemFile(certPath);
         using X509Certificate2 actual = certificateFile.Load();
@@ -124,7 +124,7 @@ public sealed class CertificateFileTest : IDisposable
 
         using RSA key1 = RSA.Create();
         using X509Certificate2 cert1 = key1.CreateSelfSignedCertificate();
-        cert1.WriteFile(certPath);
+        File.WriteAllBytes(certPath, cert1.Export(X509ContentType.Pkcs12));
 
         using ManualResetEventSlim changeEvent = new(initialState: false);
         using CertificateFile certificateFile = new(certPath);
@@ -139,7 +139,7 @@ public sealed class CertificateFileTest : IDisposable
         // Note: On Linux, there appears to be an issue monitoring changes when overwriting the file
         using RSA key2 = RSA.Create();
         using X509Certificate2 cert2 = key2.CreateSelfSignedCertificate();
-        cert2.WriteFile(certPath);
+        File.WriteAllBytes(certPath, cert2.Export(X509ContentType.Pkcs12));
 
         Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(10)));
         using X509Certificate2 actual2 = certificateFile.Load();
