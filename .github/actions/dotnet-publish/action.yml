@@ -83,10 +83,10 @@ runs:
       shell: bash
       run: |
         dotnet publish "./src/Keda.Scaler.DurableTask.AzureStorage/Keda.Scaler.DurableTask.AzureStorage.csproj" \
+          -r linux-x64 \
           -c "${{ inputs.buildConfiguration }}" \
           "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
           -warnaserror \
-          --no-build \
           -o "${{ runner.temp }}/app"
 
     - if: ${{ inputs.sign == 'true' && success() }}
