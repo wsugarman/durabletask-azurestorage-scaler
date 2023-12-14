@@ -23,7 +23,7 @@ runs:
         path: ${{ runner.temp }}/codecoverage
 
     - name: Codecov Upload
-      uses: codecov/codecov-action@v4.0.0-beta.3
+      uses: codecov/codecov-action@v2
       with:
         files: coverage.cobertura.xml
         fail_ci_if_error: true
