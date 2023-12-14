@@ -38,7 +38,14 @@ public sealed class CertificateFileMonitorTest : IDisposable
 
     [Fact]
     public void GivenNullCertificateFile_WhenCreatingMonitor_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => CertificateFileMonitor.Create(null!));
+        => Assert.Throws<ArgumentNullException>(() => CertificateFileMonitor.Create(null!, _logger));
+
+    [Fact]
+    public void GivenNullLogger_WhenCreatingMonitor_ThenThrowArgumentNullException()
+    {
+        using CertificateFile file = new(Path.Combine(_tempFolder, "unused.crt"));
+        _ = Assert.Throws<ArgumentNullException>(() => CertificateFileMonitor.Create(file, null!));
+    }
 
     [Fact]
     public void GivenChangingToInvalidFile_WhenMonitoringCertificateFile_ThenAutomaticallyUpdateValue()

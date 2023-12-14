@@ -7,7 +7,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
@@ -128,10 +127,12 @@ internal sealed class CertificateFileMonitor : IDisposable
         previousToken.OnReload();
     }
 
-    public static CertificateFileMonitor Create(CertificateFile file, ILogger? logger = null)
+    public static CertificateFileMonitor Create(CertificateFile file, ILogger logger)
     {
+        ArgumentNullException.ThrowIfNull(logger);
+
         CertificateFileMonitor monitor = new(file);
-        _ = monitor.Subscribe(logger ?? NullLogger.Instance);
+        _ = monitor.Subscribe(logger);
 
         return monitor;
     }
