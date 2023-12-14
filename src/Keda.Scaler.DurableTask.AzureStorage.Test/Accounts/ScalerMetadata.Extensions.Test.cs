@@ -10,33 +10,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
 public class ScalerMetadataExtensionsTest
 {
-    private readonly MockEnvironment _environment = new();
-
     [Fact]
     public void GivenNullMetadata_WhenGettingAccountInfo_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!, _environment));
-
-    [Fact]
-    public void GivenNullEnvironment_WhenGettingAccountInfo_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new ScalerMetadata().GetAccountInfo(null!));
+        => Assert.Throws<ArgumentNullException>(() => ScalerMetadataExtensions.GetAccountInfo(null!));
 
     [Fact]
     public void GivenConnectionStringScalerMetadata_WhenGettingAccountInfo_ThenPassthroughData()
     {
         ScalerMetadata metadata = new() { Connection = "UseDevelopmentStorage=true" };
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
-        Assert.Equal("UseDevelopmentStorage=true", actual.ConnectionString);
-    }
-
-    [Fact]
-    public void GivenEnvConnectionStringScalerMetadata_WhenGettingAccountInfo_ThenLookupVariable()
-    {
-        const string ConnectionKey = "Connection";
-        ScalerMetadata metadata = new() { ConnectionFromEnv = ConnectionKey };
-
-        _environment.SetEnvironmentVariable(ConnectionKey, "UseDevelopmentStorage=true");
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
-
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
         Assert.Equal("UseDevelopmentStorage=true", actual.ConnectionString);
     }
 
@@ -45,7 +27,7 @@ public class ScalerMetadataExtensionsTest
     {
         ScalerMetadata metadata = new() { Cloud = "foo" };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
         Assert.Null(actual.Cloud);
     }
 
@@ -64,7 +46,7 @@ public class ScalerMetadataExtensionsTest
             Cloud = cloud?.ToString("G"),
         };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
@@ -82,7 +64,7 @@ public class ScalerMetadataExtensionsTest
             UseManagedIdentity = true,
         };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
@@ -102,7 +84,7 @@ public class ScalerMetadataExtensionsTest
             EndpointSuffix = "storage.unit-test",
         };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo(_environment);
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);

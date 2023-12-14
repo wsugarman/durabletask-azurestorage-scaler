@@ -94,6 +94,28 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
     }
 
     [Fact]
+    public async Task GivenNullTaskHubMetadata_WhenGettingMonitor_ThenReturnNullMonitor()
+    {
+        const string TaskHubName = "UnitTest";
+        using CancellationTokenSource tokenSource = new();
+
+        BlobDownloadResult downloadResult = BlobDownloadResultFactory(BinaryData.FromString("null"));
+        Response<BlobDownloadResult> response = Response.FromValue(downloadResult, Substitute.For<Response>());
+        _ = _blobClient.DownloadContentAsync(default).ReturnsForAnyArgs(Task.FromResult(response));
+
+        AzureStorageAccountInfo accountInfo = new();
+        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
+        ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
+
+        _ = _blobServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));
+        _ = _blobServiceClient.Received(1).GetBlobContainerClient(Arg.Is(LeasesContainer.GetName(TaskHubName)));
+        _ = _blobContainerClient.Received(1).GetBlobClient(Arg.Is(LeasesContainer.TaskHubBlobName));
+        _ = await _blobClient.Received(1).DownloadContentAsync(Arg.Is(tokenSource.Token));
+
+        Assert.Same(NullTaskHubQueueMonitor.Instance, actual);
+    }
+
+    [Fact]
     public async Task GivenMissingTaskHubMetadata_WhenGettingMonitor_ThenReturnNullMonitor()
     {
         const string TaskHubName = "UnitTest";

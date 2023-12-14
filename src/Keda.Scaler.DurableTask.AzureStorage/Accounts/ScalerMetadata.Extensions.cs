@@ -3,16 +3,14 @@
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Common;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 
 internal static class ScalerMetadataExtensions
 {
-    public static AzureStorageAccountInfo GetAccountInfo(this ScalerMetadata scalerMetadata, IProcessEnvironment environment)
+    public static AzureStorageAccountInfo GetAccountInfo(this ScalerMetadata scalerMetadata)
     {
         ArgumentNullException.ThrowIfNull(scalerMetadata);
-        ArgumentNullException.ThrowIfNull(environment);
 
         return new AzureStorageAccountInfo
         {
@@ -24,7 +22,7 @@ internal static class ScalerMetadataExtensions
                 CloudEnvironment.Private => new AzureCloudEndpoints(scalerMetadata.ActiveDirectoryEndpoint!, scalerMetadata.EndpointSuffix!),
                 _ => AzureCloudEndpoints.ForEnvironment(scalerMetadata.CloudEnvironment),
             },
-            ConnectionString = scalerMetadata.ResolveConnectionString(environment),
+            ConnectionString = scalerMetadata.ConnectionString,
             Credential = scalerMetadata.UseManagedIdentity ? Credential.ManagedIdentity : null,
         };
     }

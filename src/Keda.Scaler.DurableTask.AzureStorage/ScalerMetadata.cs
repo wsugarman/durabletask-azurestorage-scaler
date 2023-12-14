@@ -5,11 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Threading;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
-using Keda.Scaler.DurableTask.AzureStorage.Common;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Keda.Scaler.DurableTask.AzureStorage;
+
+// TODO: Move back to init-properties once source generators support the 'init' keyword
 
 /// <summary>
 /// Represents the metadata present in the KEDA ScaledObject resource that configures the
@@ -27,7 +28,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// are not specified.
     /// </remarks>
     /// <value>The name of the Azure Storage account if specified; otherwise, <see langword="null"/>.</value>
-    public string? AccountName { get; init; }
+    public string? AccountName { get; set; }
 
     /// <summary>
     /// Gets the optional URL from which tokens may be requested for private clouds.
@@ -36,7 +37,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// This value may only be specified when the value of <see cref="Cloud"/> is <c>"private"</c>.
     /// </remarks>
     /// <value>The private cloud's host authority for Azure Active Directory (AAD).</value>
-    public Uri? ActiveDirectoryEndpoint { get; init; }
+    public Uri? ActiveDirectoryEndpoint { get; set; }
 
     /// <summary>
     /// Gets the optional client id to be used when authenticating with managed identity.
@@ -47,7 +48,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// identity is chosen. Be sure to specify a client id if there are multiple identities.
     /// </remarks>
     /// <value>The client id to be used with managed identity.</value>
-    public string? ClientId { get; init; }
+    public string? ClientId { get; set; }
 
     /// <summary>
     /// Gets the cloud environment that contains the Azure Storage account used by the Durable Task framework.
@@ -80,7 +81,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// Gets the name of the cloud environment that contains the Azure Storage account used by the Durable Task framework.
     /// </summary>
     /// <value>The name of the Azure cloud environment containing the storage account.</value>
-    public string? Cloud { get; init; }
+    public string? Cloud { get; set; }
 
     /// <summary>
     /// Gets the optional connection string for the Azure Storage account used by the Durable Task framework.
@@ -93,7 +94,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// A collection of semicolon-delimited properties used to connect to Azure Storage if specified;
     /// otherwise, <see langword="null"/>.
     /// </value>
-    public string? Connection { get; init; }
+    public string? Connection { get; set; }
 
     /// <summary>
     /// Gets the optional name of the environment variable whose value is the connection string
@@ -104,7 +105,21 @@ public sealed class ScalerMetadata : IValidatableObject
     /// are not specified.
     /// </remarks>
     /// <value>The name of an environment variable in the deployment if specified; otherwise, <see langword="null"/>.</value>
-    public string? ConnectionFromEnv { get; init; }
+    public string? ConnectionFromEnv { get; set; }
+
+    /// <summary>
+    /// Gets the optional connection string from either <see cref="Connection"/>, if specified, or
+    /// the environment variable specified by <see cref="ConnectionFromEnv"/>.
+    /// </summary>
+    /// <value>The Azure Storage connection string if specified; otherwise <see langword="null"/>.</value>
+    public string? ConnectionString
+    {
+        get
+        {
+            _connectionString ??= new Lazy<string?>(ResolveConnectionString, LazyThreadSafetyMode.None);
+            return _connectionString.Value;
+        }
+    }
 
     /// <summary>
     /// Gets the optional Azure Storage host suffix for private clouds.
@@ -113,21 +128,21 @@ public sealed class ScalerMetadata : IValidatableObject
     /// This value may only be specified when the value of <see cref="Cloud"/> is <c>"private"</c>.
     /// </remarks>
     /// <value>The private cloud's suffix for Azure Storage endpoints.</value>
-    public string? EndpointSuffix { get; init; }
+    public string? EndpointSuffix { get; set; }
 
     /// <summary>
     /// Gets the maximum number of activity work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
     [Range(1, int.MaxValue)]
-    public int MaxActivitiesPerWorker { get; init; } = 10;
+    public int MaxActivitiesPerWorker { get; set; } = 10;
 
     /// <summary>
     /// Gets the maximum number of orchestration work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
     [Range(1, int.MaxValue)]
-    public int MaxOrchestrationsPerWorker { get; init; } = 5;
+    public int MaxOrchestrationsPerWorker { get; set; } = 5;
 
     /// <summary>
     /// Gets the name of the configured task hub present in Azure Storage.
@@ -135,7 +150,7 @@ public sealed class ScalerMetadata : IValidatableObject
     /// <remarks>If unspecified, the default name is <c>"TestHubName"</c>.</remarks>
     /// <value>The name of the task hub.</value>
     [Required]
-    public string TaskHubName { get; init; } = "TestHubName";
+    public string TaskHubName { get; set; } = "TestHubName";
 
     /// <summary>
     /// Gets a value indicating whether a managed identity should be used to authenticate the connection to Azure Storage.
@@ -153,32 +168,21 @@ public sealed class ScalerMetadata : IValidatableObject
     /// <see langword="true"/> if a managed identity is available in the service pod and should be used to authenticate;
     /// otherwise, <see langword="false"/>.
     /// </value>
-    public bool UseManagedIdentity { get; init; }
+    public bool UseManagedIdentity { get; set; }
 
-    /// <summary>
-    /// Gets the resolved connection string based on the <see cref="Connection"/> and <see cref="ConnectionFromEnv"/>.
-    /// </summary>
-    /// <param name="environment">The <see cref="IProcessEnvironment"/> containing any variables.</param>
-    /// <returns>
-    /// <see cref="Connection"/>, if specified; otherwise, the value of an environment variable specified by
-    /// <see cref="ConnectionFromEnv"/> or <c>AzureWebJobsStorage</c> by default.
-    /// </returns>
-    /// <exception cref="ArgumentNullException"><paramref name="environment"/> is <see langword="null"/>.</exception>
-    public string? ResolveConnectionString(IProcessEnvironment environment)
+    private Lazy<string?>? _connectionString;
+
+    private string? ResolveConnectionString()
     {
-        ArgumentNullException.ThrowIfNull(environment);
-
         return Connection is null
-            ? environment.GetVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable)
+            ? Environment.GetEnvironmentVariable(ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable, EnvironmentVariableTarget.Process)
             : Connection;
     }
 
     IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext)
     {
         ArgumentNullException.ThrowIfNull(validationContext);
-        IProcessEnvironment environment = validationContext.GetRequiredService<IProcessEnvironment>();
-
-        return ValidateCloudMetadata().Concat(AccountName is null ? ValidateConnectionStringMetadata(environment) : ValidateAccountMetadata());
+        return ValidateCloudMetadata().Concat(AccountName is null ? ValidateConnectionStringMetadata() : ValidateAccountMetadata());
     }
 
     private IEnumerable<ValidationResult> ValidateCloudMetadata()
@@ -222,7 +226,7 @@ public sealed class ScalerMetadata : IValidatableObject
             yield return new ValidationResult(SR.Format(SR.MissingIdentityCredentialOptionFormat, nameof(ClientId)));
     }
 
-    private IEnumerable<ValidationResult> ValidateConnectionStringMetadata(IProcessEnvironment environment)
+    private IEnumerable<ValidationResult> ValidateConnectionStringMetadata()
     {
         if (ClientId is not null)
             yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(ClientId)));
@@ -237,7 +241,7 @@ public sealed class ScalerMetadata : IValidatableObject
             yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(Connection)));
         else if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))
             yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(ConnectionFromEnv)));
-        else if (string.IsNullOrWhiteSpace(ResolveConnectionString(environment)))
+        else if (string.IsNullOrWhiteSpace(ConnectionString))
             yield return new ValidationResult(SR.Format(SR.BlankConnectionVarFormat, ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable));
     }
 }

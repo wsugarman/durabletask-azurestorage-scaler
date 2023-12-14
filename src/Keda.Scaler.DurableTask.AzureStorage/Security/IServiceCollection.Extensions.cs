@@ -18,22 +18,27 @@ internal static class IServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(configuration);
 
         _ = services
+            .AddOptions<CertificateValidationOptions>(CertificateAuthenticationDefaults.AuthenticationScheme)
+            .BindConfiguration(CertificateValidationOptions.DefaultKey);
+
+        _ = services
             .AddOptions<CertificateAuthenticationOptions>(CertificateAuthenticationDefaults.AuthenticationScheme)
-            .BindConfiguration(TlsClientOptions.DefaultAuthenticationKey);
+            .Configure<IOptionsMonitor<CertificateValidationOptions>>(
+                (dest, src) => dest.RevocationMode = src.Get(CertificateAuthenticationDefaults.AuthenticationScheme).RevocationMode);
 
         _ = services
             .AddOptions<CertificateValidationCacheOptions>()
-            .BindConfiguration(TlsClientOptions.DefaultCachingKey);
+            .BindConfiguration(CertificateValidationOptions.DefaultCachingKey);
 
         _ = services
+            .AddSingleton<IValidateOptions<TlsClientOptions>, ValidateTlsClientOptions>()
             .AddOptions<TlsClientOptions>()
-            .BindConfiguration(TlsClientOptions.DefaultKey)
-            .ValidateDataAnnotations();
+            .BindConfiguration(TlsClientOptions.DefaultKey);
 
         _ = services
+            .AddSingleton<IValidateOptions<TlsServerOptions>, ValidateTlsServerOptions>()
             .AddOptions<TlsServerOptions>()
-            .BindConfiguration(TlsServerOptions.DefaultKey)
-            .ValidateDataAnnotations();
+            .BindConfiguration(TlsServerOptions.DefaultKey);
 
         if (configuration.EnforceMutualTls())
         {

@@ -46,7 +46,7 @@ public class IServiceCollectionExtensionsTest
             .AddTlsSupport("default", config);
 
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
-        Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IOptionsChangeTokenSource<CertificateAuthenticationOptions>)));
+        _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationCacheOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<TlsClientOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<TlsServerOptions>)));
@@ -83,7 +83,7 @@ public class IServiceCollectionExtensionsTest
             .AddTlsSupport("default", config);
 
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
-        Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IOptionsChangeTokenSource<CertificateAuthenticationOptions>)));
+        _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationCacheOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<TlsClientOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<TlsServerOptions>)));
