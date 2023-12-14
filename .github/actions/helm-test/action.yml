@@ -36,8 +36,12 @@ inputs:
     default: 00:00:30
     description: The duration of each activity
     required: false
-  testStatusPollingInterval:
+  testStatusLoggingInterval:
     default: 00:01:00
+    description: The logging interval when checking test conditions
+    required: false
+  testStatusPollingInterval:
+    default: 00:00:02
     description: The polling interval when checking test conditions
     required: false
   testTimeout:
@@ -271,6 +275,7 @@ runs:
         Function__Namespace: ${{ inputs.functionAppNamespace }}
         Kubernetes__Context: kind-integration
         Scaling__ActivityDuration: ${{ inputs.testActivityDuration }}
+        Scaling__LoggingInterval: ${{ inputs.testStatusLoggingInterval }}
         Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
         Scaling__Timeout: ${{ inputs.testTimeout }}

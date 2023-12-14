@@ -238,6 +238,7 @@ public sealed class ScaleTest : IAsyncDisposable
 
         _logger.MonitoringWorkerScaleUp(min);
 
+        int pollCount = 0;
         do
         {
             // Wait a moment before checking the first time
@@ -250,11 +251,15 @@ public sealed class ScaleTest : IAsyncDisposable
                 .ReadNamespacedDeploymentScaleAsync(_deployment.Name, _deployment.Namespace, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
 
-            _logger.ObservedKubernetesDeploymentScale(
-                _deployment.Name!,
-                _deployment.Namespace!,
-                scale.Status.Replicas,
-                scale.Spec.Replicas.GetValueOrDefault());
+            pollCount = ++pollCount % _options.PollingIntervalsPerLog;
+            if (pollCount == 0)
+            {
+                _logger.ObservedKubernetesDeploymentScale(
+                    _deployment.Name!,
+                    _deployment.Namespace!,
+                    scale.Status.Replicas,
+                    scale.Spec.Replicas.GetValueOrDefault());
+            }
         } while (scale.Status.Replicas < min || scale.Spec.Replicas.GetValueOrDefault() < min);
     }
 
