@@ -28,4 +28,3 @@ runs:
         directory: ${{ runner.temp }}/codecoverage/
         fail_ci_if_error: true
         token: ${{ inputs.codecovToken }}
-        verbose: true

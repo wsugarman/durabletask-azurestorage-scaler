@@ -25,6 +25,7 @@ internal sealed class CertificateFileMonitor : IDisposable
     private CertificateFileMonitor(CertificateFile file)
         => File = file ?? throw new ArgumentNullException(nameof(file));
 
+    [ExcludeFromCodeCoverage(Justification = "Concurrent edge cases are difficult to mock.")]
     public void Dispose()
     {
         // Attempt to set the disposed flag

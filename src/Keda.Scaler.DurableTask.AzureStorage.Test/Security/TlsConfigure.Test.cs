@@ -13,7 +13,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
-using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -65,20 +64,20 @@ public sealed class TlsConfigureTest : IDisposable
     [Fact]
     public void GivenNullTlsClientOptions_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(null!, Substitute.For<IOptions<TlsServerOptions>>(), _loggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create<TlsClientOptions>(null!), Substitute.For<IOptions<TlsServerOptions>>(), _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(null!, Options.Create(new TlsServerOptions()), _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create<TlsClientOptions>(null!), Options.Create(new TlsServerOptions()), _loggerFactory));
     }
 
     [Fact]
     public void GivenNullTlsServerOptions_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Substitute.For<IOptions<TlsClientOptions>>(), null!, _loggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Substitute.For<IOptions<TlsClientOptions>>(), Options.Create<TlsServerOptions>(null!), _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), null!, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), Options.Create<TlsServerOptions>(null!), _loggerFactory));
     }
 
     [Fact]
     public void GivenNullLoggerFactory_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Substitute.For<IOptions<TlsClientOptions>>(), Substitute.For<IOptions<TlsServerOptions>>(), null!));
+        => Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), null!));
 
     [Fact]
     public void GivenNullOptions_WhenConfiguringHttpsConnectionAdapterOptions_ThenThrowArgumentNullException()

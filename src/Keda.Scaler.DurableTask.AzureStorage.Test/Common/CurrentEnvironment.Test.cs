@@ -25,4 +25,14 @@ public sealed class CurrentEnvironmentTest : IDisposable
     [Fact]
     public void GivenEnvironmentVariableInProcess_WhenGettingTheVariable_ThenReturnTheExpectedValue()
         => Assert.Equal(_value, ProcessEnvironment.Current.GetVariable(_key));
+
+    [Fact]
+    public void GivenCache_WhenGettingTheVariable_ThenReturnSameValue()
+    {
+        EnvironmentCache cache = new();
+
+        Assert.Equal(_value, cache.GetVariable(_key));
+        Environment.SetEnvironmentVariable(_key, Guid.NewGuid().ToString(), EnvironmentVariableTarget.Process);
+        Assert.Equal(_value, cache.GetVariable(_key));
+    }
 }

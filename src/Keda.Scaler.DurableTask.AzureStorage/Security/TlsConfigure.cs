@@ -24,8 +24,8 @@ internal sealed class TlsConfigure :
 
     public TlsConfigure(IOptions<TlsClientOptions> clientOptions, IOptions<TlsServerOptions> serverOptions, ILoggerFactory factory)
     {
-        ArgumentNullException.ThrowIfNull(serverOptions?.Value, nameof(serverOptions));
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
+        ArgumentNullException.ThrowIfNull(serverOptions?.Value, nameof(serverOptions));
         ArgumentNullException.ThrowIfNull(factory);
 
         _logger = factory.CreateLogger(LogCategories.Security);

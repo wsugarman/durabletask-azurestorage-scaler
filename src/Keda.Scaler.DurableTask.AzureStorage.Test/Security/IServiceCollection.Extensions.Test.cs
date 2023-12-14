@@ -40,7 +40,10 @@ public class IServiceCollectionExtensionsTest
     public void GivenUnsafeTls_WhenAddingTlsSupport_ThenAddServiceSubset()
     {
         IConfiguration config = new ConfigurationBuilder().Build();
-        IServiceCollection services = new ServiceCollection().AddTlsSupport("default", config);
+        IServiceCollection services = new ServiceCollection()
+            .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build())
+            .AddLogging()
+            .AddTlsSupport("default", config);
 
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IOptionsChangeTokenSource<CertificateAuthenticationOptions>)));
@@ -54,6 +57,13 @@ public class IServiceCollectionExtensionsTest
         // No authentication or authorization services
         Assert.Empty(services.Where(s => s.ServiceType == typeof(IAuthenticationService)));
         Assert.Empty(services.Where(s => s.ServiceType == typeof(IAuthorizationService)));
+
+        // Assert that TLSConfigure is re-used
+        // Note: The services will be at the end of the collection, so the service provider should resolve them
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        TlsConfigure expected = serviceProvider.GetRequiredService<TlsConfigure>();
+        Assert.Same(expected, serviceProvider.GetRequiredService<IConfigureOptions<CertificateAuthenticationOptions>>());
+        Assert.Same(expected, serviceProvider.GetRequiredService<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>());
     }
 
     [Fact]
@@ -67,7 +77,10 @@ public class IServiceCollectionExtensionsTest
             })
             .Build();
 
-        IServiceCollection services = new ServiceCollection().AddTlsSupport("default", config);
+        IServiceCollection services = new ServiceCollection()
+            .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build())
+            .AddLogging()
+            .AddTlsSupport("default", config);
 
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IOptionsChangeTokenSource<CertificateAuthenticationOptions>)));
@@ -82,5 +95,12 @@ public class IServiceCollectionExtensionsTest
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(ICertificateValidationCache)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IAuthorizationService)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<AuthorizationOptions>)));
+
+        // Assert that TLSConfigure is re-used
+        // Note: The services will be at the end of the collection, so the service provider should resolve them
+        using ServiceProvider serviceProvider = services.BuildServiceProvider();
+        TlsConfigure expected = serviceProvider.GetRequiredService<TlsConfigure>();
+        Assert.Same(expected, serviceProvider.GetRequiredService<IConfigureOptions<CertificateAuthenticationOptions>>());
+        Assert.Same(expected, serviceProvider.GetRequiredService<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>());
     }
 }

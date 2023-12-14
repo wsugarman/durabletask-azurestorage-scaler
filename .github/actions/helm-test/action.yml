@@ -37,7 +37,7 @@ inputs:
     description: The duration of each activity
     required: false
   testStatusLoggingInterval:
-    default: 00:01:00
+    default: 00:00:20
     description: The logging interval when checking test conditions
     required: false
   testStatusPollingInterval:
