@@ -68,7 +68,7 @@ runs:
         docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
 
     - name: Upload Image
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: image
         path: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar

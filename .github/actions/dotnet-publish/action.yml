@@ -130,7 +130,7 @@ runs:
         az account clear
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: app
         path: ${{ runner.temp }}/app
