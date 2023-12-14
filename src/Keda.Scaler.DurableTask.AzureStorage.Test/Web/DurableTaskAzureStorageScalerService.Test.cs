@@ -20,34 +20,39 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 
-public class DurableTaskAzureStorageScalerServiceTest
+public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
 {
     private readonly MockEnvironment _environment = new();
     private readonly IStorageAccountClientFactory<BlobServiceClient> _blobServiceClientFactory = Substitute.For<IStorageAccountClientFactory<BlobServiceClient>>();
     private readonly IStorageAccountClientFactory<QueueServiceClient> _queueServiceClientFactory = Substitute.For<IStorageAccountClientFactory<QueueServiceClient>>();
     private readonly AzureStorageTaskHubClient _taskHubClient;
     private readonly IOrchestrationAllocator _allocator = Substitute.For<IOrchestrationAllocator>();
+    private readonly ServiceProvider _serviceProvider;
     private readonly DurableTaskAzureStorageScalerService _service;
 
-    public DurableTaskAzureStorageScalerServiceTest()
+    public DurableTaskAzureStorageScalerServiceTest(ITestOutputHelper outputHelper)
     {
         _taskHubClient = Substitute.For<AzureStorageTaskHubClient>(
             _blobServiceClientFactory,
             _queueServiceClientFactory,
             NullLoggerFactory.Instance);
 
-        IServiceProvider serviceProvider = new ServiceCollection()
+        _serviceProvider = new ServiceCollection()
             .AddSingleton(_taskHubClient)
             .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton(_allocator)
-            .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
+            .AddLogging(x => x.AddXUnit(outputHelper))
             .BuildServiceProvider();
 
-        _service = new DurableTaskAzureStorageScalerService(serviceProvider);
+        _service = new DurableTaskAzureStorageScalerService(_serviceProvider);
     }
+
+    public void Dispose()
+        => _serviceProvider.Dispose();
 
     [Fact]
     public void GivenNullServiceProvider_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowArgumentNullException()
@@ -56,7 +61,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     [Fact]
     public void GivenMissingAzureStorageTaskHubClientService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
     {
-        IServiceProvider serviceProvider = new ServiceCollection()
+        using ServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton(_allocator)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
@@ -80,7 +85,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     [Fact]
     public void GivenMissingOrchestrationAllocatorService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
     {
-        IServiceProvider serviceProvider = new ServiceCollection()
+        using ServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton(_taskHubClient)
             .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton<ILoggerFactory>(NullLoggerFactory.Instance)
@@ -92,7 +97,7 @@ public class DurableTaskAzureStorageScalerServiceTest
     [Fact]
     public void GivenMissingLoggerFactoryService_WhenCreatingDurableTaskAzureStorageScalerService_ThenThrowInvalidOperationException()
     {
-        IServiceProvider serviceProvider = new ServiceCollection()
+        using ServiceProvider serviceProvider = new ServiceCollection()
             .AddSingleton(_taskHubClient)
             .AddSingleton<IProcessEnvironment>(_environment)
             .AddSingleton(_allocator)

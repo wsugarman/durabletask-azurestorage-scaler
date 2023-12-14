@@ -4,7 +4,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
-using Keda.Scaler.DurableTask.AzureStorage.ComponentModel.DataAnnotations;
+using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

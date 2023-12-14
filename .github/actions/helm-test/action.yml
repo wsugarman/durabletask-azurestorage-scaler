@@ -275,19 +275,19 @@ runs:
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
         Scaling__Timeout: ${{ inputs.testTimeout }}
 
-    - name: Get Keda Logs
-      shell: bash
-      if: ${{ failure() }}
+    - if: ${{ failure() }}
+      name: Get Keda Logs
+      shell: bash 
       run: kubectl logs --tail=-1 --prefix -l app=keda-operator -n keda
 
-    - name: Get Scaler Logs
+    - if: ${{ failure() }}
+      name: Get Scaler Logs
       shell: bash
-      if: ${{ failure() }}
       run: kubectl logs --tail=-1 --prefix -l app=dtfx-scaler -n keda
 
-    - name: Get Function Logs
+    - if: ${{ failure() }}
+      name: Get Function Logs
       shell: bash
-      if: ${{ failure() }}
       run: kubectl logs --tail=-1 --prefix -l app=${{ inputs.functionAppName }} -n ${{ inputs.functionAppNamespace }}
 
     - name: Uninstall Function App Helm Chart

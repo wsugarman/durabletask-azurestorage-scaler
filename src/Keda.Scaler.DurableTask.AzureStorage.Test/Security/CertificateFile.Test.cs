@@ -136,10 +136,10 @@ public sealed class CertificateFileTest : IDisposable
         Assert.Equal(cert1.Thumbprint, actual1.Thumbprint);
 
         // Edit the file and check the new value
+        // Note: On Linux, there appears to be an issue monitoring changes when overwriting the file
         using RSA key2 = RSA.Create();
         using X509Certificate2 cert2 = key2.CreateSelfSignedCertificate();
-        cert2.WriteFile(certPath + ".tmp");
-        File.Move(certPath + ".tmp", certPath, overwrite: true);
+        cert2.WriteFile(certPath);
 
         Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(10)));
         using X509Certificate2 actual2 = certificateFile.Load();

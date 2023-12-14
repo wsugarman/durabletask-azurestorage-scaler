@@ -7,16 +7,27 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
+using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Interceptors;
 
-public class ExceptionInterceptorTest
+public sealed class ExceptionInterceptorTest : IDisposable
 {
-    private readonly ExceptionInterceptor _interceptor = new(NullLoggerFactory.Instance);
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ExceptionInterceptor _interceptor;
+
+    public ExceptionInterceptorTest(ITestOutputHelper outputHelper)
+    {
+        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
+        _interceptor = new(_loggerFactory);
+    }
+
+    public void Dispose()
+        => _loggerFactory.Dispose();
 
     [Fact]
     public void GivenNullLoggerFactory_WhenCreatingInterceptor_ThenThrowArgumentNullException()

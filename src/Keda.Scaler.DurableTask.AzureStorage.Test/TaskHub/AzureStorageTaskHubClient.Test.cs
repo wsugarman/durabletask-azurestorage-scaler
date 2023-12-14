@@ -15,15 +15,16 @@ using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Blobs;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
+using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
-public class AzureStorageTaskHubClientTest
+public sealed class AzureStorageTaskHubClientTest : IDisposable
 {
     private readonly IStorageAccountClientFactory<BlobServiceClient> _blobServiceClientFactory = Substitute.For<IStorageAccountClientFactory<BlobServiceClient>>();
     private readonly IStorageAccountClientFactory<QueueServiceClient> _queueServiceClientFactory = Substitute.For<IStorageAccountClientFactory<QueueServiceClient>>();
@@ -31,25 +32,30 @@ public class AzureStorageTaskHubClientTest
     private readonly BlobContainerClient _blobContainerClient = Substitute.For<BlobContainerClient>();
     private readonly BlobClient _blobClient = Substitute.For<BlobClient>();
     private readonly QueueServiceClient _queueServiceClient = Substitute.For<QueueServiceClient>();
+    private readonly ILoggerFactory _loggerFactory;
 
     private static readonly Func<BinaryData, BlobDownloadResult> BlobDownloadResultFactory = CreateBlobDownloadResultFactory();
 
-    public AzureStorageTaskHubClientTest()
+    public AzureStorageTaskHubClientTest(ITestOutputHelper outputHelper)
     {
         _ = _blobServiceClientFactory.GetServiceClient(default!).ReturnsForAnyArgs(_blobServiceClient);
         _ = _blobServiceClient.GetBlobContainerClient(default!).ReturnsForAnyArgs(_blobContainerClient);
         _ = _blobContainerClient.GetBlobClient(default!).ReturnsForAnyArgs(_blobClient);
-
         _ = _queueServiceClientFactory.GetServiceClient(default!).ReturnsForAnyArgs(_queueServiceClient);
+
+        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
     }
+
+    public void Dispose()
+        => _loggerFactory.Dispose();
 
     [Fact]
     public void GivenNullBlobServiceClientFactory_WhenCreatingAzureStorageTaskHubClient_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new AzureStorageTaskHubClient(null!, _queueServiceClientFactory, NullLoggerFactory.Instance));
+        => Assert.Throws<ArgumentNullException>(() => new AzureStorageTaskHubClient(null!, _queueServiceClientFactory, _loggerFactory));
 
     [Fact]
     public void GivenNullQueueServiceClientFactory_WhenCreatingAzureStorageTaskHubClient_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new AzureStorageTaskHubClient(_blobServiceClientFactory, null!, NullLoggerFactory.Instance));
+        => Assert.Throws<ArgumentNullException>(() => new AzureStorageTaskHubClient(_blobServiceClientFactory, null!, _loggerFactory));
 
     [Fact]
     public void GivenNullLoggerFactory_WhenCreatingAzureStorageTaskHubClient_ThenThrowArgumentNullException()
@@ -67,14 +73,14 @@ public class AzureStorageTaskHubClientTest
     [Fact]
     public Task GivenNullAzureStorageAccountInfo_WhenGettingMonitor_ThenThrowArgumentNullException()
     {
-        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, NullLoggerFactory.Instance);
+        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         return Assert.ThrowsAsync<ArgumentNullException>(() => client.GetMonitorAsync(null!, "foo", default).AsTask());
     }
 
     [Fact]
     public Task GivenNullTaskHub_WhenGettingMonitor_ThenThrowArgumentNullException()
     {
-        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, NullLoggerFactory.Instance);
+        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         return Assert.ThrowsAsync<ArgumentNullException>(() => client.GetMonitorAsync(new AzureStorageAccountInfo(), null!, default).AsTask());
     }
 
@@ -83,7 +89,7 @@ public class AzureStorageTaskHubClientTest
     [InlineData("    ")]
     public Task GivenEmptyOrWhiteSpaceTaskHub_WhenGettingMonitor_ThenThrowArgumentException(string taskHub)
     {
-        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, NullLoggerFactory.Instance);
+        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         return Assert.ThrowsAsync<ArgumentException>(() => client.GetMonitorAsync(new AzureStorageAccountInfo(), taskHub, default).AsTask());
     }
 
@@ -98,7 +104,7 @@ public class AzureStorageTaskHubClientTest
             .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Blob not found"));
 
         AzureStorageAccountInfo accountInfo = new();
-        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, NullLoggerFactory.Instance);
+        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 
         _ = _blobServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));
@@ -122,7 +128,7 @@ public class AzureStorageTaskHubClientTest
         _ = _blobClient.DownloadContentAsync(default).ReturnsForAnyArgs(Task.FromResult(response));
 
         AzureStorageAccountInfo accountInfo = new();
-        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, NullLoggerFactory.Instance);
+        AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 
         _ = _blobServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));

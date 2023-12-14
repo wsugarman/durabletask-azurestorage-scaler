@@ -4,7 +4,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.ComponentModel.DataAnnotations;
+namespace Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 
 internal static class ObjectValidator
 {

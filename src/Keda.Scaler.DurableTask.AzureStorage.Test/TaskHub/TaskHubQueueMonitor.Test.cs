@@ -12,33 +12,44 @@ using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Keda.Scaler.DurableTask.AzureStorage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
-using Microsoft.Extensions.Logging.Abstractions;
+using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
-public sealed class TaskHubQueueMonitorTest
+public sealed class TaskHubQueueMonitorTest : IDisposable
 {
     private readonly AzureStorageTaskHubInfo _taskHubInfo;
     private readonly QueueServiceClient _queueServiceClient = Substitute.For<QueueServiceClient>();
+    private readonly ILoggerFactory _loggerFactory;
+    private readonly ILogger _logger;
 
     private const string TaskHubName = "unit-test";
     private const int PartitionCount = 3;
 
     private static readonly Func<int, QueueProperties> QueuePropertiesFactory = CreateQueuePropertiesFactory();
 
-    public TaskHubQueueMonitorTest()
-        => _taskHubInfo = new AzureStorageTaskHubInfo(DateTimeOffset.UtcNow, PartitionCount, TaskHubName);
+    public TaskHubQueueMonitorTest(ITestOutputHelper outputHelper)
+    {
+        _taskHubInfo = new AzureStorageTaskHubInfo(DateTimeOffset.UtcNow, PartitionCount, TaskHubName);
+        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
+        _logger = _loggerFactory.CreateLogger(LogCategories.Default);
+    }
+
+    public void Dispose()
+        => _loggerFactory.Dispose();
 
     [Fact]
     public void GivenNullTaskHubInfo_WhenCreatingTaskHubQueueMonitor_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TaskHubQueueMonitor(null!, _queueServiceClient, NullLogger.Instance));
+        => Assert.Throws<ArgumentNullException>(() => new TaskHubQueueMonitor(null!, _queueServiceClient, _logger));
 
     [Fact]
     public void GivenNullQueueServiceClien_WhenCreatingTaskHubQueueMonitor_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, null!, NullLogger.Instance));
+        => Assert.Throws<ArgumentNullException>(() => new TaskHubQueueMonitor(_taskHubInfo, null!, _logger));
 
     [Fact]
     public void GivenNullLogger_WhenCreatingTaskHubQueueMonitor_ThenThrowArgumentNullException()
@@ -61,7 +72,7 @@ public sealed class TaskHubQueueMonitorTest
             .GetPropertiesAsync(default)
             .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found"));
 
-        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, NullLogger.Instance);
+        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, _logger);
         TaskHubQueueUsage actual = await monitor.GetUsageAsync(tokenSource.Token);
 
         _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
@@ -98,7 +109,7 @@ public sealed class TaskHubQueueMonitorTest
             .GetPropertiesAsync(default)
             .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found"));
 
-        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, NullLogger.Instance);
+        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, _logger);
         TaskHubQueueUsage actual = await monitor.GetUsageAsync(tokenSource.Token);
 
         _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
@@ -138,7 +149,7 @@ public sealed class TaskHubQueueMonitorTest
             .GetPropertiesAsync(default)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(1)));
 
-        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, NullLogger.Instance);
+        TaskHubQueueMonitor monitor = new(_taskHubInfo, _queueServiceClient, _logger);
         TaskHubQueueUsage actual = await monitor.GetUsageAsync(tokenSource.Token);
 
         _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));

@@ -5,7 +5,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.ComponentModel.DataAnnotations;
+namespace Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 
 internal sealed class FileExistsAttribute : ValidationAttribute
 {
