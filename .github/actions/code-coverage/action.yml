@@ -26,7 +26,7 @@ runs:
       uses: codecov/codecov-action@v3
       with:
         directory: ${{ runner.temp }}/codecoverage/
-        files: ./coverage.cobertura.xml
+        files: *.xml
         fail_ci_if_error: true
         token: ${{ inputs.codecovToken }}
         verbose: true
