@@ -22,13 +22,13 @@ annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
     - kind: added
-      description: Added support for validating the client TLS certificate's issuer
-    - kind: added
       description: Added values for configuring the scaler's logging
     - kind: added
       description: Added explicit support for Azure Workload Identity
     - kind: added
       description: Added new scaler metadata validation
+    - kind: added
+      description: Added support for validating the client TLS certificate's issuer
     - kind: changed
       description: Changed the value tls.secret to tls.serverCert.secret
     - kind: fixed
