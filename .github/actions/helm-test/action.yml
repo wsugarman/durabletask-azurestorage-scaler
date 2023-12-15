@@ -295,14 +295,18 @@ runs:
           externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
 
         # Test that the scaler rejects plaintext requests when TLS is enabled
+        set +e
         grpcurl \
           -plaintext \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
-          -format-error \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec
+
+        if [ $? -eq 0 ]; then
+          exit 1
+        fi
 
         # Test that the scaler rejects invalid client certificates when TLS is enabled
         grpcurl \
@@ -312,9 +316,14 @@ runs:
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
-          -format-error \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec
+
+        if [ $? -eq 0 ]; then
+          exit 1
+        fi
+
+        set -e
 
     - name: Test Scaler
       shell: bash
