@@ -21,8 +21,6 @@ version: "2.0.0"
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
-    - kind: changed
-      description: Changed the value tls.secret to tls.serverCert.secret
     - kind: added
       description: Added support for validating the client TLS certificate's issuer
     - kind: added
@@ -31,6 +29,10 @@ annotations:
       description: Added explicit support for Azure Workload Identity
     - kind: added
       description: Added new scaler metadata validation
+    - kind: changed
+      description: Changed the value tls.secret to tls.serverCert.secret
+    - kind: fixed
+      description: Fixed certificate file monitor to be correctly alerted on change
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler
