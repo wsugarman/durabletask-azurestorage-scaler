@@ -91,6 +91,7 @@ spec:
             - name: Security__Transport__Server__KeyPath
               value: "/certs/{{ .Values.tls.serverCert.keys.key }}"
             {{- end }}
+            {{- if .Values.tls.serverCert.keys.cert }}
             - name: ASPNETCORE_URLS
               value: https://+:8080
             {{- end }}
