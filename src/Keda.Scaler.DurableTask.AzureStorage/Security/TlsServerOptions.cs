@@ -24,6 +24,6 @@ internal class TlsServerOptions : IValidatableObject
     IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext)
     {
         if (string.IsNullOrWhiteSpace(CertificatePath) && !string.IsNullOrWhiteSpace(KeyPath))
-            yield return new ValidationResult(SR.MissingCertificateMessage);
+            yield return new ValidationResult(SR.MissingCertificate, [nameof(CertificatePath), nameof(KeyPath)]);
     }
 }

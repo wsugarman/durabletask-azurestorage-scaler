@@ -19,14 +19,14 @@ public sealed class TlsServerOptionsTest : IDisposable
         => Directory.Delete(_tempFolder, true);
 
     [Fact]
-    public void GivenMissingCertificateFile_WhenValidatingTlsServerOptions_ThenThrowValidationException()
+    public void GivenMissingCertificateFile_WhenValidatingTlsServerOptions_ThenFailValidation()
     {
         TlsServerOptions options = new() { CertificatePath = Path.Combine(_tempFolder, "example.crt") };
         Assert.True(new ValidateTlsServerOptions().Validate(null, options).Failed);
     }
 
     [Fact]
-    public void GivenMissingKeyFile_WhenValidatingTlsServerOptions_ThenThrowValidationException()
+    public void GivenMissingKeyFile_WhenValidatingTlsServerOptions_ThenFailValidation()
     {
         const string CertName = "example.crt";
         const string KeyName = "example.key";
@@ -45,7 +45,7 @@ public sealed class TlsServerOptionsTest : IDisposable
     }
 
     [Fact]
-    public void GivenKeyFileWithoutCertificate_WhenValidatingTlsServerOptions_ThenThrowValidationException()
+    public void GivenKeyFileWithoutCertificate_WhenValidatingTlsServerOptions_ThenFailValidation()
     {
         const string KeyName = "example.key";
         string keyPath = Path.Combine(_tempFolder, KeyName);

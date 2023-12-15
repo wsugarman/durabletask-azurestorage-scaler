@@ -40,7 +40,7 @@ internal sealed class ExceptionInterceptor(ILoggerFactory loggerFactory) : Inter
         catch (Exception e)
         {
             _logger.CaughtUnhandledException(e);
-            throw new RpcException(new Status(StatusCode.Internal, SR.InternalErrorMessage));
+            throw new RpcException(new Status(StatusCode.Internal, SR.InternalServerError));
         }
     }
 }

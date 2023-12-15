@@ -197,70 +197,72 @@ public sealed class ScalerMetadata : IValidatableObject
         if (CloudEnvironment is CloudEnvironment.Private)
         {
             if (ActiveDirectoryEndpoint is null)
-                yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(ActiveDirectoryEndpoint)));
+                yield return new ValidationResult(SR.MissingPrivateCloudValue, [nameof(ActiveDirectoryEndpoint)]);
 
             if (EndpointSuffix is null)
-                yield return new ValidationResult(SR.Format(SR.PrivateCloudRequiredFieldFormat, nameof(EndpointSuffix)));
+                yield return new ValidationResult(SR.MissingPrivateCloudValue, [nameof(EndpointSuffix)]);
 
             if (EndpointSuffix is not null && string.IsNullOrWhiteSpace(EndpointSuffix))
-                yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(EndpointSuffix)));
+                yield return new ValidationResult(SR.EmptyOrWhiteSpace, [nameof(EndpointSuffix)]);
         }
         else
         {
             if (ActiveDirectoryEndpoint is not null)
-                yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(ActiveDirectoryEndpoint)));
+                yield return new ValidationResult(SR.PrivateCloudOnlyValue, [nameof(ActiveDirectoryEndpoint)]);
 
             if (EndpointSuffix is not null)
-                yield return new ValidationResult(SR.Format(SR.PrivateCloudOnlyFieldFormat, nameof(EndpointSuffix)));
+                yield return new ValidationResult(SR.PrivateCloudOnlyValue, [nameof(EndpointSuffix)]);
         }
     }
 
     private IEnumerable<ValidationResult> ValidateAccountMetadata()
     {
         if (string.IsNullOrWhiteSpace(AccountName))
-            yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(AccountName)));
+            yield return new ValidationResult(SR.EmptyOrWhiteSpace, [nameof(AccountName)]);
 
         if (CloudEnvironment is CloudEnvironment.Unknown)
-            yield return new ValidationResult(SR.Format(SR.UnknownValueFormat, Cloud, nameof(Cloud)));
+            yield return new ValidationResult(Resource.Format(SRF.UnknownValueFormat, Cloud), [nameof(Cloud)]);
 
         if (Connection is not null)
-            yield return new ValidationResult(SR.Format(SR.AmbiguousConnectionOptionFormat, nameof(Connection)));
+            yield return new ValidationResult(SR.AmbiguousConnection, [nameof(AccountName), nameof(Connection)]);
 
         if (ConnectionFromEnv is not null)
-            yield return new ValidationResult(SR.Format(SR.AmbiguousConnectionOptionFormat, nameof(ConnectionFromEnv)));
+            yield return new ValidationResult(SR.AmbiguousConnection, [nameof(AccountName), nameof(ConnectionFromEnv)]);
 
 #pragma warning disable CS0618 // Type or member is obsolete
         if (!UseManagedIdentity && !UseWorkloadIdentity && ClientId is not null)
-            yield return new ValidationResult(SR.Format(SR.MissingIdentityCredentialOptionFormat, nameof(ClientId)));
+            yield return new ValidationResult(SR.MissingCredentialOption, [nameof(ClientId)]);
 #pragma warning restore CS0618 // Type or member is obsolete
 
 #pragma warning disable CS0618 // Type or member is obsolete
         if (UseManagedIdentity && UseWorkloadIdentity)
-            yield return new ValidationResult(SR.AmbiguousIdentityCredentialMessage);
+            yield return new ValidationResult(SR.AmbiguousCredential, [nameof(UseManagedIdentity), nameof(UseWorkloadIdentity)]);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
     private IEnumerable<ValidationResult> ValidateConnectionStringMetadata()
     {
         if (ClientId is not null)
-            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(ClientId)));
+            yield return new ValidationResult(SR.ServiceUriOnlyValue, [nameof(ClientId)]);
 
         if (Cloud is not null)
-            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(Cloud)));
+            yield return new ValidationResult(SR.ServiceUriOnlyValue, [nameof(Cloud)]);
 
 #pragma warning disable CS0618 // Type or member is obsolete
         if (UseManagedIdentity)
-            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(UseManagedIdentity)));
+            yield return new ValidationResult(SR.ServiceUriOnlyValue, [nameof(UseManagedIdentity)]);
 #pragma warning restore CS0618 // Type or member is obsolete
 
         if (UseWorkloadIdentity)
-            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(UseWorkloadIdentity)));
+            yield return new ValidationResult(SR.ServiceUriOnlyValue, [nameof(UseWorkloadIdentity)]);
 
         if (Connection is not null && string.IsNullOrWhiteSpace(Connection))
-            yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(Connection)));
+            yield return new ValidationResult(SR.EmptyOrWhiteSpace, [nameof(Connection)]);
         else if (ConnectionFromEnv is not null && string.IsNullOrWhiteSpace(ConnectionFromEnv))
-            yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(ConnectionFromEnv)));
+            yield return new ValidationResult(SR.EmptyOrWhiteSpace, [nameof(ConnectionFromEnv)]);
+        else if (Connection is not null && ConnectionFromEnv is not null)
+            yield return new ValidationResult(SR.AmbiguousConnection, [nameof(Connection), nameof(ConnectionFromEnv)]);
         else if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return new ValidationResult(SR.Format(SR.BlankConnectionVarFormat, ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable));
+            yield return new ValidationResult(Resource.Format(SRF.InvalidConnectionEnvironmentVariableFormat, ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable), [nameof(ConnectionFromEnv)]);
     }
 }
