@@ -123,8 +123,8 @@
   <data name="BlankConnectionVarFormat" xml:space="preserve">
     <value>Unable to resolve the connection string from environment variable '{0}'.</value>
   </data>
-  <data name="FileNotFoundMessage" xml:space="preserve">
-    <value>Unable to find the specified file.</value>
+  <data name="FileNotFoundFormat" xml:space="preserve">
+    <value>Unable to find the file '{0}'.</value>
   </data>
   <data name="InvalidConnectionStringOptionFormat" xml:space="preserve">
     <value>{0} cannot be specified when using connection strings.</value>

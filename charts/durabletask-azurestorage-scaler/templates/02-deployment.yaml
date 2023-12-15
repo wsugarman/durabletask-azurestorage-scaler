@@ -71,25 +71,29 @@ spec:
           image: "{{ .Values.image.repository }}:{{ default .Chart.AppVersion .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
+            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
+            - name: ASPNETCORE_URLS
+              value: https://+:8080
+            {{- end }}
             - name: Logging__Console__FormatterName
               value: {{ .Values.logging.format }}
             - name: Logging__Console__FormatterOptions__TimestampFormat
               value: {{ .Values.logging.timestampFormat }}
             - name: Logging__LogLevel__Default
               value: {{ .Values.logging.level | quote }}
-            {{- if .Values.tls.caSecret }}
+            {{- if and .Values.tls.caCert.secret .Values.tls.caCert.key }}
             - name: Security__Transport__Client__CaCertificatePath
-              value: /cacerts/tls.crt
+              value: "/cacerts/{{ .Values.tls.caCert.key }}"
             {{- end }}
+            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
             - name: Security__Transport__Client__ValidateCertificate
               value: {{ not .Values.tls.unsafe | quote }}
-            {{- if .Values.tls.secret }}
             - name: Security__Transport__Server__CertificatePath
-              value: /certs/tls.crt
+              value: "/certs/{{ .Values.tls.serverCert.keys.cert }}"
+            {{- end }}
+            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.key }}
             - name: Security__Transport__Server__KeyPath
-              value: /certs/tls.key
-            - name: ASPNETCORE_URLS
-              value: https://+:8080
+              value: "/certs/{{ .Values.tls.serverCert.keys.key }}"
             {{- end }}
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 -}}
@@ -98,14 +102,14 @@ spec:
           envFrom:
             {{- toYaml .Values.envFrom | nindent 12 -}}
           {{- end }}
-          {{- if or .Values.tls.caSecret .Values.tls.secret }}
+          {{- if or .Values.tls.caCert.secret .Values.tls.serverCert.secret }}
           volumeMounts:
-            {{- if .Values.tls.caSecret }}
+            {{- if .Values.tls.caCert.secret }}
             - name: cacerts
               mountPath: /cacerts
               readOnly: true
             {{- end }}
-            {{- if .Values.tls.secret }}
+            {{- if .Values.tls.serverCert.secret }}
             - name: certs
               mountPath: /certs
               readOnly: true
@@ -119,18 +123,18 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- if or .Values.tls.caSecret .Values.tls.secret }}
+      {{- if or .Values.tls.caCert.secret .Values.tls.serverCert.secret }}
       volumes:
-        {{- if .Values.tls.caSecret }}
+        {{- if .Values.tls.caCert.secret }}
         - name: cacerts
           secret:
-            secretName: {{ .Values.tls.caSecret }}
+            secretName: {{ .Values.tls.caCert.secret }}
             optional: false
         {{- end }}
-        {{- if .Values.tls.secret }}
+        {{- if .Values.tls.serverCert.secret }}
         - name: certs
           secret:
-            secretName: {{ .Values.tls.secret }}
+            secretName: {{ .Values.tls.serverCert.secret }}
             optional: false
         {{- end }}
       {{- end }}

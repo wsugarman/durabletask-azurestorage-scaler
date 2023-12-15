@@ -1,115 +1,158 @@
-# Default names are derived from the name of the chart
-name: ""
-fullnameOverride: ""
-
-# Optional additional labels for each Kubernetes resource
+# additionalLabels is an optional collection of Kubernetes labels added to each resource.
 additionalLabels: {}
   # key: value
 
-# Optional additional annotations for each Kubernetes resource
+# additionalAnnotations is an optional collection of Kubernetes annotations added to each resource.
 additionalAnnotations: {}
   # key: value
 
-# Additional environment variables that will be passed into the scaler pods
+# env is an optional list of environment variables that populate the scaler pods.
 env:
 # - name: ENV_NAME
 #   value: 'ENV-VALUE'
 
+# envFrom is an optional list of sources for environment variables that populate the scaler pods.
 envFrom:
 # - secretRef:
 #     name: secret-name
 # - configMapRef:
 #     name: config-map-name
 
-# Docker image metadata
+# fullnameOverride is the optional name used for the Kubernetes resources. Defaults to a generated name based on the chart.
+fullnameOverride: ""
+
+# image contains settings related to the scaler container image.
 image:
+  # repository is the name of the scaler image.
   repository: ghcr.io/wsugarman/durabletask-azurestorage-scaler
-  tag: "" # will default to the appVersion in Chart.yaml
+  # tag is the optional tag for the scaler image. Defaults to appVersion in Chart.yaml.
+  tag: ""
+  # pullPolicy is the policy used by Kubernetes to pull the scaler image. Acceptable values are `Always`, `Never`, or `IfNotPresent`. Defaults to 'IfNotPresent'.
   pullPolicy: IfNotPresent
+  # pullSecrets is an optional list of references to secrets in the same namespace to use for pulling the scaler image.
   pullSecrets: []
 
 # logging contains settings related to the diagnostic output.
 logging:
-  # format is the name of the formatter for the console logger. Acceptable values are `json`, `simple`, or 'systemd'.
+  # format is the name of the formatter for the console logger. Acceptable values are `json`, `simple`, or 'systemd'. Defaults to 'systemd'.
   format: systemd
-  # level is the minimal log level emitted by the pods. Acceptable values are `trace`, `debug`, `information`, `warning`, `error`, `critical`, or `none`.
+  # level is the minimal log level emitted by the pods. Acceptable values are `trace`, `debug`, `information`, `warning`, `error`, `critical`, or `none`. Defaults to 'information'.
   level: information
-  # timestampFormat is either a standard or customer .NET date and time format string. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings for more information.
+  # timestampFormat is either a standard or customer .NET date and time format string. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings for more information. Defaults to 'O'.
   timestampFormat: O
 
-# Optional node selector for scaler pods
+# nameOverride is the optional name used for the container and Kubernetes resources. Defaults to a generated name based on the chart.
+nameOverride: ""
+
+# nodeSelector is an optional selector for determining which nodes host the scaler pods.
 nodeSelector: {}
 
-# Optional annotations for only the scaler pods
+# podAnnotations is an optional collection of Kubernetes annotations added to the scaler pods.
 podAnnotations: {}
   # key: value
 
-# Optional values for configuring the identity for the scaler pods
-# Note: Names are meant to parallel the KEDA helm chart
+# podIdentity contains settings related to identity-based connections for the scaler pods.
 podIdentity:
+  # activeDirectory contains settings related to the now-deprecated AAD Pod Identity.
   activeDirectory:
+    # identity is the value of the aadpodidbinding label for scaler pods.
     identity: ""
+  # azureWorkload contains settings related to Azure Workload Identity.
   azureWorkload:
+    # enabled indicates whether Azure Workload Identity is enabled for the scaler pods.
     enabled: false
+    # clientId is the client ID of the federated identity credential whose subject is the service account.
     clientId: ""
+    # tenantId is the tenant ID of the federated identity credential whose subject is the service account.
     tenantId: ""
+    # tokenExpiration is the duration in seconds after which the protected service account token expires. Defaults to 3600.
     tokenExpiration: 3600
 
-# Optional labels for only the scaler pods
+# podLabels is an optional collection of Kubernetes labels added to the scaler pods.
 podLabels: {}
   # key: value
 
-# Security context for all containers in the scaler pods
+# podSecurityContext is the Kubernetes security context for all containers in the scaler pods.
 podSecurityContext:
+  # runAsNonRoot indicates whether the container must be required to run as a non-root user. Defaults to 'true'.
   runAsNonRoot: true
+  # seccompProfile is the secure computing profile for the scaler pods.
   seccompProfile:
+    # type is the type of seccomp profile. Defaults to the profile defined by the container runtime 'RuntimeDefault'.
     type: RuntimeDefault
 
-# gRPC port
+# port is the gRPC port exposed by the scaler service. Defaults to 4370.
 port: 4370
 
-# Optional scaler pod priority class
+# priorityClassName is the optional name of the Kubernetes PriorityClass resource associated with the scaler pods.
 priorityClassName: ""
 
-# Scaler replicas
-# TODO: Enable auto-scaling
+# replicaCount is the number of scaler pods.
 replicaCount: 1
 
-# Container resource requests and limits
+# resources contains Kubernetes resource constraints for the scaler pods.
 resources:
+  # requests contains minimum resources requested by the scaler pods.
   requests:
+    # cpu is requested CPU amount. Defaults to 50m.
     cpu: 50m
+    # memory is the requested memory amount. Defaults to 128M.
     memory: 128M
+  # limits contains the maximum resources allowed by the scaler pods before throttling or termination.
   limits:
+    # cpu is the maximum CPU amount. Defaults to 1.
     cpu: "1"
+    # memory is the maximum memory amount. Defaults to 512M.
     memory: 512M
 
-# Security context for the scaler container
+# securityContext is the Kubernetes security context for the gRPC container in the scaler pods.
 securityContext:
+  # allowPrivilegeEscalation indicates whether the gRPC server process can gain more privileges than its parent process. Defaults to 'false'.
   allowPrivilegeEscalation: false
+  # capabilities contains the Linux capabilities for the gRPC server process.
   capabilities:
     drop:
     - ALL
+  # readOnlyRootFilesystem indicates whether the gRPC container's root filesystem is mounted as read-only. Defaults to 'true'.
   readOnlyRootFilesystem: true
 
-# Optional service account for Azure Workload Identity
+# serviceAccount contains settings related to the service account used for Azure Workload Identity.
 serviceAccount:
+  # create indicates whether the service account should be created. Defaults to 'true'.
   create: true
+  # name is the name of the service account. The default name is derived from the release.
   name: ""
-  automountServiceAccountToken: true
+  # automount indicates whether token should be automatically mounted. Defaults to 'true'.
+  automount: true
+  # annotations is an optional collection of Kubernetes annotations added to the service account.
   annotations: {}
     # key: value
 
-# Optional TLS information
+# tls contains settings related to the Transport Layer Security (TLS) protocol used by the gRPC server.
 tls:
-  caSecret: ""
-  secret: ""
+  # caCert contains the reference to an optional custom certificate authority (CA) certificate that is expected to issue all incoming client certificates.
+  caCert:
+    # key is the key within the Kubernetes secret containing the CA certificate.
+    key: "tls.crt"
+    # secret is the name of the Kubernetes secret containing the CA certificate.
+    secret: ""
+  # serverCert contains the reference to an optional TLS certificate used by the gRPC server.
+  serverCert:
+    # keys are the keys within the Kubernetes secret containing the server certificate and key.
+    keys:
+      # cert is the key within the Kubernetes secret containing the certificate.
+      cert: "tls.crt"
+      # key is the key within the Kubernetes secret containing the certificate key.
+      key: "tls.key"
+    # secret is the name of the Kubernetes secret containing the server certificate.
+    secret: ""
+  # unsafe indicates whether the gRPC server should accept untrusted client TLS certificates. Defaults to 'false'.
   unsafe: false
 
-# Optional topology spread constraints when replicas > 1
+# topologySpreadConstraints is a collection of constraints that control how scaler pods are spread across the Kubernetes cluster.
 topologySpreadConstraints: {}
 
-# Optional upgrade strategy for > 1 replicas
+# upgradeStrategy contains settings related to the upgrading the scaler deployment.
 upgradeStrategy: {}
   # type: RollingUpdate
   # rollingUpdate:
