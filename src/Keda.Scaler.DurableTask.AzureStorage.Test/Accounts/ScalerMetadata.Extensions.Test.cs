@@ -55,6 +55,7 @@ public class ScalerMetadataExtensionsTest
     }
 
     [Fact]
+    [Obsolete("Will be replaced by Workload Identity.")]
     public void GivenManagedIdentityScalerMetadata_WhenGettingAccountInfo_ThenPopulateCredential()
     {
         ScalerMetadata metadata = new()
@@ -69,7 +70,25 @@ public class ScalerMetadataExtensionsTest
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
         Assert.Same(AzureCloudEndpoints.Public, actual.Cloud);
-        Assert.Equal(Credential.ManagedIdentity, actual.Credential);
+        Assert.Equal(Credentials.ManagedIdentity, actual.Credential);
+    }
+
+    [Fact]
+    public void GivenWorkloadIdentityScalerMetadata_WhenGettingAccountInfo_ThenPopulateCredential()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = "foo",
+            ClientId = Guid.NewGuid().ToString(),
+            UseWorkloadIdentity = true,
+        };
+
+        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
+
+        Assert.Equal(metadata.AccountName, actual.AccountName);
+        Assert.Equal(metadata.ClientId, actual.ClientId);
+        Assert.Same(AzureCloudEndpoints.Public, actual.Cloud);
+        Assert.Equal(Credentials.WorkloadIdentity, actual.Credential);
     }
 
     [Fact]

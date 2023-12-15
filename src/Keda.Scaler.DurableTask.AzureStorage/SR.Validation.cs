@@ -10,6 +10,8 @@ internal static partial class SR
 {
     public static string AmbiguousConnectionOptionFormat => ValidationResourceManager.GetString(nameof(AmbiguousConnectionOptionFormat), CultureInfo.CurrentUICulture)!;
 
+    public static string AmbiguousIdentityCredentialMessage => ValidationResourceManager.GetString(nameof(AmbiguousIdentityCredentialMessage), CultureInfo.CurrentUICulture)!;
+
     public static string BlankConnectionVarFormat => ValidationResourceManager.GetString(nameof(BlankConnectionVarFormat), CultureInfo.CurrentUICulture)!;
 
     public static string FileNotFoundFormat => ValidationResourceManager.GetString(nameof(FileNotFoundFormat), CultureInfo.CurrentUICulture)!;

@@ -8,6 +8,7 @@ using Azure.Core;
 using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
+using Microsoft.Identity.Client;
 using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
@@ -60,6 +61,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     [Theory]
     [InlineData(null)]
     [InlineData("123456789")]
+    [Obsolete("Will be replaced by Workload Identity.")]
     public void GivenServiceUriWithManagedIdentity_WhenGettingServiceClient_ThenReturnValidClient(string? clientId)
     {
         IStorageAccountClientFactory<TClient> factory = GetFactory();
@@ -67,7 +69,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
         {
             AccountName = "test",
             Cloud = AzureCloudEndpoints.Public,
-            Credential = Credential.ManagedIdentity,
+            Credential = Credentials.ManagedIdentity,
             ClientId = clientId,
         };
 
@@ -76,6 +78,31 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
 
         ManagedIdentityCredential actualCredential = AssertTokenCredential<ManagedIdentityCredential>(actual);
         AssertClientId(actualCredential, clientId);
+    }
+
+    [Theory]
+    [InlineData("123", "123", null)]
+    [InlineData("ABC", "123", "ABC")]
+    public void GivenServiceUriWithWorkloadIdentity_WhenGettingServiceClient_ThenReturnValidClient(string expected, string? env, string? clientId)
+    {
+        using IDisposable tenant = TestEnvironment.SetVariable("AZURE_TENANT_ID", Guid.NewGuid().ToString());
+        using IDisposable client = TestEnvironment.SetVariable("AZURE_CLIENT_ID", env);
+        using IDisposable tokenFile = TestEnvironment.SetVariable("AZURE_FEDERATED_TOKEN_FILE", "/token.txt");
+
+        IStorageAccountClientFactory<TClient> factory = GetFactory();
+        AzureStorageAccountInfo storageAccountInfo = new()
+        {
+            AccountName = "test",
+            Cloud = AzureCloudEndpoints.Public,
+            Credential = Credentials.WorkloadIdentity,
+            ClientId = clientId,
+        };
+
+        TClient actual = factory.GetServiceClient(storageAccountInfo);
+        ValidateAccountName(actual, "test", AzureCloudEndpoints.Public);
+
+        WorkloadIdentityCredential actualCredential = AssertTokenCredential<WorkloadIdentityCredential>(actual);
+        AssertClientId(actualCredential, expected);
     }
 
     // Note: We use a method here to avoid exposing the internal implementation classes
@@ -112,6 +139,23 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
         string? actual = typeof(ManagedIdentityCredential).Assembly
             .DefinedTypes
             .Single(x => x.FullName == "Azure.Identity.ManagedIdentityClient")
+            .GetProperty("ClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
+            .GetValue(client) as string;
+
+        Assert.Equal(expected, actual);
+    }
+
+    private static void AssertClientId(WorkloadIdentityCredential tokenCredential, string? expected)
+    {
+        object? client = typeof(WorkloadIdentityCredential)
+            .GetProperty("Client", BindingFlags.NonPublic | BindingFlags.Instance)?
+            .GetValue(tokenCredential);
+
+        Assert.NotNull(client);
+        string? actual = typeof(ManagedIdentityCredential).Assembly
+            .DefinedTypes
+            .Single(x => x.FullName == "Azure.Identity.MsalClientBase`1")
+            .MakeGenericType(typeof(IConfidentialClientApplication))
             .GetProperty("ClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(client) as string;
 
