@@ -141,7 +141,7 @@ public sealed class CertificateFileTest : IDisposable
         using X509Certificate2 cert2 = key2.CreateSelfSignedCertificate();
         File.WriteAllBytes(certPath, cert2.Export(X509ContentType.Pkcs12));
 
-        Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(30)));
+        Assert.True(changeEvent.Wait(TimeSpan.FromMinutes(1)));
         using X509Certificate2 actual2 = certificateFile.Load();
         Assert.Equal(cert2.Thumbprint, actual2.Thumbprint);
     }

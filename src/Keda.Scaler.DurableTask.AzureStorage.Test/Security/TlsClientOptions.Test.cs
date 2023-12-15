@@ -19,7 +19,7 @@ public sealed class TlsClientOptionsTest : IDisposable
         => Directory.Delete(_tempFolder, true);
 
     [Fact]
-    public void GivenMissingCertificateFile_WhenValidatingTlsClientOptions_ThenThrowValidationException()
+    public void GivenMissingCertificateFile_WhenValidatingTlsClientOptions_ThenFailValidation()
     {
         TlsClientOptions options = new() { CaCertificatePath = Path.Combine(_tempFolder, "example.crt") };
         Assert.True(new ValidateTlsClientOptions().Validate(null, options).Failed);

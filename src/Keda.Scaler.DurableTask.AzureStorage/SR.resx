@@ -117,7 +117,46 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AmbiguousConnection" xml:space="preserve">
+    <value>Multiple Azure Storage connection values may not be specified.</value>
+  </data>
+  <data name="AmbiguousCredential" xml:space="preserve">
+    <value>Multiple identity-based connection options may be specified.</value>
+  </data>
+  <data name="EmptyOrWhiteSpace" xml:space="preserve">
+    <value>Value cannot be empty or white space.</value>
+  </data>
+  <data name="FileNotFoundFormat" xml:space="preserve">
+    <value>Unable to find the specified file at '{0}'.</value>
+  </data>
+  <data name="InternalServerError" xml:space="preserve">
+    <value>There was an internal server error. Please check the logs for details and ensure your deployment is correct.</value>
+  </data>
+  <data name="InvalidConnectionEnvironmentVariableFormat" xml:space="preserve">
+    <value>The connection environment variable '{0}' could not be resolved.</value>
+  </data>
+  <data name="InvalidMemberTypeFormat" xml:space="preserve">
+    <value>Expected member of type '{0}' but instead found '{1}'.</value>
+  </data>
+  <data name="MissingCertificate" xml:space="preserve">
+    <value>A key was specified without a certificate.</value>
+  </data>
+  <data name="MissingCredentialOption" xml:space="preserve">
+    <value>Value must be specified with an identity-based connection option like UseWorkloadIdentity.</value>
+  </data>
   <data name="MissingMemberFormat" xml:space="preserve">
-    <value>Missing member '{0}'.</value>
+    <value>Missing value for member '{0}'.</value>
+  </data>
+  <data name="MissingPrivateCloudValue" xml:space="preserve">
+    <value>Missing required value for private cloud.</value>
+  </data>
+  <data name="PrivateCloudOnlyValue" xml:space="preserve">
+    <value>Value may only be specified for private clouds.</value>
+  </data>
+  <data name="ServiceUriOnlyValue" xml:space="preserve">
+    <value>Value may only be specified with an Azure Storage account name.</value>
+  </data>
+  <data name="UnknownValueFormat" xml:space="preserve">
+    <value>Unknown value '{0}'.</value>
   </data>
 </root>

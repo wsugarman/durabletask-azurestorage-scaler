@@ -53,7 +53,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenPublicCloudWithAadEndpoint_WhenValidating_ThenThrowValidationException()
+    public void GivenPublicCloudWithAadEndpoint_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -65,7 +65,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenPublicCloudWithEndpointSuffix_WhenValidating_ThenThrowValidationException()
+    public void GivenPublicCloudWithEndpointSuffix_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -77,7 +77,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenPrivateCloudWithMissingAadEndpoint_WhenValidating_ThenThrowValidationException()
+    public void GivenPrivateCloudWithMissingAadEndpoint_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -93,7 +93,7 @@ public class ScalerMetadataTest
     [InlineData(null)]
     [InlineData("")]
     [InlineData("\r\n")]
-    public void GivenPrivateCloudWithMissingEndpointSuffix_WhenValidating_ThenThrowValidationException(string? suffix)
+    public void GivenPrivateCloudWithMissingEndpointSuffix_WhenValidating_ThenFailValidation(string? suffix)
     {
         ScalerMetadata metadata = new()
         {
@@ -108,7 +108,7 @@ public class ScalerMetadataTest
     [Theory]
     [InlineData("")]
     [InlineData("  ")]
-    public void GivenBlankAccountName_WhenValidating_ThenThrowValidationException(string accountName)
+    public void GivenBlankAccountName_WhenValidating_ThenFailValidation(string accountName)
     {
         ScalerMetadata metadata = new()
         {
@@ -120,7 +120,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenAccountWithUnknownCloud_WhenValidating_ThenThrowValidationException()
+    public void GivenAccountWithUnknownCloud_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -132,7 +132,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenAccountWithConnection_WhenValidating_ThenThrowValidationException()
+    public void GivenAccountWithConnection_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -144,7 +144,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenAccountWithConnectionFromEnv_WhenValidating_ThenThrowValidationException()
+    public void GivenAccountWithConnectionFromEnv_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -157,7 +157,7 @@ public class ScalerMetadataTest
 
     [Fact]
     [Obsolete("UseManagedIdentity is deprecated.")]
-    public void GivenAccountWithNoManagedIdentityClientId_WhenValidating_ThenThrowValidationException()
+    public void GivenAccountWithNoManagedIdentityClientId_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -170,7 +170,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenAccountWithNoWorkloadIdentityClientId_WhenValidating_ThenThrowValidationException()
+    public void GivenAccountWithNoWorkloadIdentityClientId_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -184,7 +184,7 @@ public class ScalerMetadataTest
 
     [Fact]
     [Obsolete("UseManagedIdentity is deprecated.")]
-    public void GivenAccountWithAmbiguousCredentials_WhenValidating_ThenThrowValidationException()
+    public void GivenAccountWithAmbiguousCredentials_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -197,7 +197,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenConnectionWithClientId_WhenValidating_ThenThrowValidationException()
+    public void GivenConnectionWithClientId_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -209,7 +209,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenConnectionWithCloud_WhenValidating_ThenThrowValidationException()
+    public void GivenConnectionWithCloud_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -222,7 +222,7 @@ public class ScalerMetadataTest
 
     [Fact]
     [Obsolete("UseManagedIdentity is deprecated.")]
-    public void GivenConnectionWithManagedIdentity_WhenValidating_ThenThrowValidationException()
+    public void GivenConnectionWithManagedIdentity_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -234,7 +234,7 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenConnectionWithWorkloadIdentity_WhenValidating_ThenThrowValidationException()
+    public void GivenConnectionWithWorkloadIdentity_WhenValidating_ThenFailValidation()
     {
         ScalerMetadata metadata = new()
         {
@@ -248,7 +248,7 @@ public class ScalerMetadataTest
     [Theory]
     [InlineData("")]
     [InlineData(" \t ")]
-    public void GivenEmptyOrWhiteSpaceConnection_WhenValidating_ThenThrowValidationException(string connection)
+    public void GivenEmptyOrWhiteSpaceConnection_WhenValidating_ThenFailValidation(string connection)
     {
         ScalerMetadata metadata = new()
         {
@@ -262,12 +262,25 @@ public class ScalerMetadataTest
     [Theory]
     [InlineData("")]
     [InlineData(" \t ")]
-    public void GivenEmptyOrWhiteSpaceConnectionFromEnv_WhenValidating_ThenThrowValidationException(string connectionFromEnv)
+    public void GivenEmptyOrWhiteSpaceConnectionFromEnv_WhenValidating_ThenFailValidation(string connectionFromEnv)
     {
         ScalerMetadata metadata = new()
         {
             AccountName = null,
             ConnectionFromEnv = connectionFromEnv,
+        };
+
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
+    }
+
+    [Fact]
+    public void GivenAmbiguousConnection_WhenValidating_ThenFailValidation()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            Connection = "foo",
+            ConnectionFromEnv = "bar",
         };
 
         Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
@@ -280,7 +293,7 @@ public class ScalerMetadataTest
     [InlineData("INVALID", null)]
     [InlineData("INVALID", "")]
     [InlineData("INVALID", "    ")]
-    public void GivenNullOrWhiteSpaceResolvedConnection_WhenValidating_ThenThrowValidationException(string? connectionFromEnv, string? value)
+    public void GivenNullOrWhiteSpaceResolvedConnection_WhenValidating_ThenFailValidation(string? connectionFromEnv, string? value)
     {
         using IDisposable replacement = TestEnvironment.SetVariable(connectionFromEnv ?? ScalerMetadata.DefaultConnectionEnvironmentVariable, value);
 
