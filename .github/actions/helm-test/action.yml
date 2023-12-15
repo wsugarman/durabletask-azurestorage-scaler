@@ -281,7 +281,7 @@ runs:
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
           127.0.0.1:10003 \
-          externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
+          externalscaler.ExternalScaler/GetMetricSpec
 
         # Test with TLS
         grpcurl \
@@ -292,10 +292,11 @@ runs:
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
           127.0.0.1:10004 \
-          externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
+          externalscaler.ExternalScaler/GetMetricSpec
 
         # Test that the scaler rejects plaintext requests when TLS is enabled
         set +e
+
         grpcurl \
           -plaintext \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
