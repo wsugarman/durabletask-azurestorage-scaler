@@ -14,6 +14,13 @@
   ],
   "packageRules": [
     {
+      "groupName": "Artifact Actions",
+      "matchPackageNames": [
+        "actions/upload-artifact",
+        "actions/download-artifact"
+      ]
+    },
+    {
       "groupName": "Dotnet",
       "matchPackageNames": [
         "dotnet-sdk",
@@ -31,6 +38,19 @@
       "groupName": "MSTest",
       "matchPackagePrefixes": [
         "MSTest."
+      ]
+    },
+    {
+      "groupName": "NSubstitute",
+      "matchPackagePrefixes": [
+        "NSubstitute."
+      ]
+    },
+    {
+      "groupName": "XUnit",
+      "matchPackagePrefixes": [
+        "xunit.",
+        "MartinCostello.Logging.XUnit"
       ]
     }
   ],

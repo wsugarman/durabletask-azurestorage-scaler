@@ -197,8 +197,8 @@ runs:
           --set env[0].value=NoCheck \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
-          --set tls.caSecret=self-signed-ca \
-          --set tls.secret=server-tls \
+          --set tls.caCert.secret=self-signed-ca \
+          --set tls.serverCert.secret=server-tls \
           --wait \
           --timeout 30s \
           dtfx-scaler \
@@ -282,8 +282,13 @@ runs:
 
     - if: ${{ failure() }}
       name: Get Keda Logs
-      shell: bash 
+      shell: bash
       run: kubectl logs --tail=-1 --prefix -l app=keda-operator -n keda
+
+    - if: ${{ failure() }}
+      name: Get Plaintext Scaler Logs
+      shell: bash
+      run: kubectl logs --tail=-1 --prefix -l app=plaintext-dtfx-scaler -n keda
 
     - if: ${{ failure() }}
       name: Get Scaler Logs

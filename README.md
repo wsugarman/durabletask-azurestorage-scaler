@@ -41,7 +41,7 @@ This specification describes the `external` trigger for applications that use th
 - **`useManagedIdentity`** - Optionally indicates that AAD pod identity or workload identity should be used to authenticate between the scaler and the Azure Storage account. If `true`, `Account` must be specified, and the appropriate annotations, bindings, and/or labels must be configured for the deployment. Defaults to `false`
 
 ## Authentication
-The scaler supports authentication using either an [Azure Storage connection string](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string), [AAD pod identity](https://github.com/Azure/aad-pod-identity), or [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/).
+The scaler supports authentication using either an [Azure Storage connection string](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) or [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/). [AAD pod identity](https://github.com/Azure/aad-pod-identity) is also supported, but it has been deprecated.
 
 ### Connection Strings
 Connection strings may be specified using an environment variable exposed to the deployment using the parameter `connectionFromEnv`. By default, the scaler will look for an environment variable called `AzureWebJobsStorage`. For example:
@@ -65,7 +65,7 @@ Connection strings may also be specified directly via the `connection` parameter
 ```
 
 ### Identity-Based Connection
-KEDA external scalers do not support the use of [`TriggerAuthentication`](https://keda.sh/docs/2.5/concepts/authentication/#re-use-credentials-and-delegate-auth-with-triggerauthentication), but the scaler can still leverage an identity-based connection. To use an identity, the scaler deployment must include an [AAD Pod Binding](https://azure.github.io/aad-pod-identity/docs/demo/standard_walkthrough/#5-deploy-azureidentitybinding) or [Workload Identity Service Account labels](https://azure.github.io/azure-workload-identity/docs/topics/service-account-labels-and-annotations.html). If there are multiple identities, be sure to specify the `clientId` parameter if not already specified for Workload Identity.
+To use an identity, the scaler deployment must be configured to use Azure Workload Identity (or AAD Pod Identity if necessary). If there are multiple identities, be sure to specify the `clientId` parameter if it is not already specified for Workload Identity.
 
 An example specification that uses an identity-based connection can be seen below:
 
@@ -78,6 +78,45 @@ An example specification that uses an identity-based connection can be seen belo
         clientId: <client-id>    # Optional. Recommended if there are multiple identities
         cloud: <cloud>           # Optional. Defaults to AzurePublicCloud
         useManagedIdentity: true # Optional. Must be true for managed identity. Defaults to false
+```
+
+### Transport Layer Security (TLS) Protocol
+The scaler optionally supports TLS connections as well. While the scaler deployment can be configured to use TLS, the `ScaledObject` must also include information about the client certificates as [Base64 strings](https://keda.sh/docs/2.12/scalers/external/#authentication-parameters).
+
+```yml
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: dtfx-scaler-auth
+  namespace: <namespace>
+spec:
+  secretTargetRef:
+  - parameter: caCert
+    name: <secret>
+    key: tls.crt
+  - parameter: tlsClientCert
+    name: <name>
+    key: tls.crt
+  - parameter: tlsClientKey
+    name: <name>
+    key: tls.key
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: <name>
+  namespace: <namespace>
+spec:
+  scaleTargetRef:
+    name: <function app>
+    kind: Deployment
+  triggers:
+    - type: external
+      metadata:
+        scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
+        accountName: <name> # Optional. Required for pod identity
+      authenticationRef:
+        name: dtfx-scaler-auth
 ```
 
 ## Helm

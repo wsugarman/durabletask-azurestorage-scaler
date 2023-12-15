@@ -14,7 +14,7 @@ internal static partial class SR
 
     public static string BlankConnectionVarFormat => ValidationResourceManager.GetString(nameof(BlankConnectionVarFormat), CultureInfo.CurrentUICulture)!;
 
-    public static string FileNotFoundMessage => ValidationResourceManager.GetString(nameof(FileNotFoundMessage), CultureInfo.CurrentUICulture)!;
+    public static string FileNotFoundFormat => ValidationResourceManager.GetString(nameof(FileNotFoundFormat), CultureInfo.CurrentUICulture)!;
 
     public static string InvalidConnectionStringOptionFormat => ValidationResourceManager.GetString(nameof(InvalidConnectionStringOptionFormat), CultureInfo.CurrentUICulture)!;
 
