@@ -106,7 +106,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The connection environment variable &apos;{0}&apos; cannot be null or white space..
+        ///   Looks up a localized string similar to The connection environment variable &apos;{0}&apos; could not be resolved..
         /// </summary>
         internal static string InvalidConnectionEnvironmentVariableFormat {
             get {

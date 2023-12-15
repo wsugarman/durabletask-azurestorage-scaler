@@ -133,7 +133,7 @@
     <value>There was an internal server error. Please check the logs for details and ensure your deployment is correct.</value>
   </data>
   <data name="InvalidConnectionEnvironmentVariableFormat" xml:space="preserve">
-    <value>The connection environment variable '{0}' cannot be null or white space.</value>
+    <value>The connection environment variable '{0}' could not be resolved.</value>
   </data>
   <data name="InvalidMemberTypeFormat" xml:space="preserve">
     <value>Expected member of type '{0}' but instead found '{1}'.</value>
