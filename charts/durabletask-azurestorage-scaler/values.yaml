@@ -1,5 +1,5 @@
 # Default names are derived from the name of the chart
-name: ""
+nameOverride: ""
 fullnameOverride: ""
 
 # additionalLabels is an optional collection of Kubernetes labels added to each resource.
@@ -120,34 +120,30 @@ serviceAccount:
   create: true
   # name is the name of the service account. The default name is derived from the release.
   name: ""
-  # automountServiceAccountToken indicates whether token should be automatically mounted. Defaults to 'true'.
-  automountServiceAccountToken: true
+  # automount indicates whether token should be automatically mounted. Defaults to 'true'.
+  automount: true
   # annotations is an optional collection of Kubernetes annotations added to the service account.
   annotations: {}
     # key: value
 
 # tls contains settings related to the Transport Layer Security (TLS) protocol used by the gRPC server.
 tls:
-  # secrets contains references to the optional Kubernetes secrets containing TLS PEM certificates and keys.
-  secrets:
-    # caCert contains the reference to an optional custom certificate authority (CA) certificate that is expected to issue all incoming client certificates.
-    caCert:
-      # name is the name of the Kubernetes secret containing the CA PEM certificate.
-      name: ""
-      # key is the key within the Kubernetes secret containing the CA certificate.
-      key: ""
-    # tlsServerCert contains the reference to an optional TLS certificate used by the gRPC server.
-    tlsServerCert:
-      # name is the name of the Kubernetes secret containing the server PEM certificate.
-      name: ""
-      # key is the key within the Kubernetes secret containing the server certificate.
-      key: ""
-    # tlsServerKey contains the reference to an optional TLS certificate key used by the gRPC server.
-    tlsServerKey:
-      # name is the name of the Kubernetes secret containing the server certificate key.
-      name: ""
-      # key is the key within the Kubernetes secret containing the server certificate key.
-      key: ""
+  # caCert contains the reference to an optional custom certificate authority (CA) certificate that is expected to issue all incoming client certificates.
+  caCert:
+    # secret is the name of the Kubernetes secret containing the CA certificate.
+    secret: ""
+    # key is the key within the Kubernetes secret containing the CA certificate.
+    key: "tls.crt"
+  # serverCert contains the reference to an optional TLS certificate used by the gRPC server.
+  serverCert:
+    # secret is the name of the Kubernetes secret containing the server certificate.
+    secret: ""
+    # keys are the keys within the Kubernetes secret containing the server certificate and key.
+    keys:
+      # cert is the key within the Kubernetes secret containing the certificate.
+      cert: "tls.crt"
+      # key is the key within the Kubernetes secret containing the certificate key.
+      key: "tls.key"
   # unsafe indicates whether the gRPC server should accept untrusted client TLS certificates. Defaults to 'false'.
   unsafe: false
 

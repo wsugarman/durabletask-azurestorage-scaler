@@ -77,17 +77,20 @@ spec:
               value: {{ .Values.logging.timestampFormat }}
             - name: Logging__LogLevel__Default
               value: {{ .Values.logging.level | quote }}
-            {{- if .Values.tls.caSecret }}
+            {{- if .Values.tls.caCert.key }}
             - name: Security__Transport__Client__CaCertificatePath
-              value: /cacerts/tls.crt
+              value: "/cacerts/{{ .Values.tls.caCert.key }}"
             {{- end }}
             - name: Security__Transport__Client__ValidateCertificate
               value: {{ not .Values.tls.unsafe | quote }}
-            {{- if .Values.tls.secret }}
+            {{- if .Values.tls.serverCert.keys.cert }}
             - name: Security__Transport__Server__CertificatePath
-              value: /certs/tls.crt
+              value: "/certs/{{ .Values.tls.serverCert.keys.cert }}"
+            {{- end }}
+            {{- if .Values.tls.serverCert.keys.key }}
             - name: Security__Transport__Server__KeyPath
-              value: /certs/tls.key
+              value: "/certs/{{ .Values.tls.serverCert.keys.key }}"
+            {{- end }}
             - name: ASPNETCORE_URLS
               value: https://+:8080
             {{- end }}
@@ -119,18 +122,18 @@ spec:
           resources:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-      {{- if or .Values.tls.caSecret .Values.tls.secret }}
+      {{- if or .Values.tls.caCert.secret .Values.tls.serverCert.secret }}
       volumes:
-        {{- if .Values.tls.caSecret }}
+        {{- if .Values.tls.caCert.secret }}
         - name: cacerts
           secret:
-            secretName: {{ .Values.tls.caSecret }}
+            secretName: {{ .Values.tls.caCert.secret }}
             optional: false
         {{- end }}
-        {{- if .Values.tls.secret }}
+        {{- if .Values.tls.serverCert.secret }}
         - name: certs
           secret:
-            secretName: {{ .Values.tls.secret }}
+            secretName: {{ .Values.tls.serverCert.secret }}
             optional: false
         {{- end }}
       {{- end }}
