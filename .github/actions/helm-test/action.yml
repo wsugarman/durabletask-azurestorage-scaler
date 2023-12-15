@@ -300,7 +300,7 @@ runs:
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
-          -format-error
+          -format-error \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec
 
@@ -312,7 +312,7 @@ runs:
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
-          -format-error
+          -format-error \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec
 
