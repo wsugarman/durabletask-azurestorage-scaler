@@ -85,13 +85,13 @@ spec:
             - name: Security__Transport__Client__CaCertificatePath
               value: "/cacerts/{{ .Values.tls.caCert.key }}"
             {{- end }}
+            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
             - name: Security__Transport__Client__ValidateCertificate
               value: {{ not .Values.tls.unsafe | quote }}
-            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
             - name: Security__Transport__Server__CertificatePath
               value: "/certs/{{ .Values.tls.serverCert.keys.cert }}"
             {{- end }}
-            {{- if .Values.tls.serverCert.keys.key }}
+            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.key }}
             - name: Security__Transport__Server__KeyPath
               value: "/certs/{{ .Values.tls.serverCert.keys.key }}"
             {{- end }}
@@ -102,14 +102,14 @@ spec:
           envFrom:
             {{- toYaml .Values.envFrom | nindent 12 -}}
           {{- end }}
-          {{- if or .Values.tls.caSecret .Values.tls.secret }}
+          {{- if or .Values.tls.caCert.secret .Values.tls.serverCert.secret }}
           volumeMounts:
-            {{- if .Values.tls.caSecret }}
+            {{- if .Values.tls.caCert.secret }}
             - name: cacerts
               mountPath: /cacerts
               readOnly: true
             {{- end }}
-            {{- if .Values.tls.secret }}
+            {{- if .Values.tls.serverCert.secret }}
             - name: certs
               mountPath: /certs
               readOnly: true
