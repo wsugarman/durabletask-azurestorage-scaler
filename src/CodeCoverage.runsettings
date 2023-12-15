@@ -7,7 +7,7 @@
           <Format>cobertura</Format>
           <Exclude>[Keda.Scaler.DurableTask.AzureStorage*.Test]*</Exclude>
           <Include>[Keda.Scaler.DurableTask.AzureStorage*]*</Include>
-          <ExcludeByAttribute>ExcludeFromCodeCoverage</ExcludeByAttribute>
+          <ExcludeByAttribute>CompilerGenerated,ExcludeFromCodeCoverage,GeneratedCode</ExcludeByAttribute>
           <ExcludeByFile>**/Program.cs,**/obj/**/Protos/**/*.cs,</ExcludeByFile>
           <SingleHit>false</SingleHit>
           <UseSourceLink>true</UseSourceLink>
