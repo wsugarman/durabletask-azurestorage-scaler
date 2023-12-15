@@ -75,10 +75,10 @@ An example specification that uses an identity-based connection can be seen belo
     - type: external
       metadata:
         scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
-        accountName: <name>      # Optional. Required for pod identity
-        clientId: <client-id>    # Optional. Recommended if there are multiple identities
-        cloud: <cloud>           # Optional. Defaults to AzurePublicCloud
-        useManagedIdentity: true # Optional. Must be true for managed identity. Defaults to false
+        accountName: <name>       # Optional. Required for pod identity
+        clientId: <client-id>     # Optional. Recommended if there are multiple identities
+        cloud: <cloud>            # Optional. Defaults to AzurePublicCloud
+        UseWorkloadIdentity: true # Optional. Must be true for workload identity. Defaults to false
 ```
 
 ### Transport Layer Security (TLS) Protocol
