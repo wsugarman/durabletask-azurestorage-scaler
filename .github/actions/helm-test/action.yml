@@ -282,8 +282,13 @@ runs:
 
     - if: ${{ failure() }}
       name: Get Keda Logs
-      shell: bash 
+      shell: bash
       run: kubectl logs --tail=-1 --prefix -l app=keda-operator -n keda
+
+    - if: ${{ failure() }}
+      name: Get Plaintext Scaler Logs
+      shell: bash
+      run: kubectl logs --tail=-1 --prefix -l app=plaintext-dtfx-scaler -n keda
 
     - if: ${{ failure() }}
       name: Get Scaler Logs
