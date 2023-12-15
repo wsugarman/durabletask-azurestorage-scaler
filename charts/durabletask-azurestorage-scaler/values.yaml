@@ -1,7 +1,3 @@
-# Default names are derived from the name of the chart
-nameOverride: ""
-fullnameOverride: ""
-
 # additionalLabels is an optional collection of Kubernetes labels added to each resource.
 additionalLabels: {}
   # key: value
@@ -22,6 +18,9 @@ envFrom:
 # - configMapRef:
 #     name: config-map-name
 
+# fullnameOverride is the optional name used for the Kubernetes resources. Defaults to a generated name based on the chart.
+fullnameOverride: ""
+
 # image contains settings related to the scaler container image.
 image:
   # repository is the name of the scaler image.
@@ -41,6 +40,9 @@ logging:
   level: information
   # timestampFormat is either a standard or customer .NET date and time format string. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings for more information. Defaults to 'O'.
   timestampFormat: O
+
+# nameOverride is the optional name used for the container and Kubernetes resources. Defaults to a generated name based on the chart.
+nameOverride: ""
 
 # nodeSelector is an optional selector for determining which nodes host the scaler pods.
 nodeSelector: {}
@@ -130,20 +132,20 @@ serviceAccount:
 tls:
   # caCert contains the reference to an optional custom certificate authority (CA) certificate that is expected to issue all incoming client certificates.
   caCert:
-    # secret is the name of the Kubernetes secret containing the CA certificate.
-    secret: ""
     # key is the key within the Kubernetes secret containing the CA certificate.
     key: "tls.crt"
+    # secret is the name of the Kubernetes secret containing the CA certificate.
+    secret: ""
   # serverCert contains the reference to an optional TLS certificate used by the gRPC server.
   serverCert:
-    # secret is the name of the Kubernetes secret containing the server certificate.
-    secret: ""
     # keys are the keys within the Kubernetes secret containing the server certificate and key.
     keys:
       # cert is the key within the Kubernetes secret containing the certificate.
       cert: "tls.crt"
       # key is the key within the Kubernetes secret containing the certificate key.
       key: "tls.key"
+    # secret is the name of the Kubernetes secret containing the server certificate.
+    secret: ""
   # unsafe indicates whether the gRPC server should accept untrusted client TLS certificates. Defaults to 'false'.
   unsafe: false
 
