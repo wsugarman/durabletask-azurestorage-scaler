@@ -160,6 +160,42 @@ runs:
           --cert=${{ runner.temp }}/certs/server.pem \
           --key=${{ runner.temp }}/certs/server.key
 
+    - name: Create Unknown Client Certificates
+      shell: bash
+      run: |
+        # Create Another CA Root Certificate
+        openssl req \
+          -x509 \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -days 1 \
+          -subj "/C=US/CN=Invalid Integration Tests" \
+          -keyout ${{ runner.temp }}/certs/invalid-root.key \
+          -out ${{ runner.temp }}/certs/invalid-root.pem
+
+        # Create a client TLS certificate for KEDA
+        printf "basicConstraints=CA:FALSE\nsubjectAltName=IP:127.0.0.1\n" >> ${{ runner.temp }}/certs/invalid-client.ext
+
+        openssl req \
+          -noenc \
+          -new \
+          -newkey rsa:2048 \
+          -subj "/C=US/ST=Washington/L=Redmond/O=KEDA/CN=invalid.user" \
+          -addext "subjectAltName = IP:127.0.0.1" \
+          -keyout ${{ runner.temp }}/certs/invalid-client.key \
+          -out ${{ runner.temp }}/certs/invalid-client.csr
+
+        openssl x509 \
+          -req \
+          -in ${{ runner.temp }}/certs/invalid-client.csr \
+          -extfile ${{ runner.temp }}/certs/invalid-client.ext \
+          -CA ${{ runner.temp }}/certs/invalid-root.pem \
+          -CAkey ${{ runner.temp }}/certs/invalid-root.key \
+          -CAcreateserial \
+          -days 1 \
+          -out ${{ runner.temp }}/certs/invalid-client.pem
+
     - name: Install KEDA
       shell: bash
       run: |
@@ -245,7 +281,7 @@ runs:
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
           127.0.0.1:10003 \
-          externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
+          externalscaler.ExternalScaler/GetMetricSpec
 
         # Test with TLS
         grpcurl \
@@ -256,7 +292,39 @@ runs:
           -proto "externalscaler.proto" \
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
           127.0.0.1:10004 \
-          externalscaler.ExternalScaler/GetMetricSpec 1> /dev/null
+          externalscaler.ExternalScaler/GetMetricSpec
+
+        # Test that the scaler rejects plaintext requests when TLS is enabled
+        set +e
+
+        grpcurl \
+          -plaintext \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10004 \
+          externalscaler.ExternalScaler/GetMetricSpec
+
+        if [ $? -eq 0 ]; then
+          exit 1
+        fi
+
+        # Test that the scaler rejects invalid client certificates when TLS is enabled
+        grpcurl \
+          -cacert "${{ runner.temp }}/certs/root.pem" \
+          -cert "${{ runner.temp }}/certs/invalid-client.pem" \
+          -key "${{ runner.temp }}/certs/invalid-client.key" \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10004 \
+          externalscaler.ExternalScaler/GetMetricSpec
+
+        if [ $? -eq 0 ]; then
+          exit 1
+        fi
+
+        set -e
 
     - name: Test Scaler
       shell: bash
