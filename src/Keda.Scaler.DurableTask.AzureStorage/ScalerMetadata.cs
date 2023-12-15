@@ -156,19 +156,26 @@ public sealed class ScalerMetadata : IValidatableObject
     /// Gets a value indicating whether a managed identity should be used to authenticate the connection to Azure Storage.
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// External scalers do not support Trigger Authentication, and either AAD Pod Identity or Workload Identity
-    /// must be installed in the Kubernetes cluster with the appropriate annotations, bindings, and/or labels.
-    /// </para>
-    /// <para>
-    /// If <see langword="true"/> then <see cref="AccountName"/> must also be specified.
-    /// </para>
+    /// Managed identities cannot be used with connection strings.
     /// </remarks>
     /// <value>
     /// <see langword="true"/> if a managed identity is available in the service pod and should be used to authenticate;
     /// otherwise, <see langword="false"/>.
     /// </value>
+    [Obsolete("Use UseWorkloadIdentity instead.")]
     public bool UseManagedIdentity { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether a federated identity should be used to authenticate the connection to Azure Storage.
+    /// </summary>
+    /// <remarks>
+    /// Workload identity cannot be used with connection strings.
+    /// </remarks>
+    /// <value>
+    /// <see langword="true"/> if a federated identity is available in the service pod and should be used to authenticate;
+    /// otherwise, <see langword="false"/>.
+    /// </value>
+    public bool UseWorkloadIdentity { get; set; }
 
     private Lazy<string?>? _connectionString;
 
@@ -222,8 +229,15 @@ public sealed class ScalerMetadata : IValidatableObject
         if (ConnectionFromEnv is not null)
             yield return new ValidationResult(SR.Format(SR.AmbiguousConnectionOptionFormat, nameof(ConnectionFromEnv)));
 
-        if (!UseManagedIdentity && ClientId is not null)
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (!UseManagedIdentity && !UseWorkloadIdentity && ClientId is not null)
             yield return new ValidationResult(SR.Format(SR.MissingIdentityCredentialOptionFormat, nameof(ClientId)));
+#pragma warning restore CS0618 // Type or member is obsolete
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (UseManagedIdentity && UseWorkloadIdentity)
+            yield return new ValidationResult(SR.AmbiguousIdentityCredentialMessage);
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     private IEnumerable<ValidationResult> ValidateConnectionStringMetadata()
@@ -234,8 +248,13 @@ public sealed class ScalerMetadata : IValidatableObject
         if (Cloud is not null)
             yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(Cloud)));
 
+#pragma warning disable CS0618 // Type or member is obsolete
         if (UseManagedIdentity)
             yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(UseManagedIdentity)));
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        if (UseWorkloadIdentity)
+            yield return new ValidationResult(SR.Format(SR.InvalidConnectionStringOptionFormat, nameof(UseWorkloadIdentity)));
 
         if (Connection is not null && string.IsNullOrWhiteSpace(Connection))
             yield return new ValidationResult(SR.Format(SR.OptionalBlankValueFormat, nameof(Connection)));

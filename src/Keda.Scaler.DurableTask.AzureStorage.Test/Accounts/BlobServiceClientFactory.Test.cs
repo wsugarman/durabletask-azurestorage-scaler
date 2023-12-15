@@ -9,6 +9,7 @@ using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Accounts;
 
+[Collection("Service Client Factory Test Collection")]
 public class BlobServiceClientFactoryTest : AzureStorageAccountClientFactoryTest<BlobServiceClient>
 {
     protected override IStorageAccountClientFactory<BlobServiceClient> GetFactory()

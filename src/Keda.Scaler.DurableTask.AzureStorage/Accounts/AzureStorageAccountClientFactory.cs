@@ -25,7 +25,18 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
             AzureStorageService service = typeof(T) == typeof(BlobServiceClient) ? AzureStorageService.Blob : AzureStorageService.Queue;
             Uri serviceUri = accountInfo.Cloud.GetStorageServiceUri(accountInfo.AccountName, service);
 
-            if (string.Equals(accountInfo.Credential, Credential.ManagedIdentity, StringComparison.OrdinalIgnoreCase))
+#pragma warning disable CS0618 // Type or member is obsolete
+            if (string.Equals(accountInfo.Credential, Credentials.WorkloadIdentity, StringComparison.OrdinalIgnoreCase))
+            {
+                WorkloadIdentityCredentialOptions options = new() { AuthorityHost = accountInfo.Cloud.AuthorityHost };
+
+                // Optionally override the service account annotation 'azure.workload.identity/client-id'
+                if (accountInfo.ClientId is not null)
+                    options.ClientId = accountInfo.ClientId;
+
+                return CreateServiceClient(serviceUri, new WorkloadIdentityCredential(options));
+            }
+            else if (string.Equals(accountInfo.Credential, Credentials.ManagedIdentity, StringComparison.OrdinalIgnoreCase))
             {
                 ManagedIdentityCredential credential = new(
                     accountInfo.ClientId,
@@ -37,6 +48,7 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
             {
                 return CreateServiceClient(serviceUri);
             }
+#pragma warning restore CS0618 // Type or member is obsolete
         }
         else
         {

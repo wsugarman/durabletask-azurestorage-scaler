@@ -295,6 +295,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
 
     private static ScaledObjectRef CreateScaledObjectRef(ScalerMetadata metadata)
     {
+#pragma warning disable CS0618 // Type or member is obsolete
         ScaledObjectRef result = new()
         {
             ScalerMetadata =
@@ -302,8 +303,10 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
                 { nameof(ScalerMetadata.MaxActivitiesPerWorker), metadata.MaxActivitiesPerWorker.ToString(CultureInfo.InvariantCulture) },
                 { nameof(ScalerMetadata.MaxOrchestrationsPerWorker), metadata.MaxOrchestrationsPerWorker.ToString(CultureInfo.InvariantCulture) },
                 { nameof(ScalerMetadata.UseManagedIdentity), metadata.UseManagedIdentity.ToString(CultureInfo.InvariantCulture) },
+                { nameof(ScalerMetadata.UseWorkloadIdentity), metadata.UseWorkloadIdentity.ToString(CultureInfo.InvariantCulture) },
             }
         };
+#pragma warning restore CS0618 // Type or member is obsolete
 
         if (metadata.AccountName is not null)
             result.ScalerMetadata[nameof(ScalerMetadata.AccountName)] = metadata.AccountName;

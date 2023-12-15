@@ -120,6 +120,9 @@
   <data name="AmbiguousConnectionOptionFormat" xml:space="preserve">
     <value>{0} cannot be specified in addition to AccountName.</value>
   </data>
+  <data name="AmbiguousIdentityCredentialMessage" xml:space="preserve">
+    <value>Both Managed and Workload Identity may not be specified.</value>
+  </data>
   <data name="BlankConnectionVarFormat" xml:space="preserve">
     <value>Unable to resolve the connection string from environment variable '{0}'.</value>
   </data>

@@ -23,7 +23,20 @@ internal static class ScalerMetadataExtensions
                 _ => AzureCloudEndpoints.ForEnvironment(scalerMetadata.CloudEnvironment),
             },
             ConnectionString = scalerMetadata.ConnectionString,
-            Credential = scalerMetadata.UseManagedIdentity ? Credential.ManagedIdentity : null,
+            Credential = GetCredential(scalerMetadata),
         };
+    }
+
+    private static string? GetCredential(this ScalerMetadata scalerMetadata)
+    {
+        if (scalerMetadata.UseWorkloadIdentity)
+            return Credentials.WorkloadIdentity;
+
+#pragma warning disable CS0618 // Type or member is obsolete
+        if (scalerMetadata.UseManagedIdentity)
+            return Credentials.ManagedIdentity;
+#pragma warning restore CS0618 // Type or member is obsolete
+
+        return null;
     }
 }

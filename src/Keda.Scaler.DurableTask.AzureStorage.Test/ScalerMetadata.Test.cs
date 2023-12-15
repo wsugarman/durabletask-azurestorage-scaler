@@ -156,13 +156,41 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenAccountWithNoIdentityBasedConnectionClientId_WhenValidating_ThenThrowValidationException()
+    [Obsolete("UseManagedIdentity is deprecated.")]
+    public void GivenAccountWithNoManagedIdentityClientId_WhenValidating_ThenThrowValidationException()
     {
         ScalerMetadata metadata = new()
         {
             AccountName = "example",
             ClientId = Guid.NewGuid().ToString(),
             UseManagedIdentity = false,
+        };
+
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
+    }
+
+    [Fact]
+    public void GivenAccountWithNoWorkloadIdentityClientId_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = "example",
+            ClientId = Guid.NewGuid().ToString(),
+            UseWorkloadIdentity = false,
+        };
+
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
+    }
+
+    [Fact]
+    [Obsolete("UseManagedIdentity is deprecated.")]
+    public void GivenAccountWithAmbiguousCredentials_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = "example",
+            UseManagedIdentity = true,
+            UseWorkloadIdentity = true,
         };
 
         Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
@@ -193,12 +221,25 @@ public class ScalerMetadataTest
     }
 
     [Fact]
-    public void GivenConnectionWithConnectionBasedIdentity_WhenValidating_ThenThrowValidationException()
+    [Obsolete("UseManagedIdentity is deprecated.")]
+    public void GivenConnectionWithManagedIdentity_WhenValidating_ThenThrowValidationException()
     {
         ScalerMetadata metadata = new()
         {
             AccountName = null,
             UseManagedIdentity = true,
+        };
+
+        Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
+    }
+
+    [Fact]
+    public void GivenConnectionWithWorkloadIdentity_WhenValidating_ThenThrowValidationException()
+    {
+        ScalerMetadata metadata = new()
+        {
+            AccountName = null,
+            UseWorkloadIdentity = true,
         };
 
         Assert.True(new ValidateScalerMetadata().Validate(null, metadata).Failed);
