@@ -6,8 +6,8 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
-using Microsoft.Extensions.Primitives;
 using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
@@ -117,32 +117,44 @@ public sealed class CertificateFileTest : IDisposable
     }
 
     [Fact]
-    public void GivenChangingFile_WhenWatchingCertificateFile_ThenSuccessfullyNotifySubscribers()
+    public async Task GivenChangingFile_WhenWatchingCertificateFile_ThenSuccessfullyNotifySubscribers()
     {
         const string CertName = "example.crt";
         string certPath = Path.Combine(_tempFolder, CertName);
 
-        using RSA key1 = RSA.Create();
-        using X509Certificate2 cert1 = key1.CreateSelfSignedCertificate();
-        File.WriteAllBytes(certPath, cert1.Export(X509ContentType.Pkcs12));
+        using RSA originalKey = RSA.Create();
+        using X509Certificate2 originalCert = originalKey.CreateSelfSignedCertificate();
+        await File.WriteAllBytesAsync(certPath, originalCert.Export(X509ContentType.Pkcs12));
 
         using ManualResetEventSlim changeEvent = new(initialState: false);
         using CertificateFile certificateFile = new(certPath);
-        using IDisposable subscription = ChangeToken.OnChange(certificateFile.Watch, changeEvent.Set);
+        certificateFile.Changed += (f, args) =>
+        {
+            Assert.Null(args.Certificate);
+            Assert.NotNull(args.Exception);
+
+            changeEvent.Set();
+        };
 
         // Ensure the certificate is originally as expected
         Assert.False(changeEvent.IsSet);
-        using X509Certificate2 actual1 = certificateFile.Load();
-        Assert.Equal(cert1.Thumbprint, actual1.Thumbprint);
+        using X509Certificate2 originalActual = certificateFile.Load();
+        Assert.Equal(originalCert.Thumbprint, originalActual.Thumbprint);
 
-        // Edit the file and check the new value
-        // Note: On Linux, there appears to be an issue monitoring changes when overwriting the file
-        using RSA key2 = RSA.Create();
-        using X509Certificate2 cert2 = key2.CreateSelfSignedCertificate();
-        File.WriteAllBytes(certPath, cert2.Export(X509ContentType.Pkcs12));
+        // Edit the file multiple times and check the new value
+        for (int i = 1; i <= 10; i++)
+        {
+            using RSA newKey = RSA.Create();
+            using X509Certificate2 newCert = newKey.CreateSelfSignedCertificate();
+            await File.WriteAllBytesAsync(certPath, newCert.Export(X509ContentType.Pkcs12));
 
-        Assert.True(changeEvent.Wait(TimeSpan.FromMinutes(1)));
-        using X509Certificate2 actual2 = certificateFile.Load();
-        Assert.Equal(cert2.Thumbprint, actual2.Thumbprint);
+            Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(30)), $"[{DateTime.UtcNow}] Failed to update on attempt #{i}");
+            await Task.Delay(TimeSpan.FromSeconds(5)); // Allow superfluous (for our purpose) file system events to fire
+
+            using X509Certificate2 newActual = certificateFile.Load();
+            Assert.Equal(newCert.Thumbprint, newActual.Thumbprint);
+
+            changeEvent.Reset();
+        }
     }
 }
