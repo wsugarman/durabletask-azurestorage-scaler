@@ -8,6 +8,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
+using Keda.Scaler.DurableTask.AzureStorage.Test.IO;
 using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
@@ -148,8 +149,8 @@ public sealed class CertificateFileTest : IDisposable
             using X509Certificate2 newCert = newKey.CreateSelfSignedCertificate();
             await File.WriteAllBytesAsync(certPath, newCert.Export(X509ContentType.Pkcs12));
 
-            Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(30)), $"[{DateTime.UtcNow}] Failed to update on attempt #{i}");
-            await Task.Delay(TimeSpan.FromSeconds(5)); // Allow superfluous (for our purpose) file system events to fire
+            Assert.True(changeEvent.Wait(FileSystem.PollingIntervalMs * 3), $"[{DateTime.UtcNow}] Failed to update on attempt #{i}");
+            await Task.Delay(FileSystem.PollingIntervalMs * 3); // Allow superfluous (for our purpose) file system events to fire
 
             using X509Certificate2 newActual = certificateFile.Load();
             Assert.Equal(newCert.Thumbprint, newActual.Thumbprint);
