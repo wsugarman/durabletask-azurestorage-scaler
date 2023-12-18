@@ -97,7 +97,7 @@ public sealed class CertificateFileMonitorTest : IDisposable
 
         // Set up some task to simulate a concurrent consumer
         using CancellationTokenSource tokenSource = new();
-        Task consumer = Task.Run(() => GetCurrentCert(monitor, tokenSource.Token));
+        Task consumer = GetCurrentCertAsync(monitor, tokenSource.Token);
 
         Assert.False(changeEvent.IsSet);
         Assert.Equal(originalCert.Thumbprint, monitor.Current.Thumbprint);
@@ -125,14 +125,16 @@ public sealed class CertificateFileMonitorTest : IDisposable
             await tokenSource.CancelAsync();
         }
 
-        await consumer;
+        _ = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => consumer);
 
-        static void GetCurrentCert(CertificateFileMonitor m, CancellationToken t)
+        static async Task GetCurrentCertAsync(CertificateFileMonitor m, CancellationToken t)
         {
-            while (!t.IsCancellationRequested)
+            while (true)
             {
+                t.ThrowIfCancellationRequested();
+
                 Assert.NotNull(m.Current);
-                _ = Thread.Yield();
+                await Task.Delay(100, t);
             }
         }
     }
