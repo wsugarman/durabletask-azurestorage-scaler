@@ -6,11 +6,9 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 using Xunit;
@@ -18,13 +16,12 @@ using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
 
-public sealed class TlsConfigureTest : IDisposable
+public class TlsConfigureTest : FileSystemTest
 {
     private const string CaCertName = "ca.crt";
     private const string ServerCertName = "server.pem";
     private const string ServerKeyName = "server.key";
 
-    private readonly string _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
     private readonly string _caCertPath;
     private readonly string _serverCertPath;
     private readonly string _serverKeyPath;
@@ -32,47 +29,33 @@ public sealed class TlsConfigureTest : IDisposable
     private readonly RSA _serverKey = RSA.Create();
     private readonly X509Certificate2 _caCertificate;
     private readonly X509Certificate2 _serverCertificate;
-    private readonly ILoggerFactory _loggerFactory;
 
     public TlsConfigureTest(ITestOutputHelper outputHelper)
+        : base(outputHelper)
     {
-        _ = Directory.CreateDirectory(_tempFolder);
-
-        _caCertPath = Path.Combine(_tempFolder, CaCertName);
-        _serverCertPath = Path.Combine(_tempFolder, ServerCertName);
-        _serverKeyPath = Path.Combine(_tempFolder, ServerKeyName);
+        _caCertPath = Path.Combine(RootFolder, CaCertName);
+        _serverCertPath = Path.Combine(RootFolder, ServerCertName);
+        _serverKeyPath = Path.Combine(RootFolder, ServerKeyName);
         _caCertificate = _caCertKey.CreateSelfSignedCertificate();
         _serverCertificate = _serverKey.CreateCertificate(_caCertificate, nameof(TlsConfigureTest));
 
         File.WriteAllText(_caCertPath, _caCertificate.ExportCertificatePem());
         File.WriteAllText(_serverCertPath, _serverCertificate.ExportCertificatePem());
         File.WriteAllText(_serverKeyPath, _serverKey.ExportRSAPrivateKeyPem());
-
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-    }
-
-    public void Dispose()
-    {
-        _caCertKey.Dispose();
-        _serverKey.Dispose();
-        _caCertificate.Dispose();
-        _serverCertificate.Dispose();
-        _loggerFactory.Dispose();
-        Directory.Delete(_tempFolder, true);
     }
 
     [Fact]
     public void GivenNullTlsClientOptions_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(null!, Options.Create(new TlsServerOptions()), _loggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create<TlsClientOptions>(null!), Options.Create(new TlsServerOptions()), _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(null!, Options.Create(new TlsServerOptions()), LoggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create<TlsClientOptions>(null!), Options.Create(new TlsServerOptions()), LoggerFactory));
     }
 
     [Fact]
     public void GivenNullTlsServerOptions_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), null!, _loggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), Options.Create<TlsServerOptions>(null!), _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), null!, LoggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), Options.Create<TlsServerOptions>(null!), LoggerFactory));
     }
 
     [Fact]
@@ -82,14 +65,14 @@ public sealed class TlsConfigureTest : IDisposable
     [Fact]
     public void GivenNullOptions_WhenConfiguringHttpsConnectionAdapterOptions_ThenThrowArgumentNullException()
     {
-        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), LoggerFactory);
         _ = Assert.Throws<ArgumentNullException>(() => configure.Configure((HttpsConnectionAdapterOptions)null!));
     }
 
     [Fact]
     public void GivenNoTls_WhenConfiguringHttpsConnectionAdapterOptions_ThenDoNotSupplyCertificate()
     {
-        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), LoggerFactory);
 
         HttpsConnectionAdapterOptions options = new();
         configure.Configure(options);
@@ -105,7 +88,7 @@ public sealed class TlsConfigureTest : IDisposable
     {
         TlsClientOptions clientOptions = new() { ValidateCertificate = validate };
         TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
 
         HttpsConnectionAdapterOptions options = new();
         configure.Configure(options);
@@ -117,7 +100,7 @@ public sealed class TlsConfigureTest : IDisposable
     [Fact]
     public void GivenNullOptions_WhenConfiguringCertificateAuthenticationOptions_ThenThrowArgumentNullException()
     {
-        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), LoggerFactory);
         _ = Assert.Throws<ArgumentNullException>(() => configure.Configure((CertificateAuthenticationOptions)null!));
         _ = Assert.Throws<ArgumentNullException>(() => configure.Configure("foo", null!));
     }
@@ -127,7 +110,7 @@ public sealed class TlsConfigureTest : IDisposable
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
         TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
 
         CertificateAuthenticationOptions options = new();
 
@@ -148,7 +131,7 @@ public sealed class TlsConfigureTest : IDisposable
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = customCertAuthority ? _caCertPath : null, ValidateCertificate = validateClientCert };
         TlsServerOptions serverOptions = specifyServerCert ? new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath } : new();
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
 
         CertificateAuthenticationOptions options = new();
         configure.Configure(CertificateAuthenticationDefaults.AuthenticationScheme, options);
@@ -162,7 +145,7 @@ public sealed class TlsConfigureTest : IDisposable
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
         TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
 
         CertificateAuthenticationOptions options = new();
 
@@ -182,7 +165,7 @@ public sealed class TlsConfigureTest : IDisposable
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = customCertAuthority ? _caCertPath : null, ValidateCertificate = validateClientCert };
         TlsServerOptions serverOptions = specifyServerCert ? new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath } : new();
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);
 
@@ -195,11 +178,24 @@ public sealed class TlsConfigureTest : IDisposable
     {
         TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
         TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), _loggerFactory);
+        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);
 
         IChangeToken actual = configure.GetChangeToken();
         Assert.NotSame(NullChangeToken.Singleton, actual);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _caCertKey.Dispose();
+            _serverKey.Dispose();
+            _caCertificate.Dispose();
+            _serverCertificate.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }

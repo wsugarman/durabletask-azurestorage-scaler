@@ -11,8 +11,8 @@ internal static partial class Log
     [LoggerMessage(
         EventId = 16,
         Level = LogLevel.Information,
-        Message = "Successfully loaded certificate from '{Path}' with thumbprint '{Thumbprint}'.")]
-    public static partial void LoadedCertificate(this ILogger logger, string path, string thumbprint);
+        Message = "Successfully loaded certificate with thumbprint '{Thumbprint}' from '{Path}'.")]
+    public static partial void LoadedCertificate(this ILogger logger, string thumbprint, string path);
 
     [LoggerMessage(
         EventId = 17,

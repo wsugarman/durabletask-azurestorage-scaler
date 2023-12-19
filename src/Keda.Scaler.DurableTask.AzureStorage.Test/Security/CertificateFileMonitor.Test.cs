@@ -9,126 +9,117 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
 
-public sealed class CertificateFileMonitorTest : IDisposable
+public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSystemTest(outputHelper)
 {
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly ILogger _logger;
-    private readonly string _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-    public CertificateFileMonitorTest(ITestOutputHelper outputHelper)
-    {
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-        _logger = _loggerFactory.CreateLogger(LogCategories.Security);
-        _ = Directory.CreateDirectory(_tempFolder);
-    }
-
-    public void Dispose()
-    {
-        _loggerFactory.Dispose();
-        Directory.Delete(_tempFolder, true);
-    }
-
     [Fact]
     public void GivenNullCertificateFile_WhenCreatingMonitor_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => CertificateFileMonitor.Create(null!, _logger));
+        => Assert.Throws<ArgumentNullException>(() => new CertificateFileMonitor(null!, Logger));
 
     [Fact]
     public void GivenNullLogger_WhenCreatingMonitor_ThenThrowArgumentNullException()
     {
-        using CertificateFile file = new(Path.Combine(_tempFolder, "unused.crt"));
-        _ = Assert.Throws<ArgumentNullException>(() => CertificateFileMonitor.Create(file, null!));
+        using CertificateFile file = new(Path.Combine(RootFolder, "unused.crt"));
+        _ = Assert.Throws<ArgumentNullException>(() => new CertificateFileMonitor(file, null!));
     }
 
     [Fact]
-    public void GivenChangingToInvalidFile_WhenMonitoringCertificateFile_ThenAutomaticallyUpdateValue()
+    public async Task GivenChangingToInvalidFile_WhenMonitoringCertificateFile_ThenAutomaticallyUpdateValue()
     {
         const string CertName = "example.crt";
-        string certPath = Path.Combine(_tempFolder, CertName);
+        string certPath = Path.Combine(RootFolder, CertName);
 
-        using RSA key1 = RSA.Create();
-        using X509Certificate2 cert1 = key1.CreateSelfSignedCertificate();
-        File.WriteAllBytes(certPath, cert1.Export(X509ContentType.Pkcs12));
+        using RSA key = RSA.Create();
+        using X509Certificate2 cert = key.CreateSelfSignedCertificate();
+        await File.WriteAllBytesAsync(certPath, cert.Export(X509ContentType.Pkcs12));
 
         using ManualResetEventSlim changeEvent = new(initialState: false);
         using CertificateFile certificateFile = new(certPath);
-        using CertificateFileMonitor monitor = certificateFile.Monitor(_logger);
+        using CertificateFileMonitor monitor = certificateFile.Monitor(Logger);
         using IDisposable subscription = ChangeToken.OnChange(monitor.GetReloadToken, changeEvent.Set);
 
         // Ensure the certificate is originally as expected
         Assert.False(changeEvent.IsSet);
-        Assert.Equal(cert1.Thumbprint, monitor.Current.Thumbprint);
+        Assert.Equal(cert.Thumbprint, monitor.Current.Thumbprint);
 
-        // Edit the file and check the new value
-        File.WriteAllText(certPath, "Hello world!");
+        // Edit the file and check that an error is re-thrown from the update thread
+        await File.WriteAllTextAsync(certPath, "Hello world!");
 
-        Assert.True(changeEvent.Wait(TimeSpan.FromMinutes(1)));
-        _ = Assert.ThrowsAny<CryptographicException>(() => monitor.Current);
+        using CancellationTokenSource tokenSource = new();
+        tokenSource.CancelAfter(TimeSpan.FromSeconds(15));
+        await monitor.WaitForExceptionAsync(TimeSpan.FromMilliseconds(100), tokenSource.Token);
     }
 
     [Fact]
-    public async void GivenChangingFile_WhenMonitoringCertificateFile_ThenAutomaticallyUpdateValue()
+    public async Task GivenUpdatingCertificate_WhenMonitoringCertificateFile_ThenIncrementallyUpdate()
     {
         const string CertName = "example.crt";
-        string certPath = Path.Combine(_tempFolder, CertName);
+        string certPath = Path.Combine(RootFolder, CertName);
 
-        using RSA key1 = RSA.Create();
-        using X509Certificate2 cert1 = key1.CreateSelfSignedCertificate();
-        File.WriteAllBytes(certPath, cert1.Export(X509ContentType.Pkcs12));
+        using RSA originalKey = RSA.Create();
+        using X509Certificate2 originalCert = originalKey.CreateSelfSignedCertificate();
+        await File.WriteAllBytesAsync(certPath, originalCert.Export(X509ContentType.Pkcs12));
 
-        using ManualResetEventSlim changeEvent = new(initialState: false);
         using CertificateFile certificateFile = new(certPath);
-        using CertificateFileMonitor monitor = certificateFile.Monitor(_logger);
-        using IDisposable subscription = ChangeToken.OnChange(monitor.GetReloadToken, changeEvent.Set);
+        using CertificateFileMonitor monitor = certificateFile.Monitor(Logger);
+        Assert.Equal(originalCert.Thumbprint, monitor.Current.Thumbprint);
 
-        // Set up some task to simulate concurrent consumers
+        for (int i = 0; i < 10; i++)
+        {
+            using RSA key = RSA.Create();
+            using X509Certificate2 cert = key.CreateSelfSignedCertificate();
+            await File.WriteAllBytesAsync(certPath, cert.Export(X509ContentType.Pkcs12));
+
+            using CancellationTokenSource tokenSource = new();
+            Task consumer = monitor.WaitForThumbprintAsync(cert.Thumbprint, TimeSpan.FromMilliseconds(200), tokenSource.Token);
+            tokenSource.CancelAfter(TimeSpan.FromMinutes(2));
+            await consumer;
+        }
+    }
+
+    [Fact]
+    public async Task GivenConcurrentReaders_WhenMonitoringCertificateFile_ThenEventuallyShowConsistency()
+    {
+        const string CertName = "example.crt";
+        string certPath = Path.Combine(RootFolder, CertName);
+
+        using RSA originalKey = RSA.Create();
+        using X509Certificate2 originalCert = originalKey.CreateSelfSignedCertificate();
+        await File.WriteAllBytesAsync(certPath, originalCert.Export(X509ContentType.Pkcs12));
+
+        using CertificateFile certificateFile = new(certPath);
+        using CertificateFileMonitor monitor = certificateFile.Monitor(Logger);
+        Assert.Equal(originalCert.Thumbprint, monitor.Current.Thumbprint);
+
+        // Create the expected final certificate
+        using RSA finalKey = RSA.Create();
+        using X509Certificate2 finalCert = finalKey.CreateSelfSignedCertificate();
+
         using CancellationTokenSource tokenSource = new();
         Task[] consumers = Enumerable
-            .Range(0, 25)
-            .Select(x => Task.Run(() => GetCurrentCert(monitor, tokenSource.Token)))
+            .Repeat(monitor, 3)
+            .Select(m => m.WaitForThumbprintAsync(finalCert.Thumbprint, TimeSpan.FromMilliseconds(500), tokenSource.Token))
             .ToArray();
-        try
-        {
-            // Ensure the certificate is originally as expected
-            Assert.False(changeEvent.IsSet);
-            Assert.Equal(cert1.Thumbprint, monitor.Current.Thumbprint);
 
-            // Edit the file and check the new value
-            using RSA key2 = RSA.Create();
-            using X509Certificate2 cert2 = key2.CreateSelfSignedCertificate();
-            File.WriteAllBytes(certPath, cert2.Export(X509ContentType.Pkcs12));
-
-            Assert.True(changeEvent.Wait(TimeSpan.FromMinutes(1)));
-            Assert.Equal(cert2.Thumbprint, monitor.Current.Thumbprint);
-        }
-        finally
+        // Continue to edit the certificate multiple times
+        for (int i = 0; i < 5; i++)
         {
-            tokenSource.Cancel();
+            using RSA newKey = RSA.Create();
+            using X509Certificate2 newCert = newKey.CreateSelfSignedCertificate();
+            await File.WriteAllBytesAsync(certPath, newCert.Export(X509ContentType.Pkcs12));
+            await Task.Delay(TimeSpan.FromSeconds(10)); // Wait enough time for the changes to be polled
         }
 
+        // Write the final cert and await its ingestion
+        await File.WriteAllBytesAsync(certPath, finalCert.Export(X509ContentType.Pkcs12));
+
+        // Assert that the certificate is eventually correct
+        tokenSource.CancelAfter(TimeSpan.FromMinutes(3));
         await Task.WhenAll(consumers);
-
-        static void GetCurrentCert(CertificateFileMonitor m, CancellationToken t)
-        {
-            while (!t.IsCancellationRequested)
-            {
-                try
-                {
-                    Assert.NotNull(m.Current);
-                }
-                catch (CryptographicException)
-                { }
-            }
-
-            // Ensure by the end, the certificate is valid
-            Assert.NotNull(m.Current);
-        }
     }
 }

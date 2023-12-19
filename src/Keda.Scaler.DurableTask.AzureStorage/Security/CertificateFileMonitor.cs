@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
@@ -13,132 +13,111 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 internal sealed class CertificateFileMonitor : IDisposable
 {
-    public X509Certificate2 Current => UpdateCertificate(force: false);
+    public X509Certificate2 Current
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+
+            _lock.EnterReadLock();
+
+            try
+            {
+                ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+                _loadError?.Throw();
+                return _certificate!;
+            }
+            finally
+            {
+                _lock.ExitReadLock();
+            }
+        }
+    }
 
     public CertificateFile File { get; }
 
-    private X509Certificate2? _certificate;
-    private IDisposable? _subscription;
-    private ConfigurationReloadToken _changeToken = new(); // Reuse ConfigurationReloadToken for simplicity
+    private int _disposed;
+    private volatile X509Certificate2? _certificate;
+    private volatile ExceptionDispatchInfo? _loadError;
+    private volatile ConfigurationReloadToken _changeToken = new(); // Reuse ConfigurationReloadToken for simplicity
+    private readonly ILogger _logger;
+    private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
 
-    private CertificateFileMonitor(CertificateFile file)
-        => File = file ?? throw new ArgumentNullException(nameof(file));
+    public CertificateFileMonitor(CertificateFile file, ILogger logger)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(logger);
 
-    [ExcludeFromCodeCoverage(Justification = "Concurrent edge cases are difficult to mock.")]
+        File = file;
+        _logger = logger;
+
+        // Ensure the event handler is configured before loading the certificate
+        File.Changed += ReloadCertificate;
+        File.EnableRaisingEvents = true;
+        LoadCertificate();
+    }
+
     public void Dispose()
     {
-        // Attempt to set the disposed flag
-        X509Certificate2? expected;
-        for (expected = _certificate; !ReferenceEquals(expected, States.Disposed); expected = _certificate)
+        if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
-            if (ReferenceEquals(expected, Interlocked.CompareExchange(ref _certificate, States.Disposed, expected)))
-                break;
-        }
+            // Do not dispose any resources until entering write lock
+            _lock.EnterWriteLock();
 
-        // If this thread was successful in starting disposal, then dispose!
-        if (!ReferenceEquals(expected, States.Disposed))
-        {
-            expected?.Dispose();
-            _subscription!.Dispose();
-            File.Dispose();
+            try
+            {
+                _certificate?.Dispose();
+                _certificate = null;
 
-            _subscription = null;
-
-            GC.SuppressFinalize(this);
+                File.Changed -= ReloadCertificate;
+                File.Dispose();
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+                _lock.Dispose();
+            }
         }
     }
 
     public IChangeToken GetReloadToken()
         => _changeToken;
 
-    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Only throw exceptions on request threads.")]
-    private IDisposable Subscribe(ILogger logger)
+    private void LoadCertificate()
+        => ReloadCertificate(File, new CertificateFileChangedEventArgs { Certificate = File.Load() });
+
+    private void ReloadCertificate(CertificateFile sender, CertificateFileChangedEventArgs args)
     {
-        // Configure the monitor before load the file so we do not miss any changes
-        // Note: Users cannot Dispose this instance before this method exits,
-        // so do not worry about concurrency related to setting _subscription
-        _subscription = ChangeToken.OnChange(File.Watch, Reload);
-        _ = UpdateCertificate(force: false);
+        _lock.EnterWriteLock();
 
-        return _subscription;
-
-        void Reload()
+        ConfigurationReloadToken previousToken;
+        try
         {
-            try
+            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+            if (args.Certificate is not null)
             {
-                X509Certificate2 latest = UpdateCertificate(force: true);
-                logger.LoadedCertificate(File.Path, latest.Thumbprint);
+                _logger.LoadedCertificate(args.Certificate.Thumbprint, sender.Path);
+
+                _certificate?.Dispose();
+                _certificate = args.Certificate;
+                _loadError = null;
             }
-            catch (Exception ex)
+            else
             {
-                logger.FailedLoadingCertificate(ex, File.Path);
+                _logger.FailedLoadingCertificate(args.Exception!.SourceException, sender.Path);
+
+                _certificate = null;
+                _loadError = args.Exception;
             }
+
+            // Subscribers may only be alerted after leaving the lock so that they may read the new value
+            previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
         }
-    }
-
-    [ExcludeFromCodeCoverage(Justification = "Concurrent edge cases are difficult to mock.")]
-    private X509Certificate2 UpdateCertificate(bool force)
-    {
-        X509Certificate2? expected;
-        for (expected = _certificate; !ReferenceEquals(expected, States.Disposed) && (force || expected is null); expected = _certificate)
+        finally
         {
-            X509Certificate2 latest;
-            try
-            {
-                latest = File.Load();
-            }
-            catch (Exception)
-            {
-                // If the file fails to load, invalidate the certificate
-                if (ReferenceEquals(expected, Interlocked.CompareExchange(ref _certificate, null, expected)))
-                    OnReload(expected);
-
-                throw;
-            }
-
-            X509Certificate2? actual = Interlocked.CompareExchange(ref _certificate, latest, expected);
-
-            // Did this thread succeed in updating?
-            if (ReferenceEquals(expected, actual))
-            {
-                OnReload(actual);
-                return latest;
-            }
-
-            // Otherwise, clean up this unused certificate
-            string thumbprint = latest.Thumbprint;
-            latest.Dispose();
-
-            // Did another thread load the same certificate?
-            if (string.Equals(thumbprint, actual?.Thumbprint, StringComparison.Ordinal))
-                return actual!;
+            _lock.ExitWriteLock();
         }
 
-        ObjectDisposedException.ThrowIf(ReferenceEquals(expected, States.Disposed), this);
-        return expected;
-    }
-
-    private void OnReload(X509Certificate2? previous)
-    {
-        previous?.Dispose();
-
-        // Alert any listeners of the expected change
-        ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
         previousToken.OnReload();
-    }
-
-    public static CertificateFileMonitor Create(CertificateFile file, ILogger logger)
-    {
-        ArgumentNullException.ThrowIfNull(logger);
-
-        CertificateFileMonitor monitor = new(file);
-        _ = monitor.Subscribe(logger);
-
-        return monitor;
-    }
-
-    private static class States
-    {
-        public static readonly X509Certificate2 Disposed = new(ReadOnlySpan<byte>.Empty);
     }
 }

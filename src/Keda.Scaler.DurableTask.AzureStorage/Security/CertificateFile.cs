@@ -2,12 +2,15 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
+
+internal delegate void CertificateFileSystemEventHandler(CertificateFile sender, CertificateFileChangedEventArgs e);
 
 internal class CertificateFile : IDisposable
 {
@@ -15,14 +18,31 @@ internal class CertificateFile : IDisposable
 
     public virtual string? KeyPath => null;
 
-    private readonly PhysicalFileProvider _fileProvider;
-
-    public CertificateFile(string fileName)
+    public bool EnableRaisingEvents
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
+        get => _watcher.EnableRaisingEvents;
+        set => _watcher.EnableRaisingEvents = value;
+    }
 
-        Path = fileName;
-        _fileProvider = new PhysicalFileProvider(System.IO.Path.GetDirectoryName(fileName)!);
+    public event CertificateFileSystemEventHandler? Changed;
+
+    internal event FileSystemEventHandler? FileSystemChanged
+    {
+        add => _watcher.Changed += value;
+        remove => _watcher.Changed -= value;
+    }
+
+    private readonly object _lock = new();
+    private readonly FileSystemWatcher _watcher;
+    private DateTime _lastProcessedWriteTimeUtc;
+
+    public CertificateFile(string filePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+
+        Path = filePath;
+        _watcher = new FileSystemWatcher(System.IO.Path.GetDirectoryName(filePath)!, System.IO.Path.GetFileName(filePath));
+        _watcher.Changed += (o, e) => OnChanged(e);
     }
 
     public void Dispose()
@@ -32,13 +52,10 @@ internal class CertificateFile : IDisposable
     }
 
     public CertificateFileMonitor Monitor(ILogger logger)
-        => CertificateFileMonitor.Create(this, logger);
+        => new(this, logger);
 
     public virtual X509Certificate2 Load()
         => new(Path);
-
-    public IChangeToken Watch()
-        => _fileProvider.Watch(System.IO.Path.GetFileName(Path));
 
     public static CertificateFile CreateFromPemFile(string certPemFilePath, string? keyPemFilePath = default)
         => new CertificatePemFile(certPemFilePath, keyPemFilePath);
@@ -46,7 +63,36 @@ internal class CertificateFile : IDisposable
     protected virtual void Dispose(bool disposing)
     {
         if (disposing)
-            _fileProvider.Dispose();
+            _watcher.Dispose();
+    }
+
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Any exceptin is capture and forwarded to subscribers.")]
+    protected virtual void OnChanged(FileSystemEventArgs e)
+    {
+        DateTime lastWriteTimeUtc = DateTime.MinValue;
+        CertificateFileSystemEventHandler? changeHandler = Changed;
+
+        if (changeHandler is not null)
+        {
+            lock (_lock)
+            {
+                try
+                {
+                    // Note: Reading the file from within the OnChanged event handler may conflict
+                    // with file operations performed by a separate process on the same file.
+                    lastWriteTimeUtc = File.GetLastWriteTimeUtc(Path);
+                    if (lastWriteTimeUtc > _lastProcessedWriteTimeUtc)
+                    {
+                        _lastProcessedWriteTimeUtc = lastWriteTimeUtc;
+                        changeHandler.Invoke(this, new CertificateFileChangedEventArgs { Certificate = Load() });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    changeHandler.Invoke(this, new CertificateFileChangedEventArgs { Exception = ExceptionDispatchInfo.Capture(ex) });
+                }
+            }
+        }
     }
 
     private sealed class CertificatePemFile(string certPemFilePath, string? keyPemFilePath = default)
