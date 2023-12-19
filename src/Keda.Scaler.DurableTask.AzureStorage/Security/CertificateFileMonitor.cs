@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Runtime.ExceptionServices;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
@@ -13,33 +13,13 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 internal sealed class CertificateFileMonitor : IDisposable
 {
-    public X509Certificate2 Current
-    {
-        get
-        {
-            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
-
-            _lock.EnterReadLock();
-
-            try
-            {
-                ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
-                _loadError?.Throw();
-                return _certificate!;
-            }
-            finally
-            {
-                _lock.ExitReadLock();
-            }
-        }
-    }
+    public X509Certificate2 Current => TryGetCertificate(out X509Certificate2? certificate) ? certificate : GetOrUpdateCertificate();
 
     public CertificateFile File { get; }
 
     private int _disposed;
     private volatile X509Certificate2? _certificate;
-    private volatile ExceptionDispatchInfo? _loadError;
-    private volatile ConfigurationReloadToken _changeToken = new(); // Reuse ConfigurationReloadToken for simplicity
+    private volatile ConfigurationReloadToken _changeToken = new();
     private readonly ILogger _logger;
     private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
 
@@ -52,9 +32,10 @@ internal sealed class CertificateFileMonitor : IDisposable
         _logger = logger;
 
         // Ensure the event handler is configured before loading the certificate
-        File.Changed += ReloadCertificate;
+        File.Changed += OnChanged;
         File.EnableRaisingEvents = true;
-        LoadCertificate();
+
+        _certificate = File.Load();
     }
 
     public void Dispose()
@@ -69,7 +50,7 @@ internal sealed class CertificateFileMonitor : IDisposable
                 _certificate?.Dispose();
                 _certificate = null;
 
-                File.Changed -= ReloadCertificate;
+                File.Changed -= OnChanged;
                 File.Dispose();
             }
             finally
@@ -83,41 +64,83 @@ internal sealed class CertificateFileMonitor : IDisposable
     public IChangeToken GetReloadToken()
         => _changeToken;
 
-    private void LoadCertificate()
-        => ReloadCertificate(File, new CertificateFileChangedEventArgs { Certificate = File.Load() });
-
-    private void ReloadCertificate(CertificateFile sender, CertificateFileChangedEventArgs args)
+    private bool TryGetCertificate([NotNullWhen(true)] out X509Certificate2? certificate)
     {
-        _lock.EnterWriteLock();
+        _lock.EnterReadLock();
 
-        ConfigurationReloadToken previousToken;
         try
         {
             ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
-            if (args.Certificate is not null)
+            if (_certificate is not null)
             {
-                _logger.LoadedCertificate(args.Certificate.Thumbprint, sender.Path);
-
-                _certificate?.Dispose();
-                _certificate = args.Certificate;
-                _loadError = null;
+                certificate = _certificate;
+                return true;
             }
-            else
-            {
-                _logger.FailedLoadingCertificate(args.Exception!.SourceException, sender.Path);
+        }
+        finally
+        {
+            _lock.ExitReadLock();
+        }
 
-                _certificate = null;
-                _loadError = args.Exception;
-            }
+        certificate = default;
+        return false;
+    }
 
-            // Subscribers may only be alerted after leaving the lock so that they may read the new value
-            previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
+    private X509Certificate2 GetOrUpdateCertificate()
+    {
+        _lock.EnterUpgradeableReadLock();
+
+        try
+        {
+            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+            if (_certificate is null)
+                UpdateCertificate();
+
+            return _certificate!;
+        }
+        finally
+        {
+            _lock.ExitUpgradeableReadLock();
+        }
+    }
+
+    private void UpdateCertificate(bool throwOnError = true)
+    {
+        _lock.EnterWriteLock();
+
+        try
+        {
+            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+
+            X509Certificate2 certificate = File.Load();
+            _logger.LoadedCertificate(certificate.Thumbprint, File.Path);
+
+            _certificate?.Dispose();
+            _certificate = certificate;
+        }
+        catch (Exception ex) when (ex is not ObjectDisposedException)
+        {
+            _logger.FailedLoadingCertificate(ex, File.Path);
+            _certificate = null;
+
+            if (throwOnError)
+                throw;
         }
         finally
         {
             _lock.ExitWriteLock();
         }
 
+        OnReload();
+    }
+
+    private void OnChanged(CertificateFile sender, CertificateFileChangedEventArgs args)
+        => UpdateCertificate(throwOnError: false);
+
+    private void OnReload()
+    {
+        // Subscribers may only be alerted after leaving the lock so that they may read the new value
+        ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
         previousToken.OnReload();
     }
 }

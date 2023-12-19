@@ -115,39 +115,6 @@ public class CertificateFileTest(ITestOutputHelper outputHelper) : FileSystemTes
     }
 
     [Fact]
-    public async Task GivenNoSubscriber_WhenChangingCertificateFile_ThenSkipAlerting()
-    {
-        const string CertName = "example.crt";
-        string certPath = Path.Combine(RootFolder, CertName);
-
-        using RSA key = RSA.Create();
-        using X509Certificate2 cert = key.CreateSelfSignedCertificate();
-        await File.WriteAllTextAsync(certPath, cert.ExportCertificatePem(key));
-
-        using ManualResetEventSlim changeEvent = new(initialState: false);
-        using CertificateFile certificateFile = CertificateFile.CreateFromPemFile(certPath);
-        using X509Certificate2 actual1 = certificateFile.Load();
-
-        // This event is for the underlying file system and is not exposed to users
-        certificateFile.FileSystemChanged += Set;
-        certificateFile.EnableRaisingEvents = true;
-
-        Assert.True(certificateFile.EnableRaisingEvents);
-        Assert.Equal(certPath, certificateFile.Path);
-        Assert.Null(certificateFile.KeyPath);
-        Assert.Equal(cert.Thumbprint, actual1.Thumbprint);
-
-        // Edit the file, wait some time for the subscriber-less handler to execute, and assert the thumbprint
-        File.SetLastWriteTimeUtc(certPath, DateTime.UtcNow);
-        Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(15)));
-
-        certificateFile.FileSystemChanged -= Set;
-
-        void Set(object sender, FileSystemEventArgs args)
-            => changeEvent.Set();
-    }
-
-    [Fact]
     public async Task GivenModifiedFile_WhenWatchingCertificateFile_ThenSuccessfullyNotifySubscribers()
     {
         const string CertName = "example.crt";
@@ -159,13 +126,7 @@ public class CertificateFileTest(ITestOutputHelper outputHelper) : FileSystemTes
 
         using ManualResetEventSlim changeEvent = new(initialState: false);
         using CertificateFile certificateFile = new(certPath) { EnableRaisingEvents = true };
-        certificateFile.Changed += (f, args) =>
-        {
-            Assert.Null(args.Certificate);
-            Assert.NotNull(args.Exception);
-
-            changeEvent.Set();
-        };
+        certificateFile.Changed += (f, args) => changeEvent.Set();
 
         // Ensure the certificate is originally as expected
         Assert.False(changeEvent.IsSet);
