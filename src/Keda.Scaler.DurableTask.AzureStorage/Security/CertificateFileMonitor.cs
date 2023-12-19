@@ -90,6 +90,7 @@ internal sealed class CertificateFileMonitor : IDisposable
     {
         _lock.EnterWriteLock();
 
+        ConfigurationReloadToken previousToken;
         try
         {
             ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
@@ -108,14 +109,15 @@ internal sealed class CertificateFileMonitor : IDisposable
                 _certificate = null;
                 _loadError = args.Exception;
             }
+
+            // Subscribers may only be alerted after leaving the lock so that they may read the new value
+            previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
         }
         finally
         {
             _lock.ExitWriteLock();
         }
 
-        // Subscribers may only be alerted after leaving the lock so that they may read the new value
-        ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
         previousToken.OnReload();
     }
 }

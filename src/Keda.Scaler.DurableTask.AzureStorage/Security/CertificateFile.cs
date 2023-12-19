@@ -26,6 +26,13 @@ internal class CertificateFile : IDisposable
 
     public event CertificateFileSystemEventHandler? Changed;
 
+    [ExcludeFromCodeCoverage]
+    internal event FileSystemEventHandler? FileSystemChanged
+    {
+        add => _watcher.Changed += value;
+        remove => _watcher.Changed -= value;
+    }
+
     private readonly object _lock = new();
     private readonly FileSystemWatcher _watcher;
     private DateTime _lastProcessedWriteTimeUtc;

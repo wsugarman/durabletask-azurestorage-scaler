@@ -1,27 +1,19 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using System;
 using System.IO;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
 
-public sealed class TlsServerOptionsTest : IDisposable
+public class TlsServerOptionsTest(ITestOutputHelper outputHelper) : FileSystemTest(outputHelper)
 {
-    private readonly string _tempFolder = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-
-    public TlsServerOptionsTest()
-        => Directory.CreateDirectory(_tempFolder);
-
-    public void Dispose()
-        => Directory.Delete(_tempFolder, true);
-
     [Fact]
     public void GivenMissingCertificateFile_WhenValidatingTlsServerOptions_ThenFailValidation()
     {
-        TlsServerOptions options = new() { CertificatePath = Path.Combine(_tempFolder, "example.crt") };
+        TlsServerOptions options = new() { CertificatePath = Path.Combine(RootFolder, "example.crt") };
         Assert.True(new ValidateTlsServerOptions().Validate(null, options).Failed);
     }
 
@@ -30,8 +22,8 @@ public sealed class TlsServerOptionsTest : IDisposable
     {
         const string CertName = "example.crt";
         const string KeyName = "example.key";
-        string certPath = Path.Combine(_tempFolder, CertName);
-        string keyPath = Path.Combine(_tempFolder, KeyName);
+        string certPath = Path.Combine(RootFolder, CertName);
+        string keyPath = Path.Combine(RootFolder, KeyName);
 
         File.WriteAllText(certPath, "Hello world!");
 
@@ -48,7 +40,7 @@ public sealed class TlsServerOptionsTest : IDisposable
     public void GivenKeyFileWithoutCertificate_WhenValidatingTlsServerOptions_ThenFailValidation()
     {
         const string KeyName = "example.key";
-        string keyPath = Path.Combine(_tempFolder, KeyName);
+        string keyPath = Path.Combine(RootFolder, KeyName);
         File.WriteAllText(keyPath, "Hello world!");
 
         TlsServerOptions options = new() { KeyPath = keyPath };
@@ -59,7 +51,7 @@ public sealed class TlsServerOptionsTest : IDisposable
     public void GivenValidCertificateFileOnly_WhenValidatingTlsServerOptions_ThenSucceedValidation()
     {
         const string CertName = "example.crt";
-        string certPath = Path.Combine(_tempFolder, CertName);
+        string certPath = Path.Combine(RootFolder, CertName);
         File.WriteAllText(certPath, "Hello world!");
 
         TlsServerOptions options = new() { CertificatePath = certPath };
@@ -71,8 +63,8 @@ public sealed class TlsServerOptionsTest : IDisposable
     {
         const string CertName = "example.crt";
         const string KeyName = "example.key";
-        string certPath = Path.Combine(_tempFolder, CertName);
-        string keyPath = Path.Combine(_tempFolder, KeyName);
+        string certPath = Path.Combine(RootFolder, CertName);
+        string keyPath = Path.Combine(RootFolder, KeyName);
 
         File.WriteAllText(certPath, "Hello world!");
         File.WriteAllText(keyPath, "Hello world!");
