@@ -4,7 +4,6 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 
@@ -25,12 +24,6 @@ internal class CertificateFile : IDisposable
     }
 
     public event CertificateFileSystemEventHandler? Changed;
-
-    internal event FileSystemEventHandler? FileSystemChanged
-    {
-        add => _watcher.Changed += value;
-        remove => _watcher.Changed -= value;
-    }
 
     private readonly object _lock = new();
     private readonly FileSystemWatcher _watcher;
@@ -66,32 +59,28 @@ internal class CertificateFile : IDisposable
             _watcher.Dispose();
     }
 
-    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Any exceptin is capture and forwarded to subscribers.")]
+    [ExcludeFromCodeCoverage]
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Ignore IO errors and allow subscriber to discover them.")]
     protected virtual void OnChanged(FileSystemEventArgs e)
     {
-        DateTime lastWriteTimeUtc = DateTime.MinValue;
-        CertificateFileSystemEventHandler? changeHandler = Changed;
+        ArgumentNullException.ThrowIfNull(e);
 
-        if (changeHandler is not null)
+        DateTime lastWriteTimeUtc = DateTime.MinValue;
+
+        lock (_lock)
         {
-            lock (_lock)
+            try
             {
-                try
-                {
-                    // Note: Reading the file from within the OnChanged event handler may conflict
-                    // with file operations performed by a separate process on the same file.
-                    lastWriteTimeUtc = File.GetLastWriteTimeUtc(Path);
-                    if (lastWriteTimeUtc > _lastProcessedWriteTimeUtc)
-                    {
-                        _lastProcessedWriteTimeUtc = lastWriteTimeUtc;
-                        changeHandler.Invoke(this, new CertificateFileChangedEventArgs { Certificate = Load() });
-                    }
-                }
-                catch (Exception ex)
-                {
-                    changeHandler.Invoke(this, new CertificateFileChangedEventArgs { Exception = ExceptionDispatchInfo.Capture(ex) });
-                }
+                lastWriteTimeUtc = File.GetLastWriteTimeUtc(e.FullPath);
+                if (lastWriteTimeUtc <= _lastProcessedWriteTimeUtc)
+                    return;
+
+                _lastProcessedWriteTimeUtc = lastWriteTimeUtc;
             }
+            catch (Exception)
+            { }
+
+            Changed?.Invoke(this, new CertificateFileChangedEventArgs { ChangeType = e.ChangeType });
         }
     }
 
