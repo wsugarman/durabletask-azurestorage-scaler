@@ -19,16 +19,4 @@ internal static partial class Log
         Level = LogLevel.Error,
         Message = "Unable to load certificate from '{Path}'.")]
     public static partial void FailedLoadingCertificate(this ILogger logger, Exception exception, string path);
-
-    [LoggerMessage(
-        EventId = 18,
-        Level = LogLevel.Debug,
-        Message = "Skipped reload event because the newly loaded certificate has the same thumbprint '{Thumbprint}'.")]
-    public static partial void SkippedReloadEventForDuplicateThumbprint(this ILogger logger, string thumbprint);
-
-    [LoggerMessage(
-        EventId = 19,
-        Level = LogLevel.Debug,
-        Message = "Skipped reload event because the previous certificate file failed to load.")]
-    public static partial void SkippedReloadEventForContinuedError(this ILogger logger);
 }

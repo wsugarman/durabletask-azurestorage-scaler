@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -18,13 +17,14 @@ internal sealed class CertificateFileMonitor : IDisposable
     {
         get
         {
+            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+
             _lock.EnterReadLock();
 
             try
             {
-                ObjectDisposedException.ThrowIf(_disposed, this);
+                ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
                 _loadError?.Throw();
-
                 return _certificate!;
             }
             finally
@@ -36,13 +36,11 @@ internal sealed class CertificateFileMonitor : IDisposable
 
     public CertificateFile File { get; }
 
-    private bool _disposed;
-    private X509Certificate2? _certificate;
-    private ExceptionDispatchInfo? _loadError;
-    private readonly ILogger _logger;
+    private int _disposed;
+    private volatile X509Certificate2? _certificate;
+    private volatile ExceptionDispatchInfo? _loadError;
     private volatile ConfigurationReloadToken _changeToken = new(); // Reuse ConfigurationReloadToken for simplicity
-
-    [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed", Justification = "Lock used for synchronizing disposal. Disposed in finalizer instead.")]
+    private readonly ILogger _logger;
     private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
 
     public CertificateFileMonitor(CertificateFile file, ILogger logger)
@@ -55,34 +53,30 @@ internal sealed class CertificateFileMonitor : IDisposable
 
         // Ensure the event handler is configured before loading the certificate
         File.Changed += ReloadCertificate;
+        File.EnableRaisingEvents = true;
         LoadCertificate();
     }
 
-    ~CertificateFileMonitor()
-        => _lock.Dispose();
-
-    [SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize", Justification = "Finalizer disposes of ReaderWriterLockSlim.")]
     public void Dispose()
     {
-        _lock.EnterWriteLock();
-
-        try
+        if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
-            // Check if the certificate has already been disposed
-            if (!_disposed)
+            // Do not dispose any resources until entering write lock
+            _lock.EnterWriteLock();
+
+            try
             {
                 _certificate?.Dispose();
                 _certificate = null;
 
                 File.Changed -= ReloadCertificate;
                 File.Dispose();
-
-                _disposed = true;
             }
-        }
-        finally
-        {
-            _lock.ExitWriteLock();
+            finally
+            {
+                _lock.ExitWriteLock();
+                _lock.Dispose();
+            }
         }
     }
 
@@ -94,22 +88,14 @@ internal sealed class CertificateFileMonitor : IDisposable
 
     private void ReloadCertificate(CertificateFile sender, CertificateFileChangedEventArgs args)
     {
-        bool notifySubscribers;
-
         _lock.EnterWriteLock();
 
         try
         {
-            ObjectDisposedException.ThrowIf(_disposed, this);
+            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
             if (args.Certificate is not null)
             {
                 _logger.LoadedCertificate(args.Certificate.Thumbprint, sender.Path);
-
-                // Determine whether the thumbprint has notifySubscribers
-                // If the thumbprint hasn't notifySubscribers, no need to alert downstream subscribers
-                notifySubscribers = !string.Equals(_certificate?.Thumbprint, args.Certificate.Thumbprint, StringComparison.Ordinal);
-                if (!notifySubscribers)
-                    _logger.SkippedReloadEventForDuplicateThumbprint(args.Certificate.Thumbprint);
 
                 _certificate?.Dispose();
                 _certificate = args.Certificate;
@@ -118,12 +104,6 @@ internal sealed class CertificateFileMonitor : IDisposable
             else
             {
                 _logger.FailedLoadingCertificate(args.Exception!.SourceException, sender.Path);
-
-                // Determine whether the certificate continues to fail to load
-                // If the certificate is still in error, no need to alert downstream subscribers
-                notifySubscribers = _loadError is null;
-                if (!notifySubscribers)
-                    _logger.SkippedReloadEventForContinuedError();
 
                 _certificate = null;
                 _loadError = args.Exception;
@@ -135,10 +115,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         }
 
         // Subscribers may only be alerted after leaving the lock so that they may read the new value
-        if (notifySubscribers)
-        {
-            ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
-            previousToken.OnReload();
-        }
+        ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _changeToken, new ConfigurationReloadToken());
+        previousToken.OnReload();
     }
 }

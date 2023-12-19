@@ -118,6 +118,33 @@ public sealed class CertificateFileTest : IDisposable
     }
 
     [Fact]
+    public async Task GivenNoSubscriber_WhenChangingCertificateFile_ThenSkipAlerting()
+    {
+        const string CertName = "example.crt";
+        string certPath = Path.Combine(_tempFolder, CertName);
+
+        using RSA key1 = RSA.Create();
+        using X509Certificate2 expected1 = key1.CreateSelfSignedCertificate();
+        await File.WriteAllTextAsync(certPath, expected1.ExportCertificatePem(key1));
+
+        using CertificateFile certificateFile = CertificateFile.CreateFromPemFile(certPath);
+        using X509Certificate2 actual1 = certificateFile.Load();
+
+        Assert.Equal(certPath, certificateFile.Path);
+        Assert.Null(certificateFile.KeyPath);
+        Assert.Equal(expected1.Thumbprint, actual1.Thumbprint);
+
+        // Edit the file and assert
+        using RSA key2 = RSA.Create();
+        using X509Certificate2 expected2 = key2.CreateSelfSignedCertificate();
+        await File.WriteAllTextAsync(certPath, expected2.ExportCertificatePem(key2));
+
+        await Task.Delay(FileSystem.PollingIntervalMs * 3); // Allow superfluous (for our purpose) file system events to fire
+        using X509Certificate2 actual2 = certificateFile.Load();
+        Assert.Equal(expected2.Thumbprint, actual2.Thumbprint);
+    }
+
+    [Fact]
     public async Task GivenChangingFile_WhenWatchingCertificateFile_ThenSuccessfullyNotifySubscribers()
     {
         const string CertName = "example.crt";
@@ -128,7 +155,7 @@ public sealed class CertificateFileTest : IDisposable
         await File.WriteAllBytesAsync(certPath, originalCert.Export(X509ContentType.Pkcs12));
 
         using ManualResetEventSlim changeEvent = new(initialState: false);
-        using CertificateFile certificateFile = new(certPath);
+        using CertificateFile certificateFile = new(certPath) { EnableRaisingEvents = true };
         certificateFile.Changed += (f, args) =>
         {
             Assert.Null(args.Certificate);
