@@ -129,7 +129,7 @@ public class CertificateFileTest(ITestOutputHelper outputHelper) : FileSystemTes
         using X509Certificate2 actual1 = certificateFile.Load();
 
         // This event is for the underlying file system and is not exposed to users
-        certificateFile.FileSystemChanged += (f, args) => changeEvent.Set();
+        certificateFile.FileSystemChanged += Set;
         certificateFile.EnableRaisingEvents = true;
 
         Assert.True(certificateFile.EnableRaisingEvents);
@@ -140,6 +140,11 @@ public class CertificateFileTest(ITestOutputHelper outputHelper) : FileSystemTes
         // Edit the file, wait some time for the subscriber-less handler to execute, and assert the thumbprint
         File.SetLastWriteTimeUtc(certPath, DateTime.UtcNow);
         Assert.True(changeEvent.Wait(TimeSpan.FromSeconds(15)));
+
+        certificateFile.FileSystemChanged -= Set;
+
+        void Set(object sender, FileSystemEventArgs args)
+            => changeEvent.Set();
     }
 
     [Fact]

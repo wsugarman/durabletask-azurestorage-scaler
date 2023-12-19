@@ -26,7 +26,6 @@ internal class CertificateFile : IDisposable
 
     public event CertificateFileSystemEventHandler? Changed;
 
-    [ExcludeFromCodeCoverage]
     internal event FileSystemEventHandler? FileSystemChanged
     {
         add => _watcher.Changed += value;
