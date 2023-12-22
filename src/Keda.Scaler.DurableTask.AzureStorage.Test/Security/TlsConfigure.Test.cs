@@ -21,19 +21,11 @@ public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTe
     {
         _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(null!, LoggerFactory));
         _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create<TlsClientOptions>(null!), LoggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Server, null!, LoggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Server, Options.Create<TlsClientOptions>(null!), LoggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Server, ClientCa, null!, LoggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Server, ClientCa, Options.Create<TlsClientOptions>(null!), LoggerFactory));
     }
 
     [Fact]
     public void GivenNullLoggerFactory_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
-    {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), null!));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Server, Options.Create(new TlsClientOptions()), null!));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Server, ClientCa, Options.Create(new TlsClientOptions()), null!));
-    }
+        => Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), null!));
 
     [Fact]
     public void GivenNullOptions_WhenConfiguringHttpsConnectionAdapterOptions_ThenThrowArgumentNullException()
@@ -60,7 +52,7 @@ public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTe
     public void GivenTls_WhenConfiguringHttpsConnectionAdapterOptions_ThenConfigureClientValidationAppropriately(ClientCertificateMode expected, bool validate)
     {
         TlsClientOptions clientOptions = new() { ValidateCertificate = validate };
-        TlsConfigure configure = new(Server, Options.Create(clientOptions), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(clientOptions), LoggerFactory, Server);
 
         HttpsConnectionAdapterOptions options = new();
         configure.Configure(options);
@@ -80,7 +72,7 @@ public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTe
     [Fact]
     public void GivenInvalidName_WhenConfiguringCertificateAuthenticationOptions_ThenSkipConfiguring()
     {
-        TlsConfigure configure = new(Server, ClientCa, Options.Create(new TlsClientOptions()), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory, Server, ClientCa);
 
         CertificateAuthenticationOptions options = new();
 
@@ -101,10 +93,10 @@ public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTe
     {
         TlsClientOptions clientOptions = new() { ValidateCertificate = validateClientCert };
         TlsConfigure configure = new(
-            specifyServerCert ? Server : null!,
-            customCertAuthority ? ClientCa : null!,
             Options.Create(clientOptions),
-            LoggerFactory);
+            LoggerFactory,
+            specifyServerCert ? Server : null!,
+            customCertAuthority ? ClientCa : null!);
 
         CertificateAuthenticationOptions options = new();
         configure.Configure(CertificateAuthenticationDefaults.AuthenticationScheme, options);
@@ -116,7 +108,7 @@ public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTe
     [Fact]
     public void GivenExpectedNameAndCustomCa_WhenConfiguringCertificateAuthenticationOptions_ThenUpdateOptions()
     {
-        TlsConfigure configure = new(Server, ClientCa, Options.Create(new TlsClientOptions()), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory, Server, ClientCa);
         CertificateAuthenticationOptions options = new();
 
         Assert.Equal(X509ChainTrustMode.System, options.ChainTrustValidationMode);
@@ -135,10 +127,10 @@ public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTe
     {
         TlsClientOptions clientOptions = new() { ValidateCertificate = validateClientCert };
         TlsConfigure configure = new(
-            specifyServerCert ? Server : null!,
-            customCertAuthority ? ClientCa : null!,
             Options.Create(clientOptions),
-            LoggerFactory);
+            LoggerFactory,
+            specifyServerCert ? Server : null!,
+            customCertAuthority ? ClientCa : null!);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);
 
@@ -149,7 +141,7 @@ public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTe
     [Fact]
     public void GivenCustomCa_WhenMonitoringChangesForOptions_ThenReturnVaidToken()
     {
-        TlsConfigure configure = new(Server, ClientCa, Options.Create(new TlsClientOptions()), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory, Server, ClientCa);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);
 

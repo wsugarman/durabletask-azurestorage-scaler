@@ -20,22 +20,11 @@ internal sealed class TlsConfigure : IConfigureNamedOptions<CertificateAuthentic
     private readonly CertificateFileMonitor? _clientCa;
     private readonly ILogger _logger;
 
-    public TlsConfigure(IOptions<TlsClientOptions> clientOptions, ILoggerFactory loggerFactory)
-        : this(null!, null!, clientOptions, loggerFactory)
-    { }
-
     public TlsConfigure(
-        [FromKeyedServices("server")] CertificateFileMonitor server,
         IOptions<TlsClientOptions> clientOptions,
-        ILoggerFactory loggerFactory)
-        : this(server, null!, clientOptions, loggerFactory)
-    { }
-
-    public TlsConfigure(
-        [FromKeyedServices("server")] CertificateFileMonitor server,
-        [FromKeyedServices("clientca")] CertificateFileMonitor clientCa,
-        IOptions<TlsClientOptions> clientOptions,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        [FromKeyedServices("server")] CertificateFileMonitor? server = null,
+        [FromKeyedServices("clientca")] CertificateFileMonitor? clientCa = null)
     {
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
         ArgumentNullException.ThrowIfNull(loggerFactory);
