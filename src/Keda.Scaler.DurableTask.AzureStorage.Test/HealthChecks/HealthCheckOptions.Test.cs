@@ -17,4 +17,11 @@ public class HealthCheckOptionsTest
         HealthCheckOptions options = new() { Port = port };
         Assert.True(new ValidateHealthCheckOptions().Validate(null, options).Failed);
     }
+
+    [Fact]
+    public void GivenValidPort_WhenValidatingHealthCheckOptions_ThenSucceedValidation()
+    {
+        HealthCheckOptions options = new() { Port = 1234 };
+        Assert.True(new ValidateHealthCheckOptions().Validate(null, options).Succeeded);
+    }
 }

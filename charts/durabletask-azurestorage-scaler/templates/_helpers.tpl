@@ -57,5 +57,5 @@ app.kubernetes.io/version: {{ .Chart.Version | quote }}
 Derive the port used for readiness checks.
 */}}
 {{- define "durabletask-azurestorage-scaler.readinessPort" -}}
-{{ add .Values.port 1 }}
+{{- add .Values.port 1 }}
 {{- end }}

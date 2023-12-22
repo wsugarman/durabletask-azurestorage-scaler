@@ -77,7 +77,7 @@ spec:
             {{- end }}
             {{- if .Values.tls.serverCert.secret }}
             - name: HealthCheck__Port
-              value: {{ template "durabletask-azurestorage-scaler.readinessPort" . | quote }}
+              value: {{ include "durabletask-azurestorage-scaler.readinessPort" . | quote }}
             {{- end }}
             - name: Logging__Console__FormatterName
               value: {{ .Values.logging.format }}
@@ -126,7 +126,7 @@ spec:
           {{- if .Values.tls.serverCert.secret }}
           readinessProbe:
             grpc:
-              port: {{ template "durabletask-azurestorage-scaler.readinessPort" . }}
+              port: {{ include "durabletask-azurestorage-scaler.readinessPort" . }}
             successThreshold: 1
             failureThreshold: 2
             periodSeconds: 60
