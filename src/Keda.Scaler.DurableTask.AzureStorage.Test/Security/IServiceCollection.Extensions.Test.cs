@@ -119,13 +119,13 @@ public class IServiceCollectionExtensionsTest
             File.WriteAllText(certPath, cert.ExportCertificatePem(key));
 
             IConfiguration config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-            {
-                new("Security:Transport:Client:CaCertificatePath", useCustomCa ? certPath : null),
-                new("Security:Transport:Client:ValidateCertificate", "true"),
-                new("Security:Transport:Server:CertificatePath", certPath),
-            })
-            .Build();
+                .AddInMemoryCollection(new KeyValuePair<string, string?>[]
+                {
+                    new("Security:Transport:Client:CaCertificatePath", useCustomCa ? certPath : null),
+                    new("Security:Transport:Client:ValidateCertificate", "true"),
+                    new("Security:Transport:Server:CertificatePath", certPath),
+                })
+                .Build();
 
             IServiceCollection services = new ServiceCollection()
                 .AddSingleton(config)

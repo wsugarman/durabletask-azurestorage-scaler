@@ -16,7 +16,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services
     .AddDurableTaskScaler()
-    .AddKubernetesHealthCheck()
+    .AddKubernetesHealthCheck(builder.Configuration)
     .AddTlsSupport("default", builder.Configuration)
     .AddGrpc(o => o.Interceptors.Add<ExceptionInterceptor>());
 
