@@ -18,14 +18,7 @@ public class TlsHealthCheckTest(ITestOutputHelper outputHelper) : TlsCertificate
 {
     [Fact]
     public void GivenNullServerCertificate_WhenCreatingTlsHealthCheck_ThenThrowArgumentNullException()
-    {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsHealthCheck(null!));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsHealthCheck(null!, ClientCa));
-    }
-
-    [Fact]
-    public void GivenNullClientCaCertificate_WhenCreatingTlsHealthCheck_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TlsHealthCheck(Server, null!));
+        => Assert.Throws<ArgumentNullException>(() => new TlsHealthCheck(null!));
 
     [Fact]
     public async Task GivenInvalidServerCertificate_WhenCheckingHealth_ThenThrowException()

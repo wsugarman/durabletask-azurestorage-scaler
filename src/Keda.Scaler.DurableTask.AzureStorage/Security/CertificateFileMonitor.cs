@@ -36,7 +36,9 @@ internal sealed class CertificateFileMonitor : IDisposable
         File.Changed += OnChanged;
         File.EnableRaisingEvents = true;
 
-        _certificate = File.Load();
+        X509Certificate2 certificate = File.Load();
+        _logger.LoadedCertificate(certificate.Thumbprint, File.Path);
+        _certificate = certificate;
     }
 
     public void Dispose()

@@ -15,19 +15,11 @@ internal sealed class TlsHealthCheck : IHealthCheck
     private readonly CertificateFileMonitor _server;
     private readonly CertificateFileMonitor? _clientCa;
 
-    public TlsHealthCheck([FromKeyedServices("server")] CertificateFileMonitor server)
-    {
-        ArgumentNullException.ThrowIfNull(server);
-        _server = server;
-        _clientCa = null;
-    }
-
     public TlsHealthCheck(
         [FromKeyedServices("server")] CertificateFileMonitor server,
-        [FromKeyedServices("clientca")] CertificateFileMonitor clientCa)
+        [FromKeyedServices("clientca")] CertificateFileMonitor? clientCa = null)
     {
         ArgumentNullException.ThrowIfNull(server);
-        ArgumentNullException.ThrowIfNull(clientCa);
 
         _server = server;
         _clientCa = clientCa;
