@@ -20,4 +20,24 @@ internal static class IConfigurationExtensions
 
         return tlsServerOptions.EnforceTls && tlsClientOptions.ValidateCertificate;
     }
+
+    public static bool EnforceTls(this IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        TlsServerOptions tlsServerOptions = new();
+        configuration.GetSection(TlsServerOptions.DefaultKey).Bind(tlsServerOptions);
+
+        return tlsServerOptions.EnforceTls;
+    }
+
+    public static bool UseCustomClientCa(this IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+
+        TlsClientOptions tlsClientOptions = new();
+        configuration.GetSection(TlsClientOptions.DefaultKey).Bind(tlsClientOptions);
+
+        return !string.IsNullOrWhiteSpace(tlsClientOptions.CaCertificatePath);
+    }
 }

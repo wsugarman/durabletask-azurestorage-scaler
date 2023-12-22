@@ -5,6 +5,7 @@ using System;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -14,28 +15,37 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 internal sealed class TlsConfigure :
     IConfigureNamedOptions<CertificateAuthenticationOptions>,
-    IOptionsChangeTokenSource<CertificateAuthenticationOptions>,
-    IDisposable
+    IOptionsChangeTokenSource<CertificateAuthenticationOptions>
 {
     private readonly bool _validateClientCertificate;
-    private readonly CertificateFileMonitor? _ca;
     private readonly CertificateFileMonitor? _server;
+    private readonly CertificateFileMonitor? _clientCa;
     private readonly ILogger _logger;
 
-    public TlsConfigure(IOptions<TlsClientOptions> clientOptions, IOptions<TlsServerOptions> serverOptions, ILoggerFactory factory)
+    public TlsConfigure(IOptions<TlsClientOptions> clientOptions, ILoggerFactory loggerFactory)
+        : this(null!, null!, clientOptions, loggerFactory)
+    { }
+
+    public TlsConfigure(
+        [FromKeyedServices("server")] CertificateFileMonitor server,
+        IOptions<TlsClientOptions> clientOptions,
+        ILoggerFactory loggerFactory)
+        : this(server, null!, clientOptions, loggerFactory)
+    { }
+
+    public TlsConfigure(
+        [FromKeyedServices("server")] CertificateFileMonitor server,
+        [FromKeyedServices("clientca")] CertificateFileMonitor clientCa,
+        IOptions<TlsClientOptions> clientOptions,
+        ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
-        ArgumentNullException.ThrowIfNull(serverOptions?.Value, nameof(serverOptions));
-        ArgumentNullException.ThrowIfNull(factory);
+        ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        _logger = factory.CreateLogger(LogCategories.Security);
         _validateClientCertificate = clientOptions.Value.ValidateCertificate;
-
-        if (!string.IsNullOrWhiteSpace(serverOptions.Value.CertificatePath))
-            _server = CertificateFile.CreateFromPemFile(serverOptions.Value.CertificatePath, serverOptions.Value.KeyPath).Monitor(_logger);
-
-        if (_validateClientCertificate && _server is not null && !string.IsNullOrWhiteSpace(clientOptions.Value.CaCertificatePath))
-            _ca = new CertificateFile(clientOptions.Value.CaCertificatePath).Monitor(_logger);
+        _clientCa = clientCa;
+        _server = server;
+        _logger = loggerFactory.CreateLogger(LogCategories.Security);
     }
 
     string? IOptionsChangeTokenSource<CertificateAuthenticationOptions>.Name => CertificateAuthenticationDefaults.AuthenticationScheme;
@@ -65,23 +75,16 @@ internal sealed class TlsConfigure :
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _server is not null && _ca is not null)
+        if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _server is not null && _clientCa is not null)
         {
             options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
             options.CustomTrustStore.Clear();
-            _ = options.CustomTrustStore.Add(_ca.Current);
+            _ = options.CustomTrustStore.Add(_clientCa.Current);
 
-            _logger.ConfiguredClientCertificateValidation(_ca.File.Path);
+            _logger.ConfiguredClientCertificateValidation(_clientCa.File.Path);
         }
     }
 
-    public void Dispose()
-    {
-        _ca?.Dispose();
-        _server?.Dispose();
-        GC.SuppressFinalize(this);
-    }
-
     public IChangeToken GetChangeToken()
-        => _ca?.GetReloadToken() ?? NullChangeToken.Singleton;
+        => _clientCa?.GetReloadToken() ?? NullChangeToken.Singleton;
 }

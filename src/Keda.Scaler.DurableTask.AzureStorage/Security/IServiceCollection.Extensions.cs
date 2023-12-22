@@ -5,6 +5,7 @@ using System;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
@@ -40,23 +41,57 @@ internal static class IServiceCollectionExtensions
             .AddOptions<TlsServerOptions>()
             .BindConfiguration(TlsServerOptions.DefaultKey);
 
-        if (configuration.EnforceMutualTls())
+        if (configuration.EnforceTls())
         {
-            _ = services
-                .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
-                .AddCertificate()
-                .AddCertificateCache();
+            _ = services.AddKeyedSingleton("server", CreateServerCertificateMonitor);
 
-            _ = services
-                .AddAuthorization(o => o
-                    .AddPolicy(policyName, b => b
-                        .AddAuthenticationSchemes(CertificateAuthenticationDefaults.AuthenticationScheme)
-                        .RequireAuthenticatedUser()));
+            if (configuration.EnforceMutualTls())
+            {
+                if (configuration.UseCustomClientCa())
+                    _ = services.AddKeyedSingleton("clientca", CreateClientCaCertificateMonitor);
+
+                _ = services
+                    .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
+                    .AddCertificate()
+                    .AddCertificateCache();
+
+                _ = services
+                    .AddAuthorization(o => o
+                        .AddPolicy(policyName, b => b
+                            .AddAuthenticationSchemes(CertificateAuthenticationDefaults.AuthenticationScheme)
+                            .RequireAuthenticatedUser()));
+            }
         }
 
         return services
             .AddSingleton<TlsConfigure>()
             .AddSingleton<IConfigureOptions<CertificateAuthenticationOptions>>(p => p.GetRequiredService<TlsConfigure>())
             .AddSingleton<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>(p => p.GetRequiredService<TlsConfigure>());
+    }
+
+    private static CertificateFileMonitor CreateClientCaCertificateMonitor(IServiceProvider serviceProvider, object? key)
+    {
+        ILogger logger = serviceProvider
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger(LogCategories.Security);
+
+        TlsClientOptions options = serviceProvider
+            .GetRequiredService<IOptions<TlsClientOptions>>()
+            .Value;
+
+        return CertificateFile.CreateFromPemFile(options.CaCertificatePath!).Monitor(logger);
+    }
+
+    private static CertificateFileMonitor CreateServerCertificateMonitor(IServiceProvider serviceProvider, object? key)
+    {
+        ILogger logger = serviceProvider
+            .GetRequiredService<ILoggerFactory>()
+            .CreateLogger(LogCategories.Security);
+
+        TlsServerOptions options = serviceProvider
+            .GetRequiredService<IOptions<TlsServerOptions>>()
+            .Value;
+
+        return CertificateFile.CreateFromPemFile(options.CertificatePath!, options.KeyPath).Monitor(logger);
     }
 }
