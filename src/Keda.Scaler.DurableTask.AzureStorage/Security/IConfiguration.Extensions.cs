@@ -38,6 +38,6 @@ internal static class IConfigurationExtensions
         TlsClientOptions tlsClientOptions = new();
         configuration.GetSection(TlsClientOptions.DefaultKey).Bind(tlsClientOptions);
 
-        return !string.IsNullOrWhiteSpace(tlsClientOptions.CaCertificatePath);
+        return tlsClientOptions.UseCustomCa;
     }
 }

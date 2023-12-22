@@ -23,12 +23,15 @@ public class IServiceCollectionExtensionsTest
     {
         IServiceCollection services = new ServiceCollection().AddKubernetesHealthCheck();
 
+        // Singleton
         Assert.Equal(ServiceLifetime.Singleton, services.Single(x =>
             x.ServiceType == typeof(IValidateOptions<HealthCheckOptions>) &&
             x.ImplementationType == typeof(ValidateHealthCheckOptions)).Lifetime);
         Assert.Equal(ServiceLifetime.Singleton, services.Single(x =>
             x.ServiceType == typeof(HealthServiceImpl) &&
             x.ImplementationType == typeof(HealthServiceImpl)).Lifetime);
+
+        // Transient
         Assert.Equal(ServiceLifetime.Transient, services.Single(x =>
             x.ServiceType == typeof(IConfigureOptions<HealthCheckOptions>)).Lifetime);
 

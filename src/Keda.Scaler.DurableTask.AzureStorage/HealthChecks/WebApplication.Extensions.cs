@@ -22,7 +22,9 @@ internal static class WebApplicationExtensions
                 .GetRequiredService<IOptions<HealthCheckOptions>>()
                 .Value
                 .IsHealthCheckRequest(context),
-            b => b.UseEndpoints(e => e.MapGrpcHealthChecksService()));
+            builder => builder
+                .UseRouting()
+                .UseEndpoints(e => e.MapGrpcHealthChecksService()));
 
         return app;
     }
