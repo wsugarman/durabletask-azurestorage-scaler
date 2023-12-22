@@ -129,8 +129,7 @@ spec:
               port: {{ include "durabletask-azurestorage-scaler.readinessPort" . }}
             successThreshold: 1
             failureThreshold: 2
-            periodSeconds: 60
-            initialDelaySeconds: 5
+            periodSeconds: 10
           {{- end }}
           {{- with .Values.resources }}
           resources:
