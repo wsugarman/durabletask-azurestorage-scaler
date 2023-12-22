@@ -18,6 +18,17 @@ public class TlsClientOptionsTest(ITestOutputHelper outputHelper) : FileSystemTe
     }
 
     [Fact]
+    public void GivenSettingConflict_WhenValidatingTlsClientOptions_ThenFailValidation()
+    {
+        const string CertName = "example.crt";
+        string certPath = Path.Combine(RootFolder, CertName);
+        File.WriteAllText(certPath, "Hello world!");
+
+        TlsClientOptions options = new() { CaCertificatePath = certPath, ValidateCertificate = false };
+        Assert.True(new ValidateTlsClientOptions().Validate(null, options).Failed);
+    }
+
+    [Fact]
     public void GivenValidCertificate_WhenValidatingTlsClientOptions_ThenSucceedValidation()
     {
         const string CertName = "example.crt";

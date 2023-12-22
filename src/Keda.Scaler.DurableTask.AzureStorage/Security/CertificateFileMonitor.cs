@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using Microsoft.Extensions.Configuration;
@@ -13,15 +14,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
 internal sealed class CertificateFileMonitor : IDisposable
 {
-    public X509Certificate2 Current => TryGetCertificate(out X509Certificate2? certificate) ? certificate : GetOrUpdateCertificate();
-
-    public CertificateFile File { get; }
-
     private int _disposed;
     private volatile X509Certificate2? _certificate;
     private volatile ConfigurationReloadToken _changeToken = new();
     private readonly ILogger _logger;
     private readonly ReaderWriterLockSlim _lock = new(LockRecursionPolicy.NoRecursion);
+
+    public X509Certificate2 Current => TryGetCertificate(out X509Certificate2? certificate) ? certificate : GetOrUpdateCertificate();
+
+    public CertificateFile File { get; }
 
     public CertificateFileMonitor(CertificateFile file, ILogger logger)
     {
@@ -42,6 +43,8 @@ internal sealed class CertificateFileMonitor : IDisposable
     {
         if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 0)
         {
+            File.Changed -= OnChanged;
+
             // Do not dispose any resources until entering write lock
             _lock.EnterWriteLock();
 
@@ -50,7 +53,6 @@ internal sealed class CertificateFileMonitor : IDisposable
                 _certificate?.Dispose();
                 _certificate = null;
 
-                File.Changed -= OnChanged;
                 File.Dispose();
             }
             finally
@@ -134,7 +136,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         OnReload();
     }
 
-    private void OnChanged(CertificateFile sender, CertificateFileChangedEventArgs args)
+    private void OnChanged(object? sender, FileSystemEventArgs args)
         => UpdateCertificate(throwOnError: false);
 
     private void OnReload()

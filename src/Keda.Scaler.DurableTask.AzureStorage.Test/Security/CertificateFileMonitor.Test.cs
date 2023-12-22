@@ -50,8 +50,7 @@ public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSy
         // Edit the file and check that an error is re-thrown from the update thread
         await File.WriteAllTextAsync(certPath, "Hello world!");
 
-        using CancellationTokenSource tokenSource = new();
-        tokenSource.CancelAfter(TimeSpan.FromSeconds(15));
+        using CancellationTokenSource tokenSource = new(TimeSpan.FromSeconds(15));
         await monitor.WaitForExceptionAsync(TimeSpan.FromMilliseconds(100), tokenSource.Token);
     }
 
@@ -75,9 +74,8 @@ public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSy
             using X509Certificate2 cert = key.CreateSelfSignedCertificate();
             await File.WriteAllBytesAsync(certPath, cert.Export(X509ContentType.Pkcs12));
 
-            using CancellationTokenSource tokenSource = new();
+            using CancellationTokenSource tokenSource = new(TimeSpan.FromMinutes(2));
             Task consumer = monitor.WaitForThumbprintAsync(cert.Thumbprint, TimeSpan.FromMilliseconds(200), tokenSource.Token);
-            tokenSource.CancelAfter(TimeSpan.FromMinutes(2));
             await consumer;
         }
     }
@@ -100,7 +98,7 @@ public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSy
         using RSA finalKey = RSA.Create();
         using X509Certificate2 finalCert = finalKey.CreateSelfSignedCertificate();
 
-        using CancellationTokenSource tokenSource = new();
+        using CancellationTokenSource tokenSource = new(TimeSpan.FromMinutes(2));
         Task[] consumers = Enumerable
             .Repeat(monitor, 3)
             .Select(m => m.WaitForThumbprintAsync(finalCert.Thumbprint, TimeSpan.FromMilliseconds(500), tokenSource.Token))
@@ -119,7 +117,6 @@ public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSy
         await File.WriteAllBytesAsync(certPath, finalCert.Export(X509ContentType.Pkcs12));
 
         // Assert that the certificate is eventually correct
-        tokenSource.CancelAfter(TimeSpan.FromMinutes(3));
         await Task.WhenAll(consumers);
     }
 }

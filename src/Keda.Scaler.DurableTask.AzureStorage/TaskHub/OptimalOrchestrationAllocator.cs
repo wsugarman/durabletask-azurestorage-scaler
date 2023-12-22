@@ -64,10 +64,10 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
 
     private readonly struct PartitionSet
     {
-        public int Count => _count;
-
         private readonly ushort _partitionBitSet;
         private readonly byte _count;
+
+        public int Count => _count;
 
         private PartitionSet(ushort partitions, byte count)
         {
@@ -86,7 +86,7 @@ internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
         public PartitionSet Remove(PartitionSet other)
             => new((ushort)(_partitionBitSet & ~other._partitionBitSet), (byte)(_count - other._count));
 
-        [ExcludeFromCodeCoverage]
+        [ExcludeFromCodeCoverage(Justification = "Only used for debugging.")]
         public override string ToString()
             => _partitionBitSet.ToString("X4", CultureInfo.InvariantCulture);
 

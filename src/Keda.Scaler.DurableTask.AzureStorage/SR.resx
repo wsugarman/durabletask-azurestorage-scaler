@@ -138,6 +138,9 @@
   <data name="InvalidMemberTypeFormat" xml:space="preserve">
     <value>Expected member of type '{0}' but instead found '{1}'.</value>
   </data>
+  <data name="InvalidTlsClientValidation" xml:space="preserve">
+    <value>Cannot specify a custom TLS client certificate issuer if client certificate validation is disabled.</value>
+  </data>
   <data name="MissingCertificate" xml:space="preserve">
     <value>A key was specified without a certificate.</value>
   </data>

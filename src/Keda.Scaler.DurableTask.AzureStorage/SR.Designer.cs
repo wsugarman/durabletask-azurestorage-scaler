@@ -124,6 +124,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot specify a custom TLS client certificate issuer if client certificate validation is disabled..
+        /// </summary>
+        internal static string InvalidTlsClientValidation {
+            get {
+                return ResourceManager.GetString("InvalidTlsClientValidation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A key was specified without a certificate..
         /// </summary>
         internal static string MissingCertificate {

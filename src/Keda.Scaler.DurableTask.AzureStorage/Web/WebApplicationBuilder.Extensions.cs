@@ -12,7 +12,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 
 internal static class WebApplicationBuilderExtensions
 {
-    [ExcludeFromCodeCoverage]
+    [ExcludeFromCodeCoverage(Justification = "Tested via Helm integration tests.")]
     public static WebApplicationBuilder ConfigureKestrelTls(this WebApplicationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);

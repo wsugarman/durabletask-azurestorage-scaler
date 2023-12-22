@@ -13,9 +13,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
-internal sealed class TlsConfigure :
-    IConfigureNamedOptions<CertificateAuthenticationOptions>,
-    IOptionsChangeTokenSource<CertificateAuthenticationOptions>
+internal sealed class TlsConfigure : IConfigureNamedOptions<CertificateAuthenticationOptions>, IOptionsChangeTokenSource<CertificateAuthenticationOptions>
 {
     private readonly bool _validateClientCertificate;
     private readonly CertificateFileMonitor? _server;
@@ -42,10 +40,17 @@ internal sealed class TlsConfigure :
         ArgumentNullException.ThrowIfNull(clientOptions?.Value, nameof(clientOptions));
         ArgumentNullException.ThrowIfNull(loggerFactory);
 
-        _validateClientCertificate = clientOptions.Value.ValidateCertificate;
-        _clientCa = clientCa;
-        _server = server;
         _logger = loggerFactory.CreateLogger(LogCategories.Security);
+        _server = server;
+
+        // Values may be inconsistent based on user settings, so only assign values if appropriate
+        // E.g. We will not validate client certificates if the server is not returning its own certificate
+        if (_server is not null)
+        {
+            _validateClientCertificate = clientOptions.Value.ValidateCertificate;
+            if (_validateClientCertificate)
+                _clientCa = clientCa;
+        }
     }
 
     string? IOptionsChangeTokenSource<CertificateAuthenticationOptions>.Name => CertificateAuthenticationDefaults.AuthenticationScheme;
@@ -75,7 +80,7 @@ internal sealed class TlsConfigure :
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _server is not null && _clientCa is not null)
+        if (string.Equals(name, CertificateAuthenticationDefaults.AuthenticationScheme, StringComparison.Ordinal) && _clientCa is not null)
         {
             options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
             options.CustomTrustStore.Clear();

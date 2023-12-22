@@ -2,17 +2,16 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Security;
 
-internal delegate void CertificateFileSystemEventHandler(CertificateFile sender, CertificateFileChangedEventArgs e);
-
 internal class CertificateFile : IDisposable
 {
+    private readonly FileSystemWatcher _watcher;
+
     public string Path { get; }
 
     public virtual string? KeyPath => null;
@@ -23,11 +22,11 @@ internal class CertificateFile : IDisposable
         set => _watcher.EnableRaisingEvents = value;
     }
 
-    public event CertificateFileSystemEventHandler? Changed;
-
-    private readonly object _lock = new();
-    private readonly FileSystemWatcher _watcher;
-    private DateTime _lastProcessedWriteTimeUtc;
+    public event FileSystemEventHandler? Changed
+    {
+        add => _watcher.Changed += value;
+        remove => _watcher.Changed -= value;
+    }
 
     public CertificateFile(string filePath)
     {
@@ -35,7 +34,6 @@ internal class CertificateFile : IDisposable
 
         Path = filePath;
         _watcher = new FileSystemWatcher(System.IO.Path.GetDirectoryName(filePath)!, System.IO.Path.GetFileName(filePath));
-        _watcher.Changed += (o, e) => OnChanged(e);
     }
 
     public void Dispose()
@@ -57,31 +55,6 @@ internal class CertificateFile : IDisposable
     {
         if (disposing)
             _watcher.Dispose();
-    }
-
-    [ExcludeFromCodeCoverage]
-    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Ignore IO errors and allow subscriber to discover them.")]
-    protected virtual void OnChanged(FileSystemEventArgs e)
-    {
-        ArgumentNullException.ThrowIfNull(e);
-
-        DateTime lastWriteTimeUtc = DateTime.MinValue;
-
-        lock (_lock)
-        {
-            try
-            {
-                lastWriteTimeUtc = File.GetLastWriteTimeUtc(e.FullPath);
-                if (lastWriteTimeUtc <= _lastProcessedWriteTimeUtc)
-                    return;
-
-                _lastProcessedWriteTimeUtc = lastWriteTimeUtc;
-            }
-            catch (Exception)
-            { }
-
-            Changed?.Invoke(this, new CertificateFileChangedEventArgs { ChangeType = e.ChangeType });
-        }
     }
 
     private sealed class CertificatePemFile(string certPemFilePath, string? keyPemFilePath = default)
