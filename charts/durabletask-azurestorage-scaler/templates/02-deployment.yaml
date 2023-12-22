@@ -75,6 +75,10 @@ spec:
             - name: ASPNETCORE_URLS
               value: https://+:8080
             {{- end }}
+            {{- if .Values.tls.serverCert.secret }}
+            - name: HealthCheck__Port
+              value: {{ template "durabletask-azurestorage-scaler.readinessPort" . | quote }}
+            {{- end }}
             - name: Logging__Console__FormatterName
               value: {{ .Values.logging.format }}
             - name: Logging__Console__FormatterOptions__TimestampFormat
@@ -119,6 +123,15 @@ spec:
             - name: grpc
               containerPort: 8080
               protocol: TCP
+          {{- if .Values.tls.serverCert.secret }}
+          readinessProbe:
+            grpc:
+              port: {{ template "durabletask-azurestorage-scaler.readinessPort" . }}
+            successThreshold: 1
+            failureThreshold: 2
+            periodSeconds: 60
+            initialDelaySeconds: 5
+          {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
