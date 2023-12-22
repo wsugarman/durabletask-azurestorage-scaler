@@ -79,7 +79,7 @@ internal static class IServiceCollectionExtensions
             .GetRequiredService<IOptions<TlsClientOptions>>()
             .Value;
 
-        return CertificateFile.CreateFromPemFile(options.CaCertificatePath!).Monitor(logger);
+        return new CertificateFile(options.CaCertificatePath!).Monitor(logger);
     }
 
     private static CertificateFileMonitor CreateServerCertificateMonitor(IServiceProvider serviceProvider, object? key)

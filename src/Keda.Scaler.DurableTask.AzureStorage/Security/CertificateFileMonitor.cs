@@ -88,6 +88,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         return false;
     }
 
+    [ExcludeFromCodeCoverage(Justification = "It is difficult to deterministically exercise the update code path.")]
     private X509Certificate2 GetOrUpdateCertificate()
     {
         _lock.EnterUpgradeableReadLock();

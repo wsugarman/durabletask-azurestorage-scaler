@@ -107,14 +107,23 @@ public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSy
         // Continue to edit the certificate multiple times
         for (int i = 0; i < 5; i++)
         {
-            using RSA newKey = RSA.Create();
-            using X509Certificate2 newCert = newKey.CreateSelfSignedCertificate();
-            await File.WriteAllBytesAsync(certPath, newCert.Export(X509ContentType.Pkcs12));
-            await Task.Delay(TimeSpan.FromSeconds(10)); // Wait enough time for the changes to be polled
+            // Alternate errors and valid certificates
+            if (i % 2 == 0)
+            {
+                using RSA newKey = RSA.Create();
+                using X509Certificate2 newCert = newKey.CreateSelfSignedCertificate();
+                await File.WriteAllBytesAsync(certPath, newCert.Export(X509ContentType.Pkcs12), tokenSource.Token);
+            }
+            else
+            {
+                await File.WriteAllTextAsync(certPath, "Invalid", tokenSource.Token);
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(10), tokenSource.Token); // Wait enough time for the changes to be polled
         }
 
         // Write the final cert and await its ingestion
-        await File.WriteAllBytesAsync(certPath, finalCert.Export(X509ContentType.Pkcs12));
+        await File.WriteAllBytesAsync(certPath, finalCert.Export(X509ContentType.Pkcs12), tokenSource.Token);
 
         // Assert that the certificate is eventually correct
         await Task.WhenAll(consumers);
