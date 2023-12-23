@@ -73,11 +73,9 @@ spec:
           env:
             {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
             - name: ASPNETCORE_URLS
-              value: https://+:8080
-            {{- end }}
-            {{- if .Values.tls.serverCert.secret }}
+              value: https://+:8080;http://127.0.0.1:8081
             - name: HealthCheck__Port
-              value: {{ include "durabletask-azurestorage-scaler.readinessPort" . | quote }}
+              value: "8081"
             {{- end }}
             - name: Logging__Console__FormatterName
               value: {{ .Values.logging.format }}
@@ -126,7 +124,7 @@ spec:
           {{- if .Values.tls.serverCert.secret }}
           readinessProbe:
             grpc:
-              port: {{ include "durabletask-azurestorage-scaler.readinessPort" . }}
+              port: 8081
             successThreshold: 1
             failureThreshold: 2
             periodSeconds: 10

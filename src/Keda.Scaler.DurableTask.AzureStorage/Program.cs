@@ -31,6 +31,11 @@ WebApplication app = builder
     .ConfigureKestrelTls()
     .Build();
 
+// Only add the health check if TLS is being enforced,
+// as the only health check available concerns the TLS certificate
+if (app.Configuration.EnforceTls())
+    app.ConfigureKubernetesHealthCheck();
+
 // Configure the HTTP request pipeline
 if (app.Configuration.EnforceMutualTls())
     _ = app.UseAuthentication();
@@ -38,11 +43,6 @@ if (app.Configuration.EnforceMutualTls())
 GrpcServiceEndpointConventionBuilder grpcBuilder = app.MapGrpcService<DurableTaskAzureStorageScalerService>();
 if (app.Configuration.EnforceMutualTls())
     _ = grpcBuilder.RequireAuthorization("default");
-
-// Only add the health check if TLS is being enforced,
-// as the only health check available concerns the TLS certificate
-if (app.Configuration.EnforceTls())
-    app.ConfigureKubernetesHealthCheck();
 
 // The following routes and services should only be available when debugging the scaler
 #if DEBUG
