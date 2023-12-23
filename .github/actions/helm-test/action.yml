@@ -233,7 +233,6 @@ runs:
           --set env[0].value=NoCheck \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
-          --set logging.level=debug \
           --set tls.caCert.secret=self-signed-ca \
           --set tls.serverCert.secret=server-tls \
           --wait \
@@ -310,9 +309,10 @@ runs:
           127.0.0.1:10005 \
           grpc.health.v1.Health/Check
 
-        # Test that the scaler rejects plaintext requests when TLS is enabled
         set +e
 
+        # Test that the scaler rejects plaintext requests when TLS is enabled
+        # (Expect timeout)
         grpcurl \
           -plaintext \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
@@ -326,6 +326,7 @@ runs:
         fi
 
         # Test that the scaler rejects invalid client certificates when TLS is enabled
+        # (Expect denied)
         grpcurl \
           -cacert "${{ runner.temp }}/certs/root.pem" \
           -cert "${{ runner.temp }}/certs/invalid-client.pem" \
@@ -341,6 +342,7 @@ runs:
         fi
 
         # Test that the health check service is not available via the exposed service port
+        # (Expect undefined service)
         grpcurl \
           -cacert "${{ runner.temp }}/certs/root.pem" \
           -cert "${{ runner.temp }}/certs/client.pem" \
@@ -356,6 +358,7 @@ runs:
         fi
 
         # Test that the scaler services cannot be reached via the health check port without TLS
+        # (Expect denied)
         grpcurl \
           -plaintext \
           -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
@@ -369,6 +372,7 @@ runs:
         fi
 
         # Test that the scaler services cannot be reached via the health check port with TLS
+        # (Expect timeout)
         grpcurl \
           -cacert "${{ runner.temp }}/certs/root.pem" \
           -cert "${{ runner.temp }}/certs/client.pem" \
