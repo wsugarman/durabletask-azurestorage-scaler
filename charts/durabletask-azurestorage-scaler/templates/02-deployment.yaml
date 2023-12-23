@@ -127,7 +127,7 @@ spec:
               port: 8081
             successThreshold: 1
             failureThreshold: 2
-            periodSeconds: 10
+            periodSeconds: 15
           {{- end }}
           {{- with .Values.resources }}
           resources:
