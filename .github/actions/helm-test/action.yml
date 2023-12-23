@@ -325,6 +325,21 @@ runs:
           exit 1
         fi
 
+        # Test that only the health check service is not available via the exposed port
+        grpcurl \
+          -cacert "${{ runner.temp }}/certs/root.pem" \
+          -cert "${{ runner.temp }}/certs/client.pem" \
+          -key "${{ runner.temp }}/certs/client.key" \
+          -import-path "${{ github.workspace }}/.github/actions/helm-test/protos" \
+          -proto "health.proto" \
+          -d '{"service":""}' \
+          127.0.0.1:10004 \
+          grpc.health.v1.Health/Check
+
+        if [ $? -eq 0 ]; then
+          exit 1
+        fi
+
         set -e
 
     - name: Test Scaler
