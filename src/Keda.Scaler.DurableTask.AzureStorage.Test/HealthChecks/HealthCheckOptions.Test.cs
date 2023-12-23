@@ -5,6 +5,7 @@ using System;
 using System.Net;
 using Keda.Scaler.DurableTask.AzureStorage.HealthChecks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.HealthChecks;
@@ -47,6 +48,7 @@ public class HealthCheckOptionsTest
                 LocalPort = port,
                 RemoteIpAddress = IPAddress.Parse(remoteAddress),
             },
+            RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider(),
         };
 
         Assert.False(options.IsHealthCheckRequest(context));
@@ -64,6 +66,7 @@ public class HealthCheckOptionsTest
                 LocalPort = 1234,
                 RemoteIpAddress = IPAddress.Loopback,
             },
+            RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider(),
         };
 
         Assert.True(options.IsHealthCheckRequest(context));
