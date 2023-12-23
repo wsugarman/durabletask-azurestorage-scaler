@@ -2,10 +2,8 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Net;
 using Keda.Scaler.DurableTask.AzureStorage.HealthChecks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.HealthChecks;
@@ -34,21 +32,16 @@ public class HealthCheckOptionsTest
         => Assert.Throws<ArgumentNullException>(() => new HealthCheckOptions().IsHealthCheckRequest(null!));
 
     [Theory]
-    [InlineData(true, "127.0.0.1", 1234)]
-    [InlineData(false, "1.2.3.4", 1234)]
-    [InlineData(false, "127.0.0.1", 6789)]
-    public void GivenInvalidHttpContext_WhenCheckingIfHealthCheckRequest_ThenReturnFalse(bool isHttps, string remoteAddress, int port)
+    [InlineData(true, 1234)]
+    [InlineData(false, 1234)]
+    [InlineData(false, 6789)]
+    public void GivenInvalidHttpContext_WhenCheckingIfHealthCheckRequest_ThenReturnFalse(bool isHttps, int port)
     {
         HealthCheckOptions options = new() { Port = 1234 };
         DefaultHttpContext context = new()
         {
+            Connection = { LocalPort = port },
             Request = { IsHttps = isHttps },
-            Connection =
-            {
-                LocalPort = port,
-                RemoteIpAddress = IPAddress.Parse(remoteAddress),
-            },
-            RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider(),
         };
 
         Assert.False(options.IsHealthCheckRequest(context));
@@ -60,13 +53,8 @@ public class HealthCheckOptionsTest
         HealthCheckOptions options = new() { Port = 1234 };
         DefaultHttpContext context = new()
         {
+            Connection = { LocalPort = 1234 },
             Request = { IsHttps = false },
-            Connection =
-            {
-                LocalPort = 1234,
-                RemoteIpAddress = IPAddress.Loopback,
-            },
-            RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider(),
         };
 
         Assert.True(options.IsHealthCheckRequest(context));
