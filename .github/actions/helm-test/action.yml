@@ -266,11 +266,17 @@ runs:
           ${{ inputs.functionAppName }} \
           ./charts/example-function-app
 
+    - name: Apply Health Service
+      shell: bash
+      run: |
+        kubectl apply -f ${{ github.workspace }}/.github/actions/helm-test/resources/plaintext-service.yaml
+
     - name: Ensure Reachable Scaler Services
       shell: bash
       run: |
         kubectl port-forward service/plaintext-dtfx-scaler -n keda 10003:4370 > /dev/null &
         kubectl port-forward service/dtfx-scaler -n keda 10004:4370 > /dev/null &
+        kubectl port-forward service/dtfx-scaler-test -n keda 10005:4371 > /dev/null &
 
         export PATH=$PATH:$(go env GOPATH)/bin
         go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
@@ -294,6 +300,15 @@ runs:
           -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
           127.0.0.1:10004 \
           externalscaler.ExternalScaler/GetMetricSpec
+
+        # Test health check
+        grpcurl \
+          -plaintext \
+          -import-path "${{ github.workspace }}/.github/actions/helm-test/protos" \
+          -proto "health.proto" \
+          -d '{"service":""}' \
+          127.0.0.1:10005 \
+          grpc.health.v1.Health/Check
 
         # Test that the scaler rejects plaintext requests when TLS is enabled
         set +e
@@ -325,7 +340,7 @@ runs:
           exit 1
         fi
 
-        # Test that only the health check service is not available via the exposed port
+        # Test that the health check service is not available via the exposed service port
         grpcurl \
           -cacert "${{ runner.temp }}/certs/root.pem" \
           -cert "${{ runner.temp }}/certs/client.pem" \
@@ -340,7 +355,40 @@ runs:
           exit 1
         fi
 
+        # Test that the scaler services cannot be reached via the health check port without TLS
+        grpcurl \
+          -plaintext \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10005 \
+          externalscaler.ExternalScaler/GetMetricSpec
+
+        if [ $? -eq 0 ]; then
+          exit 1
+        fi
+
+        # Test that the scaler services cannot be reached via the health check port with TLS
+        grpcurl \
+          -cacert "${{ runner.temp }}/certs/root.pem" \
+          -cert "${{ runner.temp }}/certs/client.pem" \
+          -key "${{ runner.temp }}/certs/client.key" \
+          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+          -proto "externalscaler.proto" \
+          -d '{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"baz"}}' \
+          127.0.0.1:10005 \
+          externalscaler.ExternalScaler/GetMetricSpec
+
+        if [ $? -eq 0 ]; then
+          exit 1
+        fi
+
         set -e
+
+    - name: Delete Health Service
+      shell: bash
+      run: |
+        kubectl delete service -n keda dtfx-scaler-test
 
     - name: Test Scaler
       shell: bash
@@ -378,11 +426,6 @@ runs:
       name: Get Scaler Logs
       shell: bash
       run: kubectl logs --tail=-1 --prefix -l app=dtfx-scaler -n keda
-
-    - if: ${{ failure() }}
-      name: Describe Scaler Pods
-      shell: bash
-      run: kubectl describe pods -l app=dtfx-scaler -n keda
 
     - if: ${{ failure() }}
       name: Get Function Logs
