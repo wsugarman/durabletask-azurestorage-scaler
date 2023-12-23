@@ -233,6 +233,7 @@ runs:
           --set env[0].value=NoCheck \
           --set image.repository=${{ inputs.scalerImageRepository }} \
           --set image.tag=${{ inputs.imageTag }} \
+          --set logging.level=debug \
           --set tls.caCert.secret=self-signed-ca \
           --set tls.serverCert.secret=server-tls \
           --wait \
