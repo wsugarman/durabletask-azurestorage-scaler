@@ -2,8 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.IO;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.AspNetCore.Authentication.Certificate;
@@ -16,63 +14,30 @@ using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
 
-public class TlsConfigureTest : FileSystemTest
+public class TlsConfigureTest(ITestOutputHelper outputHelper) : TlsCertificateTest(outputHelper)
 {
-    private const string CaCertName = "ca.crt";
-    private const string ServerCertName = "server.pem";
-    private const string ServerKeyName = "server.key";
-
-    private readonly string _caCertPath;
-    private readonly string _serverCertPath;
-    private readonly string _serverKeyPath;
-    private readonly RSA _caCertKey = RSA.Create();
-    private readonly RSA _serverKey = RSA.Create();
-    private readonly X509Certificate2 _caCertificate;
-    private readonly X509Certificate2 _serverCertificate;
-
-    public TlsConfigureTest(ITestOutputHelper outputHelper)
-        : base(outputHelper)
-    {
-        _caCertPath = Path.Combine(RootFolder, CaCertName);
-        _serverCertPath = Path.Combine(RootFolder, ServerCertName);
-        _serverKeyPath = Path.Combine(RootFolder, ServerKeyName);
-        _caCertificate = _caCertKey.CreateSelfSignedCertificate();
-        _serverCertificate = _serverKey.CreateCertificate(_caCertificate, nameof(TlsConfigureTest));
-
-        File.WriteAllText(_caCertPath, _caCertificate.ExportCertificatePem());
-        File.WriteAllText(_serverCertPath, _serverCertificate.ExportCertificatePem());
-        File.WriteAllText(_serverKeyPath, _serverKey.ExportRSAPrivateKeyPem());
-    }
-
     [Fact]
     public void GivenNullTlsClientOptions_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(null!, Options.Create(new TlsServerOptions()), LoggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create<TlsClientOptions>(null!), Options.Create(new TlsServerOptions()), LoggerFactory));
-    }
-
-    [Fact]
-    public void GivenNullTlsServerOptions_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
-    {
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), null!, LoggerFactory));
-        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), Options.Create<TlsServerOptions>(null!), LoggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(null!, LoggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create<TlsClientOptions>(null!), LoggerFactory));
     }
 
     [Fact]
     public void GivenNullLoggerFactory_WhenCreatingTlsConfigure_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), null!));
+        => Assert.Throws<ArgumentNullException>(() => new TlsConfigure(Options.Create(new TlsClientOptions()), null!));
 
     [Fact]
     public void GivenNullOptions_WhenConfiguringHttpsConnectionAdapterOptions_ThenThrowArgumentNullException()
     {
-        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory);
         _ = Assert.Throws<ArgumentNullException>(() => configure.Configure((HttpsConnectionAdapterOptions)null!));
     }
 
     [Fact]
     public void GivenNoTls_WhenConfiguringHttpsConnectionAdapterOptions_ThenDoNotSupplyCertificate()
     {
-        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory);
 
         HttpsConnectionAdapterOptions options = new();
         configure.Configure(options);
@@ -87,8 +52,7 @@ public class TlsConfigureTest : FileSystemTest
     public void GivenTls_WhenConfiguringHttpsConnectionAdapterOptions_ThenConfigureClientValidationAppropriately(ClientCertificateMode expected, bool validate)
     {
         TlsClientOptions clientOptions = new() { ValidateCertificate = validate };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(clientOptions), LoggerFactory, Server);
 
         HttpsConnectionAdapterOptions options = new();
         configure.Configure(options);
@@ -100,7 +64,7 @@ public class TlsConfigureTest : FileSystemTest
     [Fact]
     public void GivenNullOptions_WhenConfiguringCertificateAuthenticationOptions_ThenThrowArgumentNullException()
     {
-        using TlsConfigure configure = new(Options.Create(new TlsClientOptions()), Options.Create(new TlsServerOptions()), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory);
         _ = Assert.Throws<ArgumentNullException>(() => configure.Configure((CertificateAuthenticationOptions)null!));
         _ = Assert.Throws<ArgumentNullException>(() => configure.Configure("foo", null!));
     }
@@ -108,9 +72,7 @@ public class TlsConfigureTest : FileSystemTest
     [Fact]
     public void GivenInvalidName_WhenConfiguringCertificateAuthenticationOptions_ThenSkipConfiguring()
     {
-        TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory, Server, ClientCa);
 
         CertificateAuthenticationOptions options = new();
 
@@ -127,11 +89,14 @@ public class TlsConfigureTest : FileSystemTest
     [InlineData(false, true, true)]
     [InlineData(true, false, true)]
     [InlineData(true, true, false)]
-    public void GivenUnsafeTls_WhenConfiguringCertificateAuthenticationOptions_ThenSkipCustomCertificate(bool specifyServerCert, bool validateClientCert, bool customCertAuthority)
+    public void GivenUnsafeOrNoTls_WhenConfiguringCertificateAuthenticationOptions_ThenSkipCustomCertificate(bool specifyServerCert, bool validateClientCert, bool customCertAuthority)
     {
-        TlsClientOptions clientOptions = new() { CaCertificatePath = customCertAuthority ? _caCertPath : null, ValidateCertificate = validateClientCert };
-        TlsServerOptions serverOptions = specifyServerCert ? new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath } : new();
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
+        TlsClientOptions clientOptions = new() { ValidateCertificate = validateClientCert };
+        TlsConfigure configure = new(
+            Options.Create(clientOptions),
+            LoggerFactory,
+            specifyServerCert ? Server : null!,
+            customCertAuthority ? ClientCa : null!);
 
         CertificateAuthenticationOptions options = new();
         configure.Configure(CertificateAuthenticationDefaults.AuthenticationScheme, options);
@@ -143,10 +108,7 @@ public class TlsConfigureTest : FileSystemTest
     [Fact]
     public void GivenExpectedNameAndCustomCa_WhenConfiguringCertificateAuthenticationOptions_ThenUpdateOptions()
     {
-        TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
-
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory, Server, ClientCa);
         CertificateAuthenticationOptions options = new();
 
         Assert.Equal(X509ChainTrustMode.System, options.ChainTrustValidationMode);
@@ -154,18 +116,21 @@ public class TlsConfigureTest : FileSystemTest
 
         Assert.Equal(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
         X509Certificate2 actual = Assert.Single(options.CustomTrustStore);
-        Assert.Equal(_caCertificate.Thumbprint, actual.Thumbprint);
+        Assert.Equal(ClientCa.Current.Thumbprint, actual.Thumbprint);
     }
 
     [Theory]
     [InlineData(false, true, true)]
     [InlineData(true, false, true)]
     [InlineData(true, true, false)]
-    public void GivenNoCustomCa_WhenMonitoringChangesForOptions_ThenReturnNullToken(bool specifyServerCert, bool validateClientCert, bool customCertAuthority)
+    public void GivenNoCustomCaMonitoring_WhenMonitoringChangesForOptions_ThenReturnNullToken(bool specifyServerCert, bool validateClientCert, bool customCertAuthority)
     {
-        TlsClientOptions clientOptions = new() { CaCertificatePath = customCertAuthority ? _caCertPath : null, ValidateCertificate = validateClientCert };
-        TlsServerOptions serverOptions = specifyServerCert ? new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath } : new();
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
+        TlsClientOptions clientOptions = new() { ValidateCertificate = validateClientCert };
+        TlsConfigure configure = new(
+            Options.Create(clientOptions),
+            LoggerFactory,
+            specifyServerCert ? Server : null!,
+            customCertAuthority ? ClientCa : null!);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);
 
@@ -176,26 +141,11 @@ public class TlsConfigureTest : FileSystemTest
     [Fact]
     public void GivenCustomCa_WhenMonitoringChangesForOptions_ThenReturnVaidToken()
     {
-        TlsClientOptions clientOptions = new() { CaCertificatePath = _caCertPath };
-        TlsServerOptions serverOptions = new() { CertificatePath = _serverCertPath, KeyPath = _serverKeyPath };
-        using TlsConfigure configure = new(Options.Create(clientOptions), Options.Create(serverOptions), LoggerFactory);
+        TlsConfigure configure = new(Options.Create(new TlsClientOptions()), LoggerFactory, Server, ClientCa);
 
         Assert.Equal(CertificateAuthenticationDefaults.AuthenticationScheme, ((IOptionsChangeTokenSource<CertificateAuthenticationOptions>)configure).Name);
 
         IChangeToken actual = configure.GetChangeToken();
         Assert.NotSame(NullChangeToken.Singleton, actual);
-    }
-
-    protected override void Dispose(bool disposing)
-    {
-        if (disposing)
-        {
-            _caCertKey.Dispose();
-            _serverKey.Dispose();
-            _caCertificate.Dispose();
-            _serverCertificate.Dispose();
-        }
-
-        base.Dispose(disposing);
     }
 }

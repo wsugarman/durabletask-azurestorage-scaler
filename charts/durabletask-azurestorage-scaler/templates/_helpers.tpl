@@ -26,7 +26,7 @@ If release name contains the word "scaler" (or if the overrien name) it will be 
 {{- end }}
 
 {{/*
-Create the name of the service account to use
+Create the name of the service account to use.
 */}}
 {{- define "durabletask-azurestorage-scaler.serviceAccountName" -}}
 {{- default (include "durabletask-azurestorage-scaler.fullname" .) .Values.serviceAccount.name }}
@@ -40,7 +40,7 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
+Common labels.
 */}}
 {{- define "durabletask-azurestorage-scaler.labels" }}
 helm.sh/chart: {{ include "durabletask-azurestorage-scaler.chart" . }}

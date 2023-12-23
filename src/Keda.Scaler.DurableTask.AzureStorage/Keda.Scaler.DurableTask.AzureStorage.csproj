@@ -17,12 +17,16 @@
     <PackageReference Include="Azure.Storage.Blobs" />
     <PackageReference Include="Azure.Storage.Queues" />
     <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.AspNetCore.HealthChecks" />
     <PackageReference Include="Grpc.AspNetCore.Server" />
-    <PackageReference Include="Grpc.AspNetCore.Server.Reflection" />
     <PackageReference Include="Grpc.Core.Api" />
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <PackageReference Include="Grpc.AspNetCore.Server.Reflection" />
   </ItemGroup>
 
   <ItemGroup>

@@ -79,6 +79,9 @@ public class IServiceCollectionExtensionsTest
             .AddLogging()
             .AddTlsSupport("default", config);
 
+        Assert.Empty(services.Where(s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "server")));
+        Assert.Empty(services.Where(s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "clientca")));
+
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationCacheOptions>)));
@@ -100,8 +103,10 @@ public class IServiceCollectionExtensionsTest
         Assert.Same(expected, serviceProvider.GetRequiredService<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>());
     }
 
-    [Fact]
-    public void GivenMutualTls_WhenAddingTlsSupport_ThenAddAllServices()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void GivenMutualTls_WhenAddingTlsSupport_ThenAddAllServices(bool useCustomCa)
     {
         const string CertName = "example.crt";
         string certPath = Path.Combine(_tempFolder, CertName);
@@ -114,17 +119,26 @@ public class IServiceCollectionExtensionsTest
             File.WriteAllText(certPath, cert.ExportCertificatePem(key));
 
             IConfiguration config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-            {
-                new("Security:Transport:Client:ValidateCertificate", "true"),
-                new("Security:Transport:Server:CertificatePath", certPath),
-            })
-            .Build();
+                .AddInMemoryCollection(new KeyValuePair<string, string?>[]
+                {
+                    new("Security:Transport:Client:CaCertificatePath", useCustomCa ? certPath : null),
+                    new("Security:Transport:Client:ValidateCertificate", "true"),
+                    new("Security:Transport:Server:CertificatePath", certPath),
+                })
+                .Build();
 
             IServiceCollection services = new ServiceCollection()
                 .AddSingleton(config)
                 .AddLogging()
                 .AddTlsSupport("default", config);
+
+            _ = Assert.Single(services.Where(s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "server")));
+
+            IEnumerable<ServiceDescriptor> clientCaDescriptors = services.Where(s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "clientca"));
+            if (useCustomCa)
+                _ = Assert.Single(clientCaDescriptors);
+            else
+                Assert.Empty(clientCaDescriptors);
 
             Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
             _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationOptions>)));

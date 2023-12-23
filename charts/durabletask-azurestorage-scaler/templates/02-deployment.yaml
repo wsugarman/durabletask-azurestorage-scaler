@@ -73,7 +73,9 @@ spec:
           env:
             {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
             - name: ASPNETCORE_URLS
-              value: https://+:8080
+              value: https://+:8080;http://+:8081
+            - name: HealthCheck__Port
+              value: "8081"
             {{- end }}
             - name: Logging__Console__FormatterName
               value: {{ .Values.logging.format }}
@@ -119,6 +121,14 @@ spec:
             - name: grpc
               containerPort: 8080
               protocol: TCP
+          {{- if .Values.tls.serverCert.secret }}
+          readinessProbe:
+            grpc:
+              port: 8081
+            successThreshold: 1
+            failureThreshold: 2
+            periodSeconds: 15
+          {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

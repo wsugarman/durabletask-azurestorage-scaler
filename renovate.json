@@ -49,7 +49,7 @@
     {
       "groupName": "XUnit",
       "matchPackagePrefixes": [
-        "xunit.",
+        "xunit",
         "MartinCostello.Logging.XUnit"
       ]
     }
