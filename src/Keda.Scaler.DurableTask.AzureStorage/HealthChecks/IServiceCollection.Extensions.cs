@@ -5,6 +5,7 @@ using System;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.HealthChecks;
@@ -26,6 +27,7 @@ internal static class IServiceCollectionExtensions
         if (configuration.EnforceTls())
         {
             _ = services
+                .Configure<HealthCheckPublisherOptions>(o => o.Delay = TimeSpan.Zero)
                 .AddGrpcHealthChecks()
                 .AddCheck<TlsHealthCheck>("TLS");
         }

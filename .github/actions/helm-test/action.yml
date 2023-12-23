@@ -365,6 +365,11 @@ runs:
       run: kubectl logs --tail=-1 --prefix -l app=dtfx-scaler -n keda
 
     - if: ${{ failure() }}
+      name: Describe Scaler Pods
+      shell: bash
+      run: kubectl describe pods -l app=dtfx-scaler -n keda
+
+    - if: ${{ failure() }}
       name: Get Function Logs
       shell: bash
       run: kubectl logs --tail=-1 --prefix -l app=${{ inputs.functionAppName }} -n ${{ inputs.functionAppNamespace }}
