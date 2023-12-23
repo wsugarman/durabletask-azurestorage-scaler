@@ -269,7 +269,7 @@ runs:
     - name: Apply Health Service
       shell: bash
       run: |
-        kubectl apply -f ${{ github.workspace }}/.github/actions/helm-test/resources/plaintext-service.yaml
+        kubectl apply -f ${{ github.workspace }}/.github/actions/helm-test/resources/health-service.yaml
 
     - name: Ensure Reachable Scaler Services
       shell: bash
