@@ -32,9 +32,8 @@ public class HealthCheckOptionsTest
         => Assert.Throws<ArgumentNullException>(() => new HealthCheckOptions().IsHealthCheckRequest(null!));
 
     [Theory]
-    [InlineData(true, 1234)]
-    [InlineData(false, 1234)]
     [InlineData(false, 6789)]
+    [InlineData(true, 1234)]
     public void GivenInvalidHttpContext_WhenCheckingIfHealthCheckRequest_ThenReturnFalse(bool isHttps, int port)
     {
         HealthCheckOptions options = new() { Port = 1234 };
