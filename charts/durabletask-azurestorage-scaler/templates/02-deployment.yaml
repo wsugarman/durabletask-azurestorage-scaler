@@ -73,7 +73,7 @@ spec:
           env:
             {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
             - name: ASPNETCORE_URLS
-              value: https://+:8080;http://127.0.0.1:8081
+              value: https://+:8080;http://+:8081
             - name: HealthCheck__Port
               value: "8081"
             {{- end }}
