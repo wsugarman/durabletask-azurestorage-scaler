@@ -17,10 +17,10 @@ internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountCli
         if (string.IsNullOrWhiteSpace(accountInfo.ConnectionString))
         {
             if (string.IsNullOrWhiteSpace(accountInfo.AccountName))
-                throw new ArgumentException(Resource.Format(SRF.MissingMemberFormat, nameof(AzureStorageAccountInfo.AccountName)), nameof(accountInfo));
+                throw new ArgumentException(SRF.Format(SRF.MissingMemberFormat, nameof(AzureStorageAccountInfo.AccountName)), nameof(accountInfo));
 
             if (accountInfo.Cloud is null)
-                throw new ArgumentException(Resource.Format(SRF.MissingMemberFormat, nameof(AzureStorageAccountInfo.Cloud)), nameof(accountInfo));
+                throw new ArgumentException(SRF.Format(SRF.MissingMemberFormat, nameof(AzureStorageAccountInfo.Cloud)), nameof(accountInfo));
 
             AzureStorageService service = typeof(T) == typeof(BlobServiceClient) ? AzureStorageService.Blob : AzureStorageService.Queue;
             Uri serviceUri = accountInfo.Cloud.GetStorageServiceUri(accountInfo.AccountName, service);

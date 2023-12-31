@@ -16,10 +16,10 @@ internal sealed class FileExistsAttribute : ValidationAttribute
         if (value is not null)
         {
             if (value is not string filePath)
-                return new ValidationResult(Resource.Format(SRF.InvalidMemberTypeFormat, "string", value.GetType().Name), [validationContext.MemberName!]);
+                return new ValidationResult(SRF.Format(SRF.InvalidMemberTypeFormat, "string", value.GetType().Name), [validationContext.MemberName!]);
 
             if (!File.Exists(filePath))
-                return new ValidationResult(Resource.Format(SRF.FileNotFoundFormat, filePath), [validationContext.MemberName!]);
+                return new ValidationResult(SRF.Format(SRF.FileNotFoundFormat, filePath), [validationContext.MemberName!]);
         }
 
         return ValidationResult.Success;

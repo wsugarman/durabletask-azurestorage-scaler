@@ -221,7 +221,7 @@ public sealed class ScalerMetadata : IValidatableObject
             yield return new ValidationResult(SR.EmptyOrWhiteSpace, [nameof(AccountName)]);
 
         if (CloudEnvironment is CloudEnvironment.Unknown)
-            yield return new ValidationResult(Resource.Format(SRF.UnknownValueFormat, Cloud), [nameof(Cloud)]);
+            yield return new ValidationResult(SRF.Format(SRF.UnknownValueFormat, Cloud), [nameof(Cloud)]);
 
         if (Connection is not null)
             yield return new ValidationResult(SR.AmbiguousConnection, [nameof(AccountName), nameof(Connection)]);
@@ -263,6 +263,6 @@ public sealed class ScalerMetadata : IValidatableObject
         else if (Connection is not null && ConnectionFromEnv is not null)
             yield return new ValidationResult(SR.AmbiguousConnection, [nameof(Connection), nameof(ConnectionFromEnv)]);
         else if (string.IsNullOrWhiteSpace(ConnectionString))
-            yield return new ValidationResult(Resource.Format(SRF.InvalidConnectionEnvironmentVariableFormat, ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable), [nameof(ConnectionFromEnv)]);
+            yield return new ValidationResult(SRF.Format(SRF.InvalidConnectionEnvironmentVariableFormat, ConnectionFromEnv ?? DefaultConnectionEnvironmentVariable), [nameof(ConnectionFromEnv)]);
     }
 }
