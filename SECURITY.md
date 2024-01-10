@@ -9,7 +9,7 @@ are **not** cherry-picked into previous versions via a patch.
 | ------- | ------------------ |
 | `1.x`   | :x:                |
 | `2.0.x` | :x:                |
-| `2.1.x` | :white_check_mark: |
+| `2.1.x` | :heavy_check_mark: |
 
 ## Reporting a Vulnerability
 
