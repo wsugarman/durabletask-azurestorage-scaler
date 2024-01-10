@@ -140,7 +140,10 @@ internal sealed class CertificateFileMonitor : IDisposable
     }
 
     private void OnChanged(object? sender, FileSystemEventArgs args)
-        => UpdateCertificate(throwOnError: false);
+    {
+        if (Thread.VolatileRead(ref _disposed) == 0)
+            UpdateCertificate(throwOnError: false);
+    }
 
     private void OnReload()
     {
