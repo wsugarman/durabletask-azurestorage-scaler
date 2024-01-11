@@ -2,7 +2,7 @@
 # Version corresponds to the chart version and should be updated every time the chart is changed.
 # AppVersion on the other hand should be updated every time the web app is changed.
 apiVersion: v2
-appVersion: "2.0.0"
+appVersion: "2.1.0"
 description: A KEDA external scaler for the Durable Task Azure Storage backend
 home: https://github.com/wsugarman/durabletask-azurestorage-scaler
 icon: https://raw.githubusercontent.com/wsugarman/durabletask-azurestorage-scaler/main/img/storm-icon.png
@@ -17,7 +17,7 @@ name: durabletask-azurestorage-scaler
 sources:
   - https://github.com/wsugarman/durabletask-azurestorage-scaler
 type: application
-version: "2.0.0"
+version: "2.1.0"
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
@@ -26,7 +26,7 @@ annotations:
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler
-      image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:2.0.0
+      image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:2.1.0
       platforms:
         - linux/amd64
   artifacthub.io/license: MIT
