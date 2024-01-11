@@ -6,16 +6,19 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using Xunit;
 using Xunit.Abstractions;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Security;
 
-public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSystemTest(outputHelper)
+public partial class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSystemTest(outputHelper)
 {
     [Fact]
     public void GivenNullCertificateFile_WhenCreatingMonitor_ThenThrowArgumentNullException()
@@ -112,20 +115,46 @@ public class CertificateFileMonitorTest(ITestOutputHelper outputHelper) : FileSy
             {
                 using RSA newKey = RSA.Create();
                 using X509Certificate2 newCert = newKey.CreateSelfSignedCertificate();
-                await File.WriteAllBytesAsync(certPath, newCert.Export(X509ContentType.Pkcs12), tokenSource.Token);
+                await WriteAllBytesAsync(certPath, newCert.Export(X509ContentType.Pkcs12), tokenSource.Token);
             }
             else
             {
-                await File.WriteAllTextAsync(certPath, "Invalid", tokenSource.Token);
+                await WriteAllTextAsync(certPath, "Invalid", tokenSource.Token);
             }
 
             await Task.Delay(TimeSpan.FromSeconds(10), tokenSource.Token); // Wait enough time for the changes to be polled
         }
 
         // Write the final cert and await its ingestion
-        await File.WriteAllBytesAsync(certPath, finalCert.Export(X509ContentType.Pkcs12), tokenSource.Token);
+        await WriteAllBytesAsync(certPath, finalCert.Export(X509ContentType.Pkcs12), tokenSource.Token);
 
         // Assert that the certificate is eventually correct
         await Task.WhenAll(consumers);
     }
+
+    private Task WriteAllTextAsync(string path, string text, CancellationToken cancellationToken)
+        => WriteAllBytesAsync(path, Encoding.UTF8.GetBytes(text), cancellationToken);
+
+    private async Task WriteAllBytesAsync(string path, byte[] bytes, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            try
+            {
+                await File.WriteAllBytesAsync(path, bytes, cancellationToken);
+            }
+            catch (IOException ex)
+            {
+                FailedFileOverwrite(Logger, ex, path);
+            }
+        }
+    }
+
+    [LoggerMessage(
+        EventId = 1000,
+        Level = LogLevel.Warning,
+        Message = "Unable to overwrite file at {Path}. Retrying...")]
+    private static partial void FailedFileOverwrite(ILogger logger, Exception ex, string path);
 }

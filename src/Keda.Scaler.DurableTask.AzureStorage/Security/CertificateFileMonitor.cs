@@ -139,6 +139,7 @@ internal sealed class CertificateFileMonitor : IDisposable
         OnReload();
     }
 
+    [ExcludeFromCodeCoverage(Justification = "It is difficult to deterministically exercise the disposal race condition.")]
     private void OnChanged(object? sender, FileSystemEventArgs args)
     {
         if (Thread.VolatileRead(ref _disposed) == 0)
