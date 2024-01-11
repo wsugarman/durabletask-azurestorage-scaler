@@ -144,6 +144,7 @@ public partial class CertificateFileMonitorTest(ITestOutputHelper outputHelper) 
             try
             {
                 await File.WriteAllBytesAsync(path, bytes, cancellationToken);
+                return; // Success
             }
             catch (IOException ex)
             {
