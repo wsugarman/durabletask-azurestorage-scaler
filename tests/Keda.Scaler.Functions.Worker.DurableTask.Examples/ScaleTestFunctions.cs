@@ -43,6 +43,8 @@ public static partial class ScaleTestFunctions
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(input);
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         ILogger logger = context.CreateReplaySafeLogger("DurableTask.AzureStorage.Keda.Tests");
         logger.StartingDelayActivity(input.ActivityCount, input.ActivityTime);
 
@@ -82,17 +84,19 @@ public static partial class ScaleTestFunctions
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(client);
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         // Run a query for all running instances to ensure the connection to the TaskHub is working correctly
         OrchestrationQuery query = new()
         {
             CreatedFrom = DateTimeOffset.MinValue,
             CreatedTo = DateTimeOffset.MaxValue,
             PageSize = 1,
-            Statuses = new OrchestrationRuntimeStatus[]
-            {
+            Statuses =
+            [
                 OrchestrationRuntimeStatus.Pending,
                 OrchestrationRuntimeStatus.Running,
-            },
+            ],
             FetchInputsAndOutputs = false,
         };
 

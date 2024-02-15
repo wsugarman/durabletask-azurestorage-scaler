@@ -1,5 +1,5 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:8.0.101-cbl-mariner2.0-amd64@sha256:c4a653b17699e8d21736f5c31774f0577c4c2ef15e448f9d1a7ff40219e9efdf AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.200-cbl-mariner2.0-amd64@sha256:9e062b416e546166b37e66995d2134e496be688df39913649534a78949d7ade7 AS build
 ARG BUILD_CONFIGURATION=Release
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/example/"]
 COPY ["./tests/Keda.Scaler.Functions.Worker.DurableTask.Examples/", "/example/src/"]
@@ -11,7 +11,7 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.101-cbl-mariner2.0-amd64@sha256:c4a653b17699e8d21736f5c31774f0577c4c2ef15e448f9d1a7ff40219e9efdf AS users
+FROM mcr.microsoft.com/dotnet/sdk:8.0.200-cbl-mariner2.0-amd64@sha256:9e062b416e546166b37e66995d2134e496be688df39913649534a78949d7ade7 AS users
 RUN groupadd nonroot -g 2000 && \
     useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 1000
 
