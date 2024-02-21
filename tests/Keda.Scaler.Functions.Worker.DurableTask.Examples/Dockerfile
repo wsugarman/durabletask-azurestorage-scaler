@@ -21,6 +21,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     AzureWebJobsScriptRoot=/home/site/wwwroot \
     DOTNET_EnableDiagnostics=0 \
     LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
     WEBSITE_HOSTNAME=localhost:8080
 USER $APP_UID
 EXPOSE 8080
