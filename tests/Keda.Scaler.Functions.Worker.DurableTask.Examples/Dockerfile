@@ -11,17 +11,8 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0.201-cbl-mariner2.0-amd64@sha256:33d91a9dd7c3c5872d84a79878002bc6dcb17adb335ac32a41fff38e50e5f60d AS users
-RUN groupadd nonroot -g 2000 && \
-    useradd -r -M -s /sbin/nologin -g nonroot -c nonroot nonroot -u 1000
-
-FROM scratch AS nonroot
-COPY --from=users /etc/group /etc/group
-COPY --from=users /etc/passwd /etc/passwd
-
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated7.0-mariner@sha256:5a0ae4cab4ebd4f85e38fb9ed0e470059bd063ff7d0a668c197f5c1770ee721f AS runtime
-COPY --from=nonroot / /
-RUN chown -R nonroot:nonroot /azure-functions-host
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0-mariner@sha256:3dd610034bc961733c3db9425d0d8a7c506d2c2bda7a064b7968451a47775373 AS runtime
+RUN chown -R $APP_UID /azure-functions-host
 ENV ASPNETCORE_URLS=http://+:8080 \
     AzureFunctionsJobHost__FileWatchingEnabled=false \
     AzureFunctionsJobHost__Logging__Console__IsEnabled=true \
@@ -32,7 +23,7 @@ ENV ASPNETCORE_URLS=http://+:8080 \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     WEBSITE_HOSTNAME=localhost:8080
-USER nonroot
+USER $APP_UID
 EXPOSE 8080
 
 FROM runtime AS func
