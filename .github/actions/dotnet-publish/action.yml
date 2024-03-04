@@ -91,7 +91,7 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: az login
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
         client-id: ${{ inputs.azureClientId }}
         tenant-id: ${{ inputs.azureTenantId }}
@@ -120,14 +120,6 @@ runs:
           -FilesCatalog '${{ runner.temp }}\signing\catalog.txt' `
           -TimestampDigest 'SHA256' `
           -TimestampRfc3161 'http://timestamp.acs.microsoft.com'
-
-    - if: ${{ inputs.sign == 'true' && always() }}
-      name: az logout
-      shell: bash
-      run: |
-        az logout
-        az cache purge
-        az account clear
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v4
