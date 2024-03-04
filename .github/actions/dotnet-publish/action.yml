@@ -121,14 +121,6 @@ runs:
           -TimestampDigest 'SHA256' `
           -TimestampRfc3161 'http://timestamp.acs.microsoft.com'
 
-    - if: ${{ inputs.sign == 'true' && always() }}
-      name: az logout
-      shell: bash
-      run: |
-        az logout
-        az cache purge
-        az account clear
-
     - name: Upload Binaries
       uses: actions/upload-artifact@v4
       with:
