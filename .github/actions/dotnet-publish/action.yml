@@ -91,7 +91,7 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: az login
-      uses: azure/login@v1
+      uses: azure/login@v2
       with:
         client-id: ${{ inputs.azureClientId }}
         tenant-id: ${{ inputs.azureTenantId }}
