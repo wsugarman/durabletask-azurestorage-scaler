@@ -11,7 +11,7 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0-mariner@sha256:73df91f1783c808954cfe66f693f1698ee6e2aa70e1c6e13a8bc83f97631053f AS runtime
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0-mariner@sha256:df8172906714bb4078e1652e68823c3e1356a10b61a70c1d5ef9528f704926c5 AS runtime
 RUN chown -R $APP_UID /azure-functions-host
 ENV ASPNETCORE_URLS=http://+:8080 \
     AzureFunctionsJobHost__FileWatchingEnabled=false \
