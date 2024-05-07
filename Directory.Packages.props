@@ -1,7 +1,7 @@
 <Project>
 
   <ItemGroup>
-    <PackageVersion Include="Azure.Identity" Version="1.11.2" />
+    <PackageVersion Include="Azure.Identity" Version="1.11.3" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.19.1" />
     <PackageVersion Include="Azure.Storage.Queues" Version="12.17.1" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
