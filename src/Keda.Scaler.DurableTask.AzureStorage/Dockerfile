@@ -1,7 +1,7 @@
 ARG COPY=false
 
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:8.0.302-cbl-mariner2.0-amd64@sha256:7526cea0900da26248845d51297fbca6a6f1a72b3ea801a14530054a2ad54cd2 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0.302-cbl-mariner2.0-amd64@sha256:576d8d46674e54558ee599baf5ba52ccecc0c65c3c08778d070d2056cb3d54aa AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
@@ -39,7 +39,7 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.6-cbl-mariner2.0-distroless-amd64@sha256:13e419bca92d33fb206e0a9502e20119e2953ee1597b292e7558816e53d067b3 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.6-cbl-mariner2.0-distroless-amd64@sha256:d80bb8146da3edf0f1c83ff55f3ff9c874fc55c80f8a697cc9257bf05c27e9c9 AS runtime
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0 \
     DOTNET_USE_POLLING_FILE_WATCHER=true
