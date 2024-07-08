@@ -39,7 +39,7 @@ public class IServiceCollectionExtensionsTest
             x.ServiceType == typeof(IConfigureOptions<HealthCheckOptions>)).Lifetime);
 
         // Skipped
-        Assert.Empty(services.Where(x => x.ServiceType == typeof(HealthServiceImpl)));
+        Assert.DoesNotContain(services, x => x.ServiceType == typeof(HealthServiceImpl));
     }
 
     [Fact]
