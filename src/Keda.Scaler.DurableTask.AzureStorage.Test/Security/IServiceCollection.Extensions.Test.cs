@@ -79,8 +79,8 @@ public class IServiceCollectionExtensionsTest
             .AddLogging()
             .AddTlsSupport("default", config);
 
-        Assert.Empty(services.Where(s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "server")));
-        Assert.Empty(services.Where(s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "clientca")));
+        Assert.DoesNotContain(services, s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "server"));
+        Assert.DoesNotContain(services, s => s.ServiceType == typeof(CertificateFileMonitor) && Equals(s.ServiceKey, "clientca"));
 
         Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(IConfigureOptions<CertificateValidationOptions>)));
@@ -92,8 +92,8 @@ public class IServiceCollectionExtensionsTest
         _ = Assert.Single(services.Where(s => s.ServiceType == typeof(TlsConfigure)));
 
         // No authentication or authorization services
-        Assert.Empty(services.Where(s => s.ServiceType == typeof(IAuthenticationService)));
-        Assert.Empty(services.Where(s => s.ServiceType == typeof(IAuthorizationService)));
+        Assert.DoesNotContain(services, s => s.ServiceType == typeof(IAuthenticationService));
+        Assert.DoesNotContain(services, s => s.ServiceType == typeof(IAuthorizationService));
 
         // Assert that TLSConfigure is re-used
         // Note: The services will be at the end of the collection, so the service provider should resolve them
