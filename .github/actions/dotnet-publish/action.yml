@@ -28,7 +28,7 @@ inputs:
     default: ''
     description: The name of the certificate profile within the Azure Code Signing Service.
   codeSigningUri:
-    default: 'https://wus.codesigning.azure.net/'
+    default: 'https://wcus.codesigning.azure.net/'
     description: The URI of the Azure Code Signing Service.
     required: false
   fileVersion:
@@ -107,19 +107,29 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
-      shell: pwsh
-      run: |
-        Install-Module -Name AzureCodeSigning -RequiredVersion 0.2.21 -Force -Repository PSGallery
-        Invoke-AzureCodeSigning `
-          -CertificateProfileName '${{ inputs.certificateProfileName }}' `
-          -CodeSigningAccountName '${{ inputs.azureCodeSigningAccountName }}' `
-          -Description 'A KEDA external scaler for the Durable Task Azure Storage backend.' `
-          -DescriptionUrl '${{ inputs.repositoryUri }}' `
-          -Endpoint '${{ inputs.codeSigningUri }}' `
-          -FileDigest 'SHA256' `
-          -FilesCatalog '${{ runner.temp }}\signing\catalog.txt' `
-          -TimestampDigest 'SHA256' `
-          -TimestampRfc3161 'http://timestamp.acs.microsoft.com'
+      uses: azure/trusted-signing-action@v0.4.0
+      with:
+        azure-client-id: ${{ inputs.azureClientId }}
+        azure-tenant-id: ${{ inputs.azureTenantId }}
+        certificate-profile-name: ${{ inputs.certificateProfileName }}
+        description: 'A KEDA external scaler for the Durable Task Azure Storage backend.'
+        description-url: ${{ inputs.repositoryUri }}
+        endpoint: ${{ inputs.codeSigningUri }}
+        exclude-azure-cli-credential: false
+        exclude-azure-developer-cli-credential: true
+        exclude-azure-powershell-credential: true
+        exclude-environment-credential: true
+        exclude-interactive-browser-credential: true
+        exclude-managed-identity-credential: true
+        exclude-shared-token-cache-credential: true
+        exclude-visual-studio-credential: true
+        exclude-visual-studio-code-credential: true
+        exclude-workload-identity-credential: true
+        file-digest: SHA256
+        files-catalog: ${{ runner.temp }}\signing\catalog.txt
+        timestamp-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        trusted-signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
 
     - name: Upload Binaries
       uses: actions/upload-artifact@v4
