@@ -39,7 +39,7 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0.8-cbl-mariner2.0-distroless-amd64@sha256:830a930ce4daa0329e9b73b54bc915ab74dfc462f3a703dcd0478fe6818f6161 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0.8-cbl-mariner2.0-distroless-amd64@sha256:add22205c615422c42b8e728a54b597bbe413f6ea94c0a4599d70f7b1865d4ef AS runtime
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0 \
     DOTNET_USE_POLLING_FILE_WATCHER=true
