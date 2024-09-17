@@ -14,7 +14,7 @@
     <PackageVersion Include="KubernetesClient" Version="15.0.1" />
     <PackageVersion Include="MartinCostello.Logging.XUnit" Version="0.4.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.Certificate" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.Azure.DurableTask.AzureStorage" Version="1.17.4" />
+    <PackageVersion Include="Microsoft.Azure.DurableTask.AzureStorage" Version="1.17.5" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="1.23.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.DurableTask" Version="1.1.5" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.2.0" />
