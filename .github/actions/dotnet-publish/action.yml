@@ -107,7 +107,7 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
-      uses: azure/trusted-signing-action@v0.4.0
+      uses: azure/trusted-signing-action@v0.5.0
       with:
         azure-client-id: ${{ inputs.azureClientId }}
         azure-tenant-id: ${{ inputs.azureTenantId }}
