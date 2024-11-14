@@ -23,7 +23,7 @@ runs:
         path: ${{ runner.temp }}/codecoverage
 
     - name: Codecov Upload
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
         directory: ${{ runner.temp }}/codecoverage/
         fail_ci_if_error: true
