@@ -17,7 +17,7 @@ public class OptimalOrchestrationAllocatorTest
 
     [Fact]
     public void GivenInvalidMaxWorkItems_WhenGettingWorkerCount_ThenThrowArgumentOutOfRangeException()
-        => Assert.Throws<ArgumentOutOfRangeException>(() => _allocator.GetWorkerCount(Array.Empty<int>(), -3));
+        => Assert.Throws<ArgumentOutOfRangeException>(() => _allocator.GetWorkerCount([], -3));
 
     [Theory]
     [InlineData(0, 3)]

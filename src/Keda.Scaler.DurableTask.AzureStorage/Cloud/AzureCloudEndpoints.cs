@@ -30,12 +30,6 @@ public sealed class AzureCloudEndpoints
     public static AzureCloudEndpoints China { get; } = new AzureCloudEndpoints(AzureAuthorityHosts.AzureChina, "core.chinacloudapi.cn");
 
     /// <summary>
-    /// Gets the Azure service endpoints for the German Azure cloud.
-    /// </summary>
-    /// <value>An instance of <see cref="AzureCloudEndpoints"/> for the German Azure cloud.</value>
-    public static AzureCloudEndpoints Germany { get; } = new AzureCloudEndpoints(AzureAuthorityHosts.AzureGermany, "core.cloudapi.de");
-
-    /// <summary>
     /// Gets the Azure Active Directory (AAD) authority URL.
     /// </summary>
     /// <value>The AAD authority.</value>
@@ -77,7 +71,6 @@ public sealed class AzureCloudEndpoints
             CloudEnvironment.AzurePublicCloud => Public,
             CloudEnvironment.AzureUSGovernmentCloud => USGovernment,
             CloudEnvironment.AzureChinaCloud => China,
-            CloudEnvironment.AzureGermanCloud => Germany,
             _ => throw new ArgumentOutOfRangeException(nameof(cloud)),
         };
     }

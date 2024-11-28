@@ -21,7 +21,7 @@ public class TaskHubQueueUsageTest
 
     [Fact]
     public void GivenInvalidWorkItemQueueMessageCount_WhenCreatingTaskHubQueueUsage_ThenThrowArgumentOutOfRangeException()
-        => Assert.Throws<ArgumentOutOfRangeException>(() => new TaskHubQueueUsage(Array.Empty<int>(), -2));
+        => Assert.Throws<ArgumentOutOfRangeException>(() => new TaskHubQueueUsage([], -2));
 
     [Theory]
     [InlineData(false, 0)]

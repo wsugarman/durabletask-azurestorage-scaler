@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Grpc.HealthCheck;
 using Keda.Scaler.DurableTask.AzureStorage.HealthChecks;
@@ -46,10 +45,7 @@ public class IServiceCollectionExtensionsTest
     public void GivenServiceCollection_WhenAddingKubernetesHealthCheck_ThenAddExpectedServices()
     {
         IConfiguration config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-            {
-                new("Security:Transport:Server:CertificatePath", "tls.crt"),
-            })
+            .AddInMemoryCollection([new("Security:Transport:Server:CertificatePath", "tls.crt")])
             .Build();
 
         IServiceCollection services = new ServiceCollection().AddKubernetesHealthCheck(config);

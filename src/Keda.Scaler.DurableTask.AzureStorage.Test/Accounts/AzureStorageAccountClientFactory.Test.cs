@@ -54,8 +54,8 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     public void GivenServiceUri_WhenGettingServiceClient_ThenReturnValidClient()
     {
         IStorageAccountClientFactory<TClient> factory = GetFactory();
-        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = AzureCloudEndpoints.Germany });
-        ValidateAccountName(actual, "test", AzureCloudEndpoints.Germany);
+        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = AzureCloudEndpoints.USGovernment });
+        ValidateAccountName(actual, "test", AzureCloudEndpoints.USGovernment);
     }
 
     [Theory]

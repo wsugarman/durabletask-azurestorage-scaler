@@ -23,10 +23,6 @@ public class AzureCloudEndpointsTest
         => AssertEndpoints(AzureAuthorityHosts.AzureChina, "core.chinacloudapi.cn", AzureCloudEndpoints.China);
 
     [Fact]
-    public void GivenGermanyCloud_WhenGettingEndpoints_ThenHaveExpectedValues()
-        => AssertEndpoints(AzureAuthorityHosts.AzureGermany, "core.cloudapi.de", AzureCloudEndpoints.Germany);
-
-    [Fact]
     public void GivenNullAuthority_WhenCreatingCloudEndpoints_ThenThrowArgumentNullException()
         => Assert.Throws<ArgumentNullException>(() => new AzureCloudEndpoints(null!, "suffix"));
 
@@ -57,10 +53,6 @@ public class AzureCloudEndpointsTest
     [Fact]
     public void GivenChinaCloud_WhenGettingEndpointsForEnvironment_ThenReturnExpectedInstance()
         => Assert.Same(AzureCloudEndpoints.China, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzureChinaCloud));
-
-    [Fact]
-    public void GivenGermanyCloud_WhenGettingEndpointsForEnvironment_ThenReturnExpectedInstance()
-        => Assert.Same(AzureCloudEndpoints.Germany, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzureGermanCloud));
 
     private static void AssertEndpoints(Uri authorityHost, string storageSuffix, AzureCloudEndpoints actual)
     {

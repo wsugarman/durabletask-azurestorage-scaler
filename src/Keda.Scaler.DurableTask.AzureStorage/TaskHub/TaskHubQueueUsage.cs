@@ -40,7 +40,7 @@ public sealed class TaskHubQueueUsage
     /// Gets a <see cref="TaskHubQueueUsage"/> object that represents no activity.
     /// </summary>
     /// <value>An object representing no activity.</value>
-    public static TaskHubQueueUsage None { get; } = new TaskHubQueueUsage(Array.Empty<int>(), 0);
+    public static TaskHubQueueUsage None { get; } = new TaskHubQueueUsage([], 0);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="TaskHubQueueUsage"/> class.

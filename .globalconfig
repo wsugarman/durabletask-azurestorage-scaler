@@ -117,7 +117,7 @@ dotnet_diagnostic.CA1511.severity = error # Use ArgumentException throw helper
 dotnet_diagnostic.CA1512.severity = error # Use ArgumentOutOfRangeException throw helper
 dotnet_diagnostic.CA1513.severity = error # Use ObjectDisposedException throw helper
 dotnet_diagnostic.CA1514.severity = error # Avoid redundant length argument
-dotnet_diagnostic.CA1515.severity = error # Consider making public types internal
+dotnet_diagnostic.CA1515.severity = none  # Consider making public types internal
 
 # -----------------------------------
 # Naming rules
