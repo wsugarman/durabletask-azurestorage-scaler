@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 
@@ -18,5 +19,5 @@ public interface IStorageAccountClientFactory<T>
     /// <returns>An instance of type <typeparamref name="T"/> representing the service client..</returns>
     /// <exception cref="ArgumentException"><paramref name="accountInfo"/> is missing information.</exception>
     /// <exception cref="ArgumentNullException"><paramref name="accountInfo"/> is <see langword="null"/>.</exception>
-    T GetServiceClient(AzureStorageAccountInfo accountInfo);
+    T GetServiceClient(AzureStorageAccountOptions accountInfo);
 }

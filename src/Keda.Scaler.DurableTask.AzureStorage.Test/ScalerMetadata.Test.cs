@@ -57,7 +57,7 @@ public class ScalerMetadataTest
     {
         ScalerMetadata metadata = new()
         {
-            ActiveDirectoryEndpoint = new Uri("https://example.aad"),
+            EntraEndpoint = new Uri("https://example.aad"),
             Cloud = nameof(CloudEnvironment.AzurePublicCloud),
         };
 
@@ -81,7 +81,7 @@ public class ScalerMetadataTest
     {
         ScalerMetadata metadata = new()
         {
-            ActiveDirectoryEndpoint = null,
+            EntraEndpoint = null,
             Cloud = nameof(CloudEnvironment.Private),
             EndpointSuffix = "example",
         };
@@ -97,7 +97,7 @@ public class ScalerMetadataTest
     {
         ScalerMetadata metadata = new()
         {
-            ActiveDirectoryEndpoint = new Uri("https://example.aad"),
+            EntraEndpoint = new Uri("https://example.aad"),
             Cloud = nameof(CloudEnvironment.Private),
             EndpointSuffix = suffix,
         };

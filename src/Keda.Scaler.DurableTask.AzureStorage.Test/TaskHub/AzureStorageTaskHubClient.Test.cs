@@ -14,6 +14,7 @@ using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Blobs;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
@@ -81,7 +82,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
     public Task GivenNullTaskHub_WhenGettingMonitor_ThenThrowArgumentNullException()
     {
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
-        return Assert.ThrowsAsync<ArgumentNullException>(() => client.GetMonitorAsync(new AzureStorageAccountInfo(), null!, default).AsTask());
+        return Assert.ThrowsAsync<ArgumentNullException>(() => client.GetMonitorAsync(new AzureStorageAccountOptions(), null!, default).AsTask());
     }
 
     [Theory]
@@ -90,7 +91,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
     public Task GivenEmptyOrWhiteSpaceTaskHub_WhenGettingMonitor_ThenThrowArgumentException(string taskHub)
     {
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
-        return Assert.ThrowsAsync<ArgumentException>(() => client.GetMonitorAsync(new AzureStorageAccountInfo(), taskHub, default).AsTask());
+        return Assert.ThrowsAsync<ArgumentException>(() => client.GetMonitorAsync(new AzureStorageAccountOptions(), taskHub, default).AsTask());
     }
 
     [Fact]
@@ -103,7 +104,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
         Response<BlobDownloadResult> response = Response.FromValue(downloadResult, Substitute.For<Response>());
         _ = _blobClient.DownloadContentAsync(default).ReturnsForAnyArgs(Task.FromResult(response));
 
-        AzureStorageAccountInfo accountInfo = new();
+        AzureStorageAccountOptions accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 
@@ -125,7 +126,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
             .DownloadContentAsync(default)
             .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Blob not found"));
 
-        AzureStorageAccountInfo accountInfo = new();
+        AzureStorageAccountOptions accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 
@@ -149,7 +150,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
         Response<BlobDownloadResult> response = Response.FromValue(downloadResult, Substitute.For<Response>());
         _ = _blobClient.DownloadContentAsync(default).ReturnsForAnyArgs(Task.FromResult(response));
 
-        AzureStorageAccountInfo accountInfo = new();
+        AzureStorageAccountOptions accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
         ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 

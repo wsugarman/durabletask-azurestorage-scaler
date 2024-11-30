@@ -22,9 +22,4 @@ public enum AzureStorageService
     /// A NoSQL store for schemaless storage of structured data.
     /// </summary>
     Table,
-
-    /// <summary>
-    /// Managed file shares for cloud or on-premises deployments.
-    /// </summary>
-    File,
 }

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
@@ -130,7 +131,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
             TaskHubName = TaskHubName,
         };
 
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
+        AzureStorageAccountOptions accountInfo = metadata.GetAccountInfo();
 
         using CancellationTokenSource tokenSource = new();
         GetMetricsRequest request = CreateGetMetricsRequest(metadata);
@@ -153,7 +154,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         _ = await _taskHubClient
             .Received(1)
             .GetMonitorAsync(
-                Arg.Is<AzureStorageAccountInfo>(a => AzureStorageAccountInfoEqualityComparer.Instance.Equals(a, accountInfo)),
+                Arg.Is<AzureStorageAccountOptions>(a => AzureStorageAccountInfoEqualityComparer.Instance.Equals(a, accountInfo)),
                 Arg.Is(TaskHubName),
                 Arg.Is(tokenSource.Token));
         _ = await monitor
@@ -254,7 +255,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
             TaskHubName = TaskHubName,
         };
 
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
+        AzureStorageAccountOptions accountInfo = metadata.GetAccountInfo();
 
         using CancellationTokenSource tokenSource = new();
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);
@@ -274,7 +275,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         _ = await _taskHubClient
             .Received(1)
             .GetMonitorAsync(
-                Arg.Is<AzureStorageAccountInfo>(a => AzureStorageAccountInfoEqualityComparer.Instance.Equals(a, accountInfo)),
+                Arg.Is<AzureStorageAccountOptions>(a => AzureStorageAccountInfoEqualityComparer.Instance.Equals(a, accountInfo)),
                 Arg.Is(TaskHubName),
                 Arg.Is(tokenSource.Token));
         _ = await monitor

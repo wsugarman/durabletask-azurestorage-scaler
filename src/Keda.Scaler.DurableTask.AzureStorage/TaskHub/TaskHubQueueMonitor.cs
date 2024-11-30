@@ -13,21 +13,22 @@ using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
-internal class TaskHubQueueMonitor(AzureStorageTaskHubInfo taskHubInfo, QueueServiceClient queueServiceClient, ILogger logger) : ITaskHubQueueMonitor
+internal class TaskHubQueueMonitor(string taskHubName, int partitionCount, QueueServiceClient queueServiceClient, ILogger logger) : ITaskHubQueueMonitor
 {
-    private readonly AzureStorageTaskHubInfo _taskHubInfo = taskHubInfo ?? throw new ArgumentNullException(nameof(taskHubInfo));
+    private readonly string _taskHubName = string.IsNullOrEmpty(taskHubName) ? throw new ArgumentNullException(nameof(taskHubName)) : taskHubName;
+    private readonly int _partitionCount = partitionCount > 0 ? partitionCount : throw new ArgumentOutOfRangeException(nameof(partitionCount));
     private readonly QueueServiceClient _queueServiceClient = queueServiceClient ?? throw new ArgumentNullException(nameof(queueServiceClient));
     private readonly ILogger _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
     public virtual async ValueTask<TaskHubQueueUsage> GetUsageAsync(CancellationToken cancellationToken = default)
     {
         int workItemQueueMessages;
-        int[] controlQueueMessages = new int[_taskHubInfo.PartitionCount];
+        int[] controlQueueMessages = new int[_partitionCount];
 
         // Look at the Control Queues to determine the number of active partitions
-        for (int i = 0; i < _taskHubInfo.PartitionCount; i++)
+        for (int i = 0; i < _partitionCount; i++)
         {
-            QueueClient controlQueueClient = _queueServiceClient.GetQueueClient(ControlQueue.GetName(_taskHubInfo.TaskHubName, i));
+            QueueClient controlQueueClient = _queueServiceClient.GetQueueClient(ControlQueue.GetName(_taskHubName, i));
 
             try
             {
@@ -42,7 +43,7 @@ internal class TaskHubQueueMonitor(AzureStorageTaskHubInfo taskHubInfo, QueueSer
         }
 
         // Look at the Work Item queue to determine the number of active activities, events, etc
-        QueueClient workItemQueueClient = _queueServiceClient.GetQueueClient(WorkItemQueue.GetName(_taskHubInfo.TaskHubName));
+        QueueClient workItemQueueClient = _queueServiceClient.GetQueueClient(WorkItemQueue.GetName(_taskHubName));
 
         try
         {

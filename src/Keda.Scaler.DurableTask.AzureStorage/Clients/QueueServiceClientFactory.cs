@@ -3,12 +3,15 @@
 
 using Azure.Core;
 using Azure.Storage.Queues;
+using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using System;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
+namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
 internal sealed class QueueServiceClientFactory : AzureStorageAccountClientFactory<QueueServiceClient>
 {
+    protected override AzureStorageService Service => AzureStorageService.Queue;
+
     protected override QueueServiceClient CreateServiceClient(string connectionString)
         => new(connectionString);
 

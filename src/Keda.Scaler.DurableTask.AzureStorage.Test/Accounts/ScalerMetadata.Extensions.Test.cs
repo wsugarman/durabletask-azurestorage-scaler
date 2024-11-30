@@ -3,6 +3,7 @@
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Xunit;
 
@@ -18,7 +19,7 @@ public class ScalerMetadataExtensionsTest
     public void GivenConnectionStringScalerMetadata_WhenGettingAccountInfo_ThenPassthroughData()
     {
         ScalerMetadata metadata = new() { Connection = "UseDevelopmentStorage=true" };
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
+        AzureStorageAccountOptions actual = metadata.GetAccountInfo();
         Assert.Equal("UseDevelopmentStorage=true", actual.ConnectionString);
     }
 
@@ -27,7 +28,7 @@ public class ScalerMetadataExtensionsTest
     {
         ScalerMetadata metadata = new() { Cloud = "foo" };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
+        AzureStorageAccountOptions actual = metadata.GetAccountInfo();
         Assert.Null(actual.Cloud);
     }
 
@@ -46,7 +47,7 @@ public class ScalerMetadataExtensionsTest
             Cloud = cloud?.ToString("G"),
         };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
+        AzureStorageAccountOptions actual = metadata.GetAccountInfo();
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
@@ -65,7 +66,7 @@ public class ScalerMetadataExtensionsTest
             UseManagedIdentity = true,
         };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
+        AzureStorageAccountOptions actual = metadata.GetAccountInfo();
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
@@ -83,7 +84,7 @@ public class ScalerMetadataExtensionsTest
             UseWorkloadIdentity = true,
         };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
+        AzureStorageAccountOptions actual = metadata.GetAccountInfo();
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
@@ -99,15 +100,15 @@ public class ScalerMetadataExtensionsTest
             AccountName = "foo",
             ClientId = Guid.NewGuid().ToString(),
             Cloud = CloudEnvironment.Private.ToString("G"),
-            ActiveDirectoryEndpoint = new Uri("https://unit-test.authority", UriKind.Absolute),
+            EntraEndpoint = new Uri("https://unit-test.authority", UriKind.Absolute),
             EndpointSuffix = "storage.unit-test",
         };
 
-        AzureStorageAccountInfo actual = metadata.GetAccountInfo();
+        AzureStorageAccountOptions actual = metadata.GetAccountInfo();
 
         Assert.Equal(metadata.AccountName, actual.AccountName);
         Assert.Equal(metadata.ClientId, actual.ClientId);
-        Assert.Equal(metadata.ActiveDirectoryEndpoint, actual.Cloud!.AuthorityHost);
+        Assert.Equal(metadata.EntraEndpoint, actual.Cloud!.AuthorityHost);
         Assert.Equal(metadata.EndpointSuffix, actual.Cloud.StorageSuffix);
     }
 }

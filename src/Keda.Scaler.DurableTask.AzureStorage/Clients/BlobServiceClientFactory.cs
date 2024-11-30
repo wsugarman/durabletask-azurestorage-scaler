@@ -3,12 +3,15 @@
 
 using Azure.Core;
 using Azure.Storage.Blobs;
+using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using System;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
+namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
 internal sealed class BlobServiceClientFactory : AzureStorageAccountClientFactory<BlobServiceClient>
 {
+    protected override AzureStorageService Service => AzureStorageService.Blob;
+
     protected override BlobServiceClient CreateServiceClient(string connectionString)
         => new(connectionString);
 

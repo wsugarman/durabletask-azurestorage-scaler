@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Google.Protobuf.Collections;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Microsoft.Extensions.Configuration;
@@ -85,7 +86,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata metadata = ParseScalerMetadata(request.ScaledObjectRef.ScalerMetadata);
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
+        AzureStorageAccountOptions accountInfo = metadata.GetAccountInfo();
 
         ITaskHubQueueMonitor monitor = await _taskHubClient
             .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
@@ -163,7 +164,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ArgumentNullException.ThrowIfNull(context);
 
         ScalerMetadata metadata = ParseScalerMetadata(request.ScalerMetadata);
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
+        AzureStorageAccountOptions accountInfo = metadata.GetAccountInfo();
 
         ITaskHubQueueMonitor monitor = await _taskHubClient
             .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)

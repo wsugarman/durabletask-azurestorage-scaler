@@ -4,15 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using Keda.Scaler.DurableTask.AzureStorage.Accounts;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 
-internal sealed class AzureStorageAccountInfoEqualityComparer : IEqualityComparer<AzureStorageAccountInfo>
+internal sealed class AzureStorageAccountInfoEqualityComparer : IEqualityComparer<AzureStorageAccountOptions>
 {
-    public static IEqualityComparer<AzureStorageAccountInfo> Instance { get; } = new AzureStorageAccountInfoEqualityComparer();
+    public static IEqualityComparer<AzureStorageAccountOptions> Instance { get; } = new AzureStorageAccountInfoEqualityComparer();
 
-    public bool Equals(AzureStorageAccountInfo? x, AzureStorageAccountInfo? y)
+    public bool Equals(AzureStorageAccountOptions? x, AzureStorageAccountOptions? y)
     {
         if (x is null)
             return y is null;
@@ -27,7 +27,7 @@ internal sealed class AzureStorageAccountInfoEqualityComparer : IEqualityCompare
             && x.Credential == y.Credential;
     }
 
-    public int GetHashCode([DisallowNull] AzureStorageAccountInfo obj)
+    public int GetHashCode([DisallowNull] AzureStorageAccountOptions obj)
     {
         ArgumentNullException.ThrowIfNull(obj);
 

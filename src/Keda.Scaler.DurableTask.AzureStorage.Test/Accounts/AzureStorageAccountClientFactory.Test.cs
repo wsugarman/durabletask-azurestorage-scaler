@@ -7,6 +7,7 @@ using System.Reflection;
 using Azure.Core;
 using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Microsoft.Identity.Client;
 using Xunit;
@@ -29,7 +30,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     [InlineData("", null)]
     public void GivenEmptyOrWhiteSpaceAccountInfo_WhenGettingServiceClient_ThenThrowArgumentException(string? accountName, string? connectionString)
     {
-        AzureStorageAccountInfo info = new() { AccountName = accountName, ConnectionString = connectionString, Cloud = AzureCloudEndpoints.Public };
+        AzureStorageAccountOptions info = new() { AccountName = accountName, ConnectionString = connectionString, Cloud = AzureCloudEndpoints.Public };
         IStorageAccountClientFactory<TClient> factory = GetFactory();
         _ = Assert.Throws<ArgumentException>(() => factory.GetServiceClient(info));
     }
@@ -37,7 +38,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     [Fact]
     public void GivenMissingCloudInfoForAccount_WhenGettingServiceClient_ThenThrowArgumentException()
     {
-        AzureStorageAccountInfo info = new() { AccountName = "account", ConnectionString = null, Cloud = null };
+        AzureStorageAccountOptions info = new() { AccountName = "account", ConnectionString = null, Cloud = null };
         IStorageAccountClientFactory<TClient> factory = GetFactory();
         _ = Assert.Throws<ArgumentException>(() => factory.GetServiceClient(info));
     }
@@ -46,7 +47,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     public void GivenConnectionString_WhenGettingServiceClient_ThenReturnValidClient()
     {
         IStorageAccountClientFactory<TClient> factory = GetFactory();
-        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { ConnectionString = "UseDevelopmentStorage=true" });
+        TClient actual = factory.GetServiceClient(new AzureStorageAccountOptions { ConnectionString = "UseDevelopmentStorage=true" });
         ValidateEmulator(actual);
     }
 
@@ -54,7 +55,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     public void GivenServiceUri_WhenGettingServiceClient_ThenReturnValidClient()
     {
         IStorageAccountClientFactory<TClient> factory = GetFactory();
-        TClient actual = factory.GetServiceClient(new AzureStorageAccountInfo { AccountName = "test", Cloud = AzureCloudEndpoints.USGovernment });
+        TClient actual = factory.GetServiceClient(new AzureStorageAccountOptions { AccountName = "test", Cloud = AzureCloudEndpoints.USGovernment });
         ValidateAccountName(actual, "test", AzureCloudEndpoints.USGovernment);
     }
 
@@ -65,7 +66,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     public void GivenServiceUriWithManagedIdentity_WhenGettingServiceClient_ThenReturnValidClient(string? clientId)
     {
         IStorageAccountClientFactory<TClient> factory = GetFactory();
-        AzureStorageAccountInfo storageAccountInfo = new()
+        AzureStorageAccountOptions storageAccountInfo = new()
         {
             AccountName = "test",
             Cloud = AzureCloudEndpoints.Public,
@@ -90,7 +91,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
         using IDisposable tokenFile = TestEnvironment.SetVariable("AZURE_FEDERATED_TOKEN_FILE", "/token.txt");
 
         IStorageAccountClientFactory<TClient> factory = GetFactory();
-        AzureStorageAccountInfo storageAccountInfo = new()
+        AzureStorageAccountOptions storageAccountInfo = new()
         {
             AccountName = "test",
             Cloud = AzureCloudEndpoints.Public,
@@ -139,7 +140,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
         string? actual = typeof(ManagedIdentityCredential).Assembly
             .DefinedTypes
             .Single(x => x.FullName == "Azure.Identity.ManagedIdentityClient")
-            .GetProperty("ClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
+            .GetProperty("EntraClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(client) as string;
 
         Assert.Equal(expected, actual);
@@ -156,7 +157,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
             .DefinedTypes
             .Single(x => x.FullName == "Azure.Identity.MsalClientBase`1")
             .MakeGenericType(typeof(IConfidentialClientApplication))
-            .GetProperty("ClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
+            .GetProperty("EntraClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(client) as string;
 
         Assert.Equal(expected, actual);

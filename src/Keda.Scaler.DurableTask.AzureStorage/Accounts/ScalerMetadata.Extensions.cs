@@ -2,24 +2,25 @@
 // Licensed under the MIT License.
 
 using System;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
 
 internal static class ScalerMetadataExtensions
 {
-    public static AzureStorageAccountInfo GetAccountInfo(this ScalerMetadata scalerMetadata)
+    public static AzureStorageAccountOptions GetAccountInfo(this ScalerMetadata scalerMetadata)
     {
         ArgumentNullException.ThrowIfNull(scalerMetadata);
 
-        return new AzureStorageAccountInfo
+        return new AzureStorageAccountOptions
         {
             AccountName = scalerMetadata.AccountName,
             ClientId = scalerMetadata.ClientId,
             Cloud = scalerMetadata.CloudEnvironment switch
             {
                 CloudEnvironment.Unknown => null,
-                CloudEnvironment.Private => new AzureCloudEndpoints(scalerMetadata.ActiveDirectoryEndpoint!, scalerMetadata.EndpointSuffix!),
+                CloudEnvironment.Private => new AzureCloudEndpoints(scalerMetadata.EntraEndpoint!, scalerMetadata.EndpointSuffix!),
                 _ => AzureCloudEndpoints.ForEnvironment(scalerMetadata.CloudEnvironment),
             },
             ConnectionString = scalerMetadata.ConnectionString,
