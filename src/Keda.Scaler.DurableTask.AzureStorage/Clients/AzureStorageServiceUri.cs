@@ -3,11 +3,10 @@
 
 using System.Globalization;
 using System;
-using Keda.Scaler.DurableTask.AzureStorage.Clients;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Clouds;
+namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
-internal static class AzureStorageEndpoint
+internal static class AzureStorageServiceUri
 {
     public const string PublicSuffix = "core.windows.net";
 
@@ -15,10 +14,10 @@ internal static class AzureStorageEndpoint
 
     public const string ChinaSuffix = "core.chinacloudapi.cn";
 
-    public static Uri GetStorageServiceUri(string account, AzureStorageService service, string endpointSuffix)
+    public static Uri Create(string accountName, AzureStorageService service, string endpointSuffix)
     {
-        ArgumentNullException.ThrowIfNull(endpointSuffix);
-        ArgumentException.ThrowIfNullOrWhiteSpace(account);
+        ArgumentException.ThrowIfNullOrWhiteSpace(accountName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(endpointSuffix);
 
         if (!Enum.IsDefined(service))
             throw new ArgumentOutOfRangeException(nameof(service));
@@ -28,7 +27,7 @@ internal static class AzureStorageEndpoint
             string.Format(
                 CultureInfo.InvariantCulture,
                 "https://{0}.{1}.{2}",
-                account,
+                accountName,
                 service.ToString("G").ToLowerInvariant(),
                 endpointSuffix),
             UriKind.Absolute);

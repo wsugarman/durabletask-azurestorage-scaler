@@ -1,7 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Clouds;
+namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
 internal static class CloudEnvironment
 {

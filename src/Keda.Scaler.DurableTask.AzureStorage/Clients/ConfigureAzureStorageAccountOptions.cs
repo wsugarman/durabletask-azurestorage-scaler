@@ -3,7 +3,6 @@
 
 using System;
 using Azure.Identity;
-using Keda.Scaler.DurableTask.AzureStorage.Clouds;
 using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
@@ -36,13 +35,13 @@ internal sealed class ConfigureAzureStorageAccountOptions(IScalerMetadataAccesso
     private static string? GetEndpointSuffix(ScalerMetadata metadata)
     {
         if (metadata.Cloud is null || metadata.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureStorageEndpoint.PublicSuffix;
+            return AzureStorageServiceUri.PublicSuffix;
+        else if (metadata.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
+            return AzureStorageServiceUri.USGovernmentSuffix;
+        else if (metadata.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
+            return AzureStorageServiceUri.ChinaSuffix;
         else if (metadata.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
             return metadata.EndpointSuffix;
-        else if (metadata.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureStorageEndpoint.USGovernmentSuffix;
-        else if (metadata.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureStorageEndpoint.ChinaSuffix;
         else
             return null;
     }

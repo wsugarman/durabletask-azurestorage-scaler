@@ -3,32 +3,64 @@
 
 using System;
 using Azure.Core;
-using Keda.Scaler.DurableTask.AzureStorage.Clouds;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
-internal abstract class AzureStorageAccountClientFactory<T>
+/// <summary>
+/// Represents a factory for creating Azure Storage service clients based on the context for a given request.
+/// </summary>
+/// <typeparam name="T">The type of the service client.</typeparam>
+public abstract class AzureStorageAccountClientFactory<T>
 {
+    /// <summary>
+    /// Gets the Azure Storage service associated with produced clients.
+    /// </summary>
+    /// <value>
+    /// <see cref="AzureStorageService.Blob"/>, <see cref="AzureStorageService.Queue"/>,
+    /// or <see cref="AzureStorageService.Table"/>.
+    /// </value>
     protected abstract AzureStorageService Service { get; }
 
-    public T GetServiceClient(AzureStorageAccountOptions accountInfo)
+    /// <summary>
+    /// Creates a service client based on the given account options.
+    /// </summary>
+    /// <param name="options">The options associated with the current request.</param>
+    /// <returns>The corresponding Azure Storage service client.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="options"/> is <see langword="null"/>.</exception>
+    public T GetServiceClient(AzureStorageAccountOptions options)
     {
-        ArgumentNullException.ThrowIfNull(accountInfo);
+        ArgumentNullException.ThrowIfNull(options);
 
-        if (string.IsNullOrWhiteSpace(accountInfo.ConnectionString))
+        if (string.IsNullOrWhiteSpace(options.ConnectionString))
         {
-            Uri serviceUri = AzureStorageEndpoint.GetStorageServiceUri(accountInfo.AccountName!, Service, accountInfo.EndpointSuffix!);
-            return accountInfo.TokenCredential is null ? CreateServiceClient(serviceUri) : CreateServiceClient(serviceUri, accountInfo.TokenCredential);
+            Uri serviceUri = AzureStorageServiceUri.Create(options.AccountName!, Service, options.EndpointSuffix!);
+            return options.TokenCredential is null ? CreateServiceClient(serviceUri) : CreateServiceClient(serviceUri, options.TokenCredential);
         }
         else
         {
-            return CreateServiceClient(accountInfo.ConnectionString);
+            return CreateServiceClient(options.ConnectionString);
         }
     }
 
+    /// <summary>
+    /// Creates a service client based on the given connection string.
+    /// </summary>
+    /// <param name="connectionString">An Azure Storage connection string.</param>
+    /// <returns>The corresponding Azure Storage service client.</returns>
     protected abstract T CreateServiceClient(string connectionString);
 
+    /// <summary>
+    /// Creates a service client based on the given service URI.
+    /// </summary>
+    /// <param name="serviceUri">An Azure Storage service URI.</param>
+    /// <returns>The corresponding Azure Storage service client.</returns>
     protected abstract T CreateServiceClient(Uri serviceUri);
 
+    /// <summary>
+    /// Creates a service client based on the given service URI.
+    /// </summary>
+    /// <param name="serviceUri">An Azure Storage service URI.</param>
+    /// <param name="credential">A token credential for authenticating the client.</param>
+    /// <returns>The corresponding Azure Storage service client.</returns>
     protected abstract T CreateServiceClient(Uri serviceUri, TokenCredential credential);
 }

@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using Keda.Scaler.DurableTask.AzureStorage.Clouds;
 using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
