@@ -13,7 +13,6 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
-using Keda.Scaler.DurableTask.AzureStorage.Blobs;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
@@ -106,7 +105,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
 
         AzureStorageAccountOptions accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
-        ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
+        ITaskHub actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 
         _ = _blobServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));
         _ = _blobServiceClient.Received(1).GetBlobContainerClient(Arg.Is(LeasesContainer.GetName(TaskHubName)));
@@ -128,7 +127,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
 
         AzureStorageAccountOptions accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
-        ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
+        ITaskHub actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 
         _ = _blobServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));
         _ = _blobServiceClient.Received(1).GetBlobContainerClient(Arg.Is(LeasesContainer.GetName(TaskHubName)));
@@ -152,7 +151,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
 
         AzureStorageAccountOptions accountInfo = new();
         AzureStorageTaskHubClient client = new(_blobServiceClientFactory, _queueServiceClientFactory, _loggerFactory);
-        ITaskHubQueueMonitor actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
+        ITaskHub actual = await client.GetMonitorAsync(accountInfo, TaskHubName, tokenSource.Token);
 
         _ = _blobServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));
         _ = _blobServiceClient.Received(1).GetBlobContainerClient(Arg.Is(LeasesContainer.GetName(TaskHubName)));
@@ -160,7 +159,7 @@ public sealed class AzureStorageTaskHubClientTest : IDisposable
         _ = await _blobClient.Received(1).DownloadContentAsync(Arg.Is(tokenSource.Token));
         _ = _queueServiceClientFactory.Received(1).GetServiceClient(Arg.Is(accountInfo));
 
-        _ = Assert.IsType<TaskHubQueueMonitor>(actual);
+        _ = Assert.IsType<TaskHub>(actual);
     }
 
     private static Func<BinaryData, BlobDownloadResult> CreateBlobDownloadResultFactory()

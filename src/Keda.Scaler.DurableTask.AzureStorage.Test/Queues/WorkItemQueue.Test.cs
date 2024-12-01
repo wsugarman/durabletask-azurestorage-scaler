@@ -1,7 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using Keda.Scaler.DurableTask.AzureStorage.Queues;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using System;
 using Xunit;
 

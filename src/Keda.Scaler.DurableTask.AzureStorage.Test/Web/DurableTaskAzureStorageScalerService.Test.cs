@@ -29,7 +29,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
     private readonly IStorageAccountClientFactory<BlobServiceClient> _blobServiceClientFactory = Substitute.For<IStorageAccountClientFactory<BlobServiceClient>>();
     private readonly IStorageAccountClientFactory<QueueServiceClient> _queueServiceClientFactory = Substitute.For<IStorageAccountClientFactory<QueueServiceClient>>();
     private readonly AzureStorageTaskHubClient _taskHubClient;
-    private readonly IOrchestrationAllocator _allocator = Substitute.For<IOrchestrationAllocator>();
+    private readonly DurableTaskScaleManager _allocator = Substitute.For<DurableTaskScaleManager>();
     private readonly ServiceProvider _serviceProvider;
     private readonly DurableTaskAzureStorageScalerService _service;
 
@@ -137,7 +137,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         GetMetricsRequest request = CreateGetMetricsRequest(metadata);
         MockServerCallContext context = new(tokenSource.Token);
 
-        ITaskHubQueueMonitor monitor = Substitute.For<ITaskHubQueueMonitor>();
+        ITaskHub monitor = Substitute.For<ITaskHub>();
         TaskHubQueueUsage usage = new([1, 2, 3, 4], 1);
         _ = _taskHubClient
             .GetMonitorAsync(default!, default!, default)
@@ -261,7 +261,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         ScaledObjectRef scaledObjectRef = CreateScaledObjectRef(metadata);
         MockServerCallContext context = new(tokenSource.Token);
 
-        ITaskHubQueueMonitor monitor = Substitute.For<ITaskHubQueueMonitor>();
+        ITaskHub monitor = Substitute.For<ITaskHub>();
         TaskHubQueueUsage usage = hasActivity ? new([1, 2, 3, 4], 1) : new([0, 0, 0, 0], 0);
         _ = _taskHubClient
             .GetMonitorAsync(default!, default!, default)

@@ -3,7 +3,6 @@
 
 using Azure.Core;
 using Azure.Storage.Queues;
-using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using System;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;

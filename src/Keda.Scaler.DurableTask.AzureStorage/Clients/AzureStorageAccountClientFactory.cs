@@ -3,12 +3,11 @@
 
 using System;
 using Azure.Core;
-using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Clouds;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
-internal abstract class AzureStorageAccountClientFactory<T> : IStorageAccountClientFactory<T>
+internal abstract class AzureStorageAccountClientFactory<T>
 {
     protected abstract AzureStorageService Service { get; }
 

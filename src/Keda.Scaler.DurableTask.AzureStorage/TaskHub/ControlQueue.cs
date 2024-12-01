@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Queues;
+namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 internal static class ControlQueue
 {

@@ -1,9 +1,9 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using System.Globalization;
 using System;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clouds;
 

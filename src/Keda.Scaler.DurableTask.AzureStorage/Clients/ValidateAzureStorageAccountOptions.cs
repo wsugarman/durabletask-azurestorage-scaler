@@ -49,7 +49,7 @@ internal sealed class ValidateAzureStorageAccountOptions(IScalerMetadataAccessor
         else if (metadata.Connection is not null && metadata.ConnectionFromEnv is not null)
             failures.Add(SR.AmbiguousConnection);
         else if (string.IsNullOrWhiteSpace(options.ConnectionString))
-            failures.Add(SRF.Format(SRF.InvalidConnectionEnvironmentVariable, metadata.ConnectionFromEnv ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable)));
+            failures.Add(SRF.Format(SRF.InvalidConnectionEnvironmentVariable, metadata.ConnectionFromEnv ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable));
 
         return failures;
     }

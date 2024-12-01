@@ -20,8 +20,8 @@ internal static class AzureStorageServiceClientExtensions
             .AddSingleton<BlobServiceClientFactory>()
             .AddSingleton<QueueServiceClientFactory>()
             .AddSingleton<TableServiceClientFactory>()
-            .AddScoped<IConfigureOptions<AzureStorageAccountOptions>, ConfigureAzureStorageAccountOptions>()
-            .AddScoped<IValidateOptions<AzureStorageAccountOptions>, ValidateAzureStorageAccountOptions>()
+            .AddSingleton<IConfigureOptions<AzureStorageAccountOptions>, ConfigureAzureStorageAccountOptions>()
+            .AddSingleton<IValidateOptions<AzureStorageAccountOptions>, ValidateAzureStorageAccountOptions>()
             .AddScoped(sp => GetBlobServiceClient(sp.GetRequiredService<BlobServiceClientFactory>(), sp.GetRequiredService<IOptionsSnapshot<AzureStorageAccountOptions>>()))
             .AddScoped(sp => GetQueueServiceClient(sp.GetRequiredService<QueueServiceClientFactory>(), sp.GetRequiredService<IOptionsSnapshot<AzureStorageAccountOptions>>()))
             .AddScoped(sp => GetTableServiceClient(sp.GetRequiredService<TableServiceClientFactory>(), sp.GetRequiredService<IOptionsSnapshot<AzureStorageAccountOptions>>()));

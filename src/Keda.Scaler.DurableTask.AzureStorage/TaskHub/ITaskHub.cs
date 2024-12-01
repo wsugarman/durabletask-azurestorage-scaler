@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 /// <summary>
-/// Represents a monitor for a given Durable Task Hub's Azure Queues when using the Azure Storage backend provider.
+/// Represents a Durable Task Hub using the Azure Storage backend provider.
 /// </summary>
-public interface ITaskHubQueueMonitor
+public interface ITaskHub
 {
     /// <summary>
     /// Asynchronously fetches the number of messages in queue across the Task Hub to gauge its usage.

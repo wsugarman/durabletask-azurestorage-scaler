@@ -9,7 +9,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
 public class OptimalOrchestrationAllocatorTest
 {
-    private readonly OptimalOrchestrationAllocator _allocator = new();
+    private readonly OptimalDurableTaskScaleManager _allocator = new();
 
     [Fact]
     public void GivenNullPartitions_WhenGettingWorkerCount_ThenThrowArgumentNullException()

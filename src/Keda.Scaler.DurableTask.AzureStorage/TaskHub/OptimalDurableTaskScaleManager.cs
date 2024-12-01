@@ -5,23 +5,21 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
-internal sealed class OptimalOrchestrationAllocator : IOrchestrationAllocator
+internal sealed class OptimalDurableTaskScaleManager(ITaskHub taskHub, IOptionsSnapshot<TaskHubOptions> options, ILoggerFactory loggerFactory) : DurableTaskScaleManager(taskHub, options, loggerFactory)
 {
-    public int GetWorkerCount(IReadOnlyList<int> partitionWorkItems, int maxOrchestrationWorkItems)
+    protected override int GetWorkerCount(TaskHubQueueUsage usage)
     {
-        ArgumentNullException.ThrowIfNull(partitionWorkItems);
-        ArgumentOutOfRangeException.ThrowIfLessThan(maxOrchestrationWorkItems, 1);
+        ArgumentNullException.ThrowIfNull(usage);
 
-        if (partitionWorkItems.Count == 0)
-            return 0;
-
-        WorkerSet workers = new(PartitionSet.FromWorkItems(partitionWorkItems));
+        WorkerSet workers = new(PartitionSet.FromWorkItems(usage.ControlQueueMessages));
         while (workers.RemainingPartitions.Count > 0)
         {
-            PartitionSet workerPartitions = MaximizeWorkerPartitions(partitionWorkItems, workers.RemainingPartitions, maxOrchestrationWorkItems);
+            PartitionSet workerPartitions = MaximizeWorkerPartitions(usage.ControlQueueMessages, workers.RemainingPartitions, Options.MaxOrchestrationsPerWorker);
             workers = workers.AddWorker(workerPartitions);
         }
 

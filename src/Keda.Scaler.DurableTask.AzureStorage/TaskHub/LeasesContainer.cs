@@ -4,7 +4,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Blobs;
+namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 internal static class LeasesContainer
 {

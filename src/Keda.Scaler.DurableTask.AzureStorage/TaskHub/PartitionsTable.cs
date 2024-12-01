@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Tables;
+namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 internal static class PartitionsTable
 {

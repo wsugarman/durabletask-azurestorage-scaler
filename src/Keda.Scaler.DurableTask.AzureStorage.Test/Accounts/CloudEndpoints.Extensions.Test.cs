@@ -3,6 +3,7 @@
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Cloud;
 using Xunit;
 

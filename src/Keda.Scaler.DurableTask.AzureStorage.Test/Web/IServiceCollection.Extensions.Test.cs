@@ -8,7 +8,6 @@ using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Accounts;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
-using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -34,8 +33,8 @@ public class IServiceCollectionExtensionsTest
             x.ServiceType == typeof(IStorageAccountClientFactory<QueueServiceClient>) &&
             x.ImplementationType == typeof(QueueServiceClientFactory)).Lifetime);
         Assert.Equal(ServiceLifetime.Singleton, services.Single(x =>
-            x.ServiceType == typeof(IOrchestrationAllocator) &&
-            x.ImplementationType == typeof(OptimalOrchestrationAllocator)).Lifetime);
+            x.ServiceType == typeof(DurableTaskScaleManager) &&
+            x.ImplementationType == typeof(OptimalDurableTaskScaleManager)).Lifetime);
 
         // Scoped
         Assert.Equal(ServiceLifetime.Scoped, services.Single(x => x.ServiceType == typeof(AzureStorageTaskHubClient)).Lifetime);

@@ -3,7 +3,7 @@
 
 using Microsoft.Extensions.Logging;
 
-namespace Keda.Scaler.DurableTask.AzureStorage;
+namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
 internal static partial class Log
 {

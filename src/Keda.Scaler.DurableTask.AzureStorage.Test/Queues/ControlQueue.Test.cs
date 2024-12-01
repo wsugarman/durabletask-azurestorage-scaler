@@ -2,8 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using Keda.Scaler.DurableTask.AzureStorage.Blobs;
-using Keda.Scaler.DurableTask.AzureStorage.Queues;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Queues;

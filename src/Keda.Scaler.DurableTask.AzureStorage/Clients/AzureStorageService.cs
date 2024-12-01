@@ -1,7 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Accounts;
+namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
 /// <summary>
 /// Represents a data service included in Azure Storage.
