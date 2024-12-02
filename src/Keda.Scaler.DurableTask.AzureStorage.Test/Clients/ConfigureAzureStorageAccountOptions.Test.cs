@@ -31,7 +31,7 @@ public class ConfigureAzureStorageAccountOptionsTest
     [InlineData("Key=1", null, "ExampleConnectionString2", "Key=1", null)]
     [InlineData("Key=1", null, "ExampleConnectionString3", "Key=1", "Key=2")]
     [InlineData("Key=1", null, null, null, "Key=1")]
-    public void GivenScalerMetadataWithConnectionString_WhenConfiguringAzureStorageAccountOptions_ThenConfigureConnectionString(string expected, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
+    public void GivenMetadataWithConnectionString_WhenConfiguringOptions_ThenConfigureConnectionString(string expected, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
     {
         List<IDisposable> disposables = [];
 
@@ -67,7 +67,7 @@ public class ConfigureAzureStorageAccountOptionsTest
     [InlineData("Key=1", null, "ExampleConnectionString5", "Key=2", null)]
     [InlineData("Key=1", null, "ExampleConnectionString6", "Key=3", "Key=4")]
     [InlineData("Key=1", null, null, null, "Key=2")]
-    public void GivenScalerMetadataWithAccount_WhenConfiguringAzureStorageAccountOptions_ThenConfigureUriConnection(string accountName, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
+    public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureUriConnection(string accountName, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
     {
         List<IDisposable> disposables = [];
 
@@ -110,7 +110,7 @@ public class ConfigureAzureStorageAccountOptionsTest
     [InlineData("unit.test.cloud", "priVATE", "unit.test.cloud")]
     [InlineData(null, "AzureUnknownCloud", null)]
     [InlineData(null, CloudEnvironment.Private, null)]
-    public void GivenScalerMetadataWithAccount_WhenConfiguringAzureStorageAccountOptions_ThenConfigureEndpointBasedOnCloud(string? expected, string? cloud, string? endpointSuffix)
+    public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureEndpointBasedOnCloud(string? expected, string? cloud, string? endpointSuffix)
     {
         const string AccountName = "unittest";
 
@@ -130,7 +130,7 @@ public class ConfigureAzureStorageAccountOptionsTest
     [Theory]
     [InlineData(null, null)]
     [InlineData("https://entra.unit.test", "12345")]
-    public void GivenScalerMetadataWithAccount_WhenConfiguringAzureStorageAccountOptions_ThenConfigureTokenCredential(string? entraEndpoint, string? clientId)
+    public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureTokenCredential(string? entraEndpoint, string? clientId)
     {
         const string AccountName = "unittest";
         string defaultClientId = Guid.NewGuid().ToString();

@@ -4,6 +4,7 @@
 using System;
 using Azure.Identity;
 using Microsoft.Extensions.Options;
+using Microsoft.Identity.Client;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
@@ -46,13 +47,27 @@ internal sealed class ConfigureAzureStorageAccountOptions(IScalerMetadataAccesso
             return null;
     }
 
+    private static Uri? GetAuthorityHost(ScalerMetadata metadata)
+    {
+        if (metadata.Cloud is null || metadata.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
+            return AzureAuthorityHosts.AzurePublicCloud;
+        else if (metadata.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
+            return AzureAuthorityHosts.AzureGovernment;
+        else if (metadata.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
+            return AzureAuthorityHosts.AzureChina;
+        else if (metadata.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
+            return metadata.EntraEndpoint;
+        else
+            return null;
+    }
+
     private static WorkloadIdentityCredential? CreateTokenCredential(ScalerMetadata metadata)
     {
         if (metadata.UseManagedIdentity)
         {
             WorkloadIdentityCredentialOptions options = new()
             {
-                AuthorityHost = metadata.EntraEndpoint,
+                AuthorityHost = GetAuthorityHost(metadata),
                 ClientId = metadata.ClientId,
             };
 

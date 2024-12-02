@@ -61,6 +61,10 @@ internal sealed class ValidateAzureStorageAccountOptions(IScalerMetadataAccessor
         if (metadata.Connection is not null || metadata.ConnectionFromEnv is not null)
             failures.Add(SR.AmbiguousConnection);
 
+        // Validate the account properties
+        if (string.IsNullOrWhiteSpace(options.AccountName))
+            failures.Add(SRF.Format(SRF.EmptyOrWhiteSpace, nameof(ScalerMetadata.AccountName)));
+
         // Validate private cloud properties
         if (string.Equals(metadata.Cloud, CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
         {
@@ -72,29 +76,20 @@ internal sealed class ValidateAzureStorageAccountOptions(IScalerMetadataAccessor
         }
         else
         {
-            if (metadata.EndpointSuffix is not null)
-                failures.Add(SRF.Format(SRF.PrivateCloudOnlyProperty, metadata.EndpointSuffix));
+            if (options.EndpointSuffix is not null)
+                failures.Add(SRF.Format(SRF.PrivateCloudOnlyProperty, options.EndpointSuffix));
 
             if (metadata.EntraEndpoint is not null)
                 failures.Add(SRF.Format(SRF.PrivateCloudOnlyProperty, metadata.EntraEndpoint));
+
+            // Note: EndpointSuffix can only be null for invalid clouds, as we checked the private cloud above
+            if (string.IsNullOrWhiteSpace(options.EndpointSuffix))
+                failures.Add(SRF.Format(SRF.UnknownCloudValue, metadata.Cloud));
         }
 
-        // Validate the account properties
-        if (string.IsNullOrWhiteSpace(options.AccountName))
-            failures.Add(SRF.Format(SRF.EmptyOrWhiteSpace, nameof(ScalerMetadata.AccountName)));
-
-        if (!metadata.UseManagedIdentity)
-        {
-            if (metadata.ClientId is not null)
-                failures.Add(SRF.Format(SRF.IdentityConnectionOnlyProperty, metadata.ClientId));
-
-            if (metadata.EntraEndpoint is not null)
-                failures.Add(SRF.Format(SRF.IdentityConnectionOnlyProperty, metadata.EntraEndpoint));
-        }
-
-        // Note: EndpointSuffix can only be null for invalid clouds, as we checked the private cloud above
-        if (string.IsNullOrWhiteSpace(options.EndpointSuffix))
-            failures.Add(SRF.Format(SRF.UnknownCloudValue, metadata.Cloud));
+        // Check managed identity properties
+        if (!metadata.UseManagedIdentity && metadata.ClientId is not null)
+            failures.Add(SRF.Format(SRF.IdentityConnectionOnlyProperty, metadata.ClientId));
 
         return failures;
     }
