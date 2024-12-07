@@ -5,7 +5,7 @@ using System;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using Xunit;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Queues;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
 public class ControlQueueTest
 {

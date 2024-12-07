@@ -1,8 +1,10 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 
@@ -18,7 +20,9 @@ public interface ITaskHubPartitionManager
     /// The token to monitor for cancellation requests. The default value is <see cref="CancellationToken.None"/>.
     /// </param>
     /// <returns>
-    /// A asynchronous enumerable of zero or more partition IDs.
+    /// A value task that represents the asynchronous operation. The value of the type parameter
+    /// of the value task contains a list of the partition IDs.
     /// </returns>
-    IAsyncEnumerable<string> GetPartitionsAsync(CancellationToken cancellationToken = default);
+    /// <exception cref="OperationCanceledException">The <paramref name="cancellationToken"/> is canceled.</exception>
+    ValueTask<IReadOnlyList<string>> GetPartitionsAsync(CancellationToken cancellationToken = default);
 }

@@ -5,7 +5,7 @@ using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
 using System;
 using Xunit;
 
-namespace Keda.Scaler.DurableTask.AzureStorage.Test.Queues;
+namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHub;
 
 public class WorkItemQueueTest
 {

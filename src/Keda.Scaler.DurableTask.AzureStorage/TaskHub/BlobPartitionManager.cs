@@ -4,10 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
@@ -23,40 +24,40 @@ internal sealed class BlobPartitionManager(BlobServiceClient blobServiceClient, 
     private readonly TaskHubOptions _options = options?.Get(default) ?? throw new ArgumentNullException(nameof(options));
     private readonly ILogger _logger = loggerFactory?.CreateLogger(LogCategories.Default) ?? throw new ArgumentNullException(nameof(loggerFactory));
 
-    public async IAsyncEnumerable<string> GetPartitionsAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async ValueTask<IReadOnlyList<string>> GetPartitionsAsync(CancellationToken cancellationToken = default)
     {
         // Fetch the blob
         BlobClient client = _blobServiceClient
             .GetBlobContainerClient(LeasesContainer.GetName(_options.TaskHubName))
             .GetBlobClient(LeasesContainer.TaskHubBlobName);
 
-        BlobDownloadResult result;
+        AzureStorageTaskHubInfo? info;
         try
         {
-            result = await client.DownloadContentAsync(cancellationToken);
+            BlobDownloadResult result = await client.DownloadContentAsync(cancellationToken);
+
+            // Parse the information about the task hub
+            info = JsonSerializer.Deserialize(
+                result.Content.ToMemory().Span,
+                SourceGenerationContext.Default.AzureStorageTaskHubInfo);
         }
         catch (RequestFailedException rfe) when (rfe.Status is (int)HttpStatusCode.NotFound)
         {
-            _logger.CannotFindTaskHubBlob(_options.TaskHubName, LeasesContainer.TaskHubBlobName, client.BlobContainerName);
-            yield break;
+            info = null;
         }
-
-        // Parse the information about the task hub
-        AzureStorageTaskHubInfo? info = JsonSerializer.Deserialize(
-            result.Content.ToMemory().Span,
-            SourceGenerationContext.Default.AzureStorageTaskHubInfo);
 
         if (info is null)
         {
             _logger.CannotFindTaskHubBlob(_options.TaskHubName, LeasesContainer.TaskHubBlobName, client.BlobContainerName);
+            return [];
         }
         else
         {
             _logger.FoundTaskHubBlob(info.TaskHubName, info.PartitionCount, info.CreatedAt, LeasesContainer.TaskHubBlobName);
-
-            // Generate the expected control queue names
-            for (int i = 0; i < info.PartitionCount; i++)
-                yield return ControlQueue.GetName(info.TaskHubName, i);
+            return Enumerable
+                .Repeat(info.TaskHubName, info.PartitionCount)
+                .Select((t, i) => ControlQueue.GetName(info.TaskHubName, i))
+                .ToList();
         }
     }
 
