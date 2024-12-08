@@ -17,11 +17,12 @@ internal static class IServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         return services
+            .AddOptions()
             .AddSingleton<BlobServiceClientFactory>()
             .AddSingleton<QueueServiceClientFactory>()
             .AddSingleton<TableServiceClientFactory>()
-            .AddSingleton<IConfigureOptions<AzureStorageAccountOptions>, ConfigureAzureStorageAccountOptions>()
-            .AddSingleton<IValidateOptions<AzureStorageAccountOptions>, ValidateAzureStorageAccountOptions>()
+            .AddScoped<IConfigureOptions<AzureStorageAccountOptions>, ConfigureAzureStorageAccountOptions>()
+            .AddScoped<IValidateOptions<AzureStorageAccountOptions>, ValidateAzureStorageAccountOptions>()
             .AddScoped(sp => GetBlobServiceClient(sp.GetRequiredService<BlobServiceClientFactory>(), sp.GetRequiredService<IOptionsSnapshot<AzureStorageAccountOptions>>()))
             .AddScoped(sp => GetQueueServiceClient(sp.GetRequiredService<QueueServiceClientFactory>(), sp.GetRequiredService<IOptionsSnapshot<AzureStorageAccountOptions>>()))
             .AddScoped(sp => GetTableServiceClient(sp.GetRequiredService<TableServiceClientFactory>(), sp.GetRequiredService<IOptionsSnapshot<AzureStorageAccountOptions>>()));

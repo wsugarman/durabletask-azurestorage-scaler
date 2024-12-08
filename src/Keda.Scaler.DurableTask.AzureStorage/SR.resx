@@ -168,4 +168,7 @@
   <data name="UnknownValueFormat" xml:space="preserve">
     <value>Unknown value '{0}'.</value>
   </data>
+  <data name="MissingManagedIdentity" xml:space="preserve">
+    <value>Managed identity must be enabled when specifying AccountName.</value>
+  </data>
 </root>

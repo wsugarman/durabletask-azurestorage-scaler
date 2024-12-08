@@ -14,7 +14,7 @@ internal static class IServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         return services
-            .AddSingleton<IConfigureOptions<TaskHubOptions>, ConfigureTaskHubOptions>()
+            .AddScoped<IConfigureOptions<TaskHubOptions>, ConfigureTaskHubOptions>()
             .AddSingleton<IValidateOptions<TaskHubOptions>, ValidateTaskHubOptions>()
             .AddScoped<BlobPartitionManager>()
             .AddScoped<TablePartitionManager>()

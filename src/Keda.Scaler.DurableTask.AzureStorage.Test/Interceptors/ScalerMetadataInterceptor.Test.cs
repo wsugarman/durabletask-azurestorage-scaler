@@ -2,10 +2,12 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using NSubstitute;
 using Xunit;
 
@@ -54,9 +56,8 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<GetMetricsRequest, GetMetricsResponse>());
 
-        ScalerMetadata? actual = _metadataAccessor.Received(1).ScalerMetadata;
-        Assert.NotNull(actual);
-        Assert.Equal(TaskHubName, actual.TaskHubName);
+        IReadOnlyDictionary<string, string?>? actual = _metadataAccessor.Received(1).ScalerMetadata;
+        Assert.Same(request.ScaledObjectRef.ScalerMetadata, actual);
     }
 
     [Fact]
@@ -75,9 +76,8 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<ScaledObjectRef, GetMetricSpecResponse>());
 
-        ScalerMetadata? actual = _metadataAccessor.Received(1).ScalerMetadata;
-        Assert.NotNull(actual);
-        Assert.Equal(TaskHubName, actual.TaskHubName);
+        IReadOnlyDictionary<string, string?>? actual = _metadataAccessor.Received(1).ScalerMetadata;
+        Assert.Same(scaledObjectRef.ScalerMetadata, actual);
     }
 
     [Fact]
@@ -89,8 +89,7 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<object, object>());
 
-        ScalerMetadata? actual = _metadataAccessor.DidNotReceive().ScalerMetadata;
-        Assert.Null(actual);
+        Assert.Null(_metadataAccessor.DidNotReceive().ScalerMetadata);
     }
 
     private static UnaryServerMethod<TRequest, TResponse> CreateSimpleHandler<TRequest, TResponse>()

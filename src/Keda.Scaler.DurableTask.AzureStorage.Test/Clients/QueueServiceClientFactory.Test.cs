@@ -17,7 +17,7 @@ public class QueueServiceClientFactoryTest : AzureStorageAccountClientFactoryTes
         => Validate(actual, accountName, AzureStorageServiceUri.Create(accountName, AzureStorageService.Queue, endpointSuffix));
 
     protected override void ValidateEmulator(QueueServiceClient actual)
-        => Validate(actual, "devstoreaccount1", new Uri("http://127.0.0.1:10000/devstoreaccount1", UriKind.Absolute));
+        => Validate(actual, "devstoreaccount1", new Uri("http://127.0.0.1:10001/devstoreaccount1", UriKind.Absolute));
 
     private static void Validate(QueueServiceClient actual, string accountName, Uri serviceUrl)
     {

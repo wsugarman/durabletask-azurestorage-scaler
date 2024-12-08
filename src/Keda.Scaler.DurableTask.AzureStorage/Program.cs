@@ -1,10 +1,10 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using Keda.Scaler.DurableTask.AzureStorage;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.HealthChecks;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
@@ -18,7 +18,7 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services
-    .AddScoped<IScalerMetadataAccessor, ScalerMetadataAccessor>()
+    .AddScalerMetadata()
     .AddAzureStorageServiceClients()
     .AddDurableTaskScaleManager()
     .AddKubernetesHealthCheck(builder.Configuration)

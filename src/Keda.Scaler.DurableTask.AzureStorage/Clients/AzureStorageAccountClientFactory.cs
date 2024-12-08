@@ -34,7 +34,7 @@ public abstract class AzureStorageAccountClientFactory<T>
         if (string.IsNullOrWhiteSpace(options.ConnectionString))
         {
             Uri serviceUri = AzureStorageServiceUri.Create(options.AccountName!, Service, options.EndpointSuffix!);
-            return options.TokenCredential is null ? CreateServiceClient(serviceUri) : CreateServiceClient(serviceUri, options.TokenCredential);
+            return CreateServiceClient(serviceUri, options.TokenCredential!);
         }
         else
         {
@@ -48,13 +48,6 @@ public abstract class AzureStorageAccountClientFactory<T>
     /// <param name="connectionString">An Azure Storage connection string.</param>
     /// <returns>The corresponding Azure Storage service client.</returns>
     protected abstract T CreateServiceClient(string connectionString);
-
-    /// <summary>
-    /// Creates a service client based on the given service URI.
-    /// </summary>
-    /// <param name="serviceUri">An Azure Storage service URI.</param>
-    /// <returns>The corresponding Azure Storage service client.</returns>
-    protected abstract T CreateServiceClient(Uri serviceUri);
 
     /// <summary>
     /// Creates a service client based on the given service URI.

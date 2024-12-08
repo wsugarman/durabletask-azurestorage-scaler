@@ -14,9 +14,6 @@ internal sealed class QueueServiceClientFactory : AzureStorageAccountClientFacto
     protected override QueueServiceClient CreateServiceClient(string connectionString)
         => new(connectionString);
 
-    protected override QueueServiceClient CreateServiceClient(Uri serviceUri)
-        => new(serviceUri);
-
     protected override QueueServiceClient CreateServiceClient(Uri serviceUri, TokenCredential credential)
         => new(serviceUri, credential);
 }

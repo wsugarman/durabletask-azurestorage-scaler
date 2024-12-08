@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using Azure.Identity;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
@@ -12,7 +13,7 @@ public sealed class AzureStorageAccountOptions
 {
     internal const string DefaultConnectionEnvironmentVariable = "AzureWebJobsStorage";
 
-    /// <inheritdoc cref="ScalerMetadata.AccountName"/>
+    /// <inheritdoc cref="ScalerOptions.AccountName"/>
     public string? AccountName { get; set; }
 
     /// <summary>
@@ -21,7 +22,7 @@ public sealed class AzureStorageAccountOptions
     /// <value>The Azure Storage connection string if specified; otherwise <see langword="null"/>.</value>
     public string? ConnectionString { get; set; }
 
-    /// <inheritdoc cref="ScalerMetadata.EndpointSuffix"/>
+    /// <inheritdoc cref="ScalerOptions.EndpointSuffix"/>
     public string? EndpointSuffix { get; set; }
 
     /// <summary>

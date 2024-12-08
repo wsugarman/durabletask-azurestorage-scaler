@@ -14,9 +14,6 @@ internal sealed class TableServiceClientFactory : AzureStorageAccountClientFacto
     protected override TableServiceClient CreateServiceClient(string connectionString)
         => new(connectionString);
 
-    protected override TableServiceClient CreateServiceClient(Uri serviceUri)
-        => new(serviceUri);
-
     protected override TableServiceClient CreateServiceClient(Uri serviceUri, TokenCredential credential)
         => new(serviceUri, credential);
 }

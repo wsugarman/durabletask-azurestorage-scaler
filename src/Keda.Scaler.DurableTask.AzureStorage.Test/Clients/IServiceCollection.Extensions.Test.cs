@@ -6,6 +6,7 @@ using Azure.Data.Tables;
 using Azure.Storage.Blobs;
 using Azure.Storage.Queues;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Xunit;
@@ -18,7 +19,7 @@ public class IServiceCollectionExtensionsTest
 
     [Fact]
     public void GivenNullServiceCollection_WhenAdddingAzureStorageServiceClients_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => IServiceCollectionExtensions.AddAzureStorageServiceClients(null!));
+        => Assert.Throws<ArgumentNullException>(() => AzureStorage.Clients.IServiceCollectionExtensions.AddAzureStorageServiceClients(null!));
 
     [Fact]
     public void GivenServiceCollection_WhenAddingAzureStorageServiceClients_ThenRegisterServices()
@@ -59,7 +60,7 @@ public class IServiceCollectionExtensionsTest
     public void GivenAzureStorageAccountOptions_WhenBlobServiceClient_ThenUseFactoryToCreateClient()
     {
         IServiceCollection services = _servicCollection
-            .Configure<AzureStorageAccountOptions>(x => x.ConnectionString = "UseDevelopmentStorage=true")
+            .Configure<ScalerOptions>(o => o.Connection = "UseDevelopmentStorage=true")
             .AddAzureStorageServiceClients();
 
         using ServiceProvider serviceProvider = services.BuildServiceProvider();
@@ -72,7 +73,7 @@ public class IServiceCollectionExtensionsTest
     public void GivenAzureStorageAccountOptions_WhenQueueServiceClient_ThenUseFactoryToCreateClient()
     {
         IServiceCollection services = _servicCollection
-            .Configure<AzureStorageAccountOptions>(x => x.ConnectionString = "UseDevelopmentStorage=true")
+            .Configure<ScalerOptions>(o => o.Connection = "UseDevelopmentStorage=true")
             .AddAzureStorageServiceClients();
 
         using ServiceProvider serviceProvider = services.BuildServiceProvider();
@@ -85,7 +86,7 @@ public class IServiceCollectionExtensionsTest
     public void GivenAzureStorageAccountOptions_WhenTableServiceClient_ThenUseFactoryToCreateClient()
     {
         IServiceCollection services = _servicCollection
-            .Configure<AzureStorageAccountOptions>(x => x.ConnectionString = "UseDevelopmentStorage=true")
+            .Configure<ScalerOptions>(o => o.Connection = "UseDevelopmentStorage=true")
             .AddAzureStorageServiceClients();
 
         using ServiceProvider serviceProvider = services.BuildServiceProvider();

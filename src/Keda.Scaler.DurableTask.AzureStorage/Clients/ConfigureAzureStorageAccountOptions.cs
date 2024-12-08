@@ -3,72 +3,74 @@
 
 using System;
 using Azure.Identity;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
-internal sealed class ConfigureAzureStorageAccountOptions(IScalerMetadataAccessor accessor) : IConfigureOptions<AzureStorageAccountOptions>
+internal sealed class ConfigureAzureStorageAccountOptions(IOptionsSnapshot<ScalerOptions> scalerOptions) : IConfigureOptions<AzureStorageAccountOptions>
 {
-    private readonly IScalerMetadataAccessor _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
+    private readonly ScalerOptions _scalerOptions = scalerOptions?.Get(default) ?? throw new ArgumentNullException(nameof(scalerOptions));
 
     public void Configure(AzureStorageAccountOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        ScalerMetadata metadata = _accessor.ScalerMetadata ?? throw new InvalidOperationException(SR.ScalerMetadataNotFound);
 
-        if (metadata.AccountName is null)
-            ConfigureStringBasedConnection(metadata, options);
+        if (_scalerOptions.AccountName is null)
+            ConfigureStringBasedConnection(options);
         else
-            ConfigureUriBasedConnection(metadata, options);
+            ConfigureUriBasedConnection(options);
     }
 
-    private static void ConfigureStringBasedConnection(ScalerMetadata src, AzureStorageAccountOptions dst)
-        => dst.ConnectionString = src.Connection ?? Environment.GetEnvironmentVariable(src.ConnectionFromEnv ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable, EnvironmentVariableTarget.Process);
+    private void ConfigureStringBasedConnection(AzureStorageAccountOptions options)
+        => options.ConnectionString = _scalerOptions.Connection ?? Environment.GetEnvironmentVariable(_scalerOptions.ConnectionFromEnv ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable, EnvironmentVariableTarget.Process);
 
-    private static void ConfigureUriBasedConnection(ScalerMetadata src, AzureStorageAccountOptions dst)
+    private void ConfigureUriBasedConnection(AzureStorageAccountOptions options)
     {
-        dst.AccountName = src.AccountName;
-        dst.EndpointSuffix = GetEndpointSuffix(src);
-        dst.TokenCredential = CreateTokenCredential(src);
+        options.AccountName = _scalerOptions.AccountName;
+        options.EndpointSuffix = GetEndpointSuffix();
+        options.TokenCredential = CreateTokenCredential();
     }
 
-    private static string? GetEndpointSuffix(ScalerMetadata metadata)
+    private string? GetEndpointSuffix()
     {
-        if (metadata.Cloud is null || metadata.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
+        if (_scalerOptions.Cloud is null || _scalerOptions.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
             return AzureStorageServiceUri.PublicSuffix;
-        else if (metadata.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
+        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
             return AzureStorageServiceUri.USGovernmentSuffix;
-        else if (metadata.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
+        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
             return AzureStorageServiceUri.ChinaSuffix;
-        else if (metadata.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
-            return metadata.EndpointSuffix;
+        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
+            return _scalerOptions.EndpointSuffix;
         else
             return null;
     }
 
-    private static Uri? GetAuthorityHost(ScalerMetadata metadata)
+    private Uri? GetAuthorityHost()
     {
-        if (metadata.Cloud is null || metadata.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
+        if (_scalerOptions.Cloud is null || _scalerOptions.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
             return AzureAuthorityHosts.AzurePublicCloud;
-        else if (metadata.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
+        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
             return AzureAuthorityHosts.AzureGovernment;
-        else if (metadata.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
+        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
             return AzureAuthorityHosts.AzureChina;
-        else if (metadata.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
-            return metadata.EntraEndpoint;
+        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
+            return _scalerOptions.EntraEndpoint;
         else
             return null;
     }
 
-    private static WorkloadIdentityCredential? CreateTokenCredential(ScalerMetadata metadata)
+    private WorkloadIdentityCredential? CreateTokenCredential()
     {
-        if (metadata.UseManagedIdentity)
+        if (_scalerOptions.UseManagedIdentity)
         {
             WorkloadIdentityCredentialOptions options = new()
             {
-                AuthorityHost = GetAuthorityHost(metadata),
-                ClientId = metadata.ClientId,
+                AuthorityHost = GetAuthorityHost(),
             };
+
+            if (!string.IsNullOrWhiteSpace(_scalerOptions.ClientId))
+                options.ClientId = _scalerOptions.ClientId;
 
             return new WorkloadIdentityCredential(options);
         }

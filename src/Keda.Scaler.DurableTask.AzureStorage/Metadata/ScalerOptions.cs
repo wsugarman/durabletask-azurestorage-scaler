@@ -4,14 +4,14 @@
 using System;
 using System.Diagnostics;
 
-namespace Keda.Scaler.DurableTask.AzureStorage;
+namespace Keda.Scaler.DurableTask.AzureStorage.Metadata;
 
 /// <summary>
 /// Represents the metadata present in the KEDA ScaledObject resource that configures the
 /// Durable Task Azure Storage external scaler.
 /// </summary>
 [DebuggerDisplay("{TaskHubName,nq}")]
-public sealed class ScalerMetadata
+public sealed class ScalerOptions
 {
     /// <summary>
     /// Gets or sets the optional name of the Azure Storage account used by the Durable Task framework.

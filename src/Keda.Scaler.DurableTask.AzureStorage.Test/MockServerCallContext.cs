@@ -5,6 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
+using GrpcMetadata = Grpc.Core.Metadata;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test;
 
@@ -22,9 +23,9 @@ internal sealed class MockServerCallContext(CancellationToken cancellationToken 
 
     protected override DateTime DeadlineCore => throw new NotImplementedException();
 
-    protected override Metadata RequestHeadersCore => throw new NotImplementedException();
+    protected override GrpcMetadata RequestHeadersCore => throw new NotImplementedException();
 
-    protected override Metadata ResponseTrailersCore => throw new NotImplementedException();
+    protected override GrpcMetadata ResponseTrailersCore => throw new NotImplementedException();
 
     protected override Status StatusCore { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
@@ -34,7 +35,7 @@ internal sealed class MockServerCallContext(CancellationToken cancellationToken 
 
     protected override ContextPropagationToken CreatePropagationTokenCore(ContextPropagationOptions? options) => throw new NotImplementedException();
 
-    protected override Task WriteResponseHeadersAsyncCore(Metadata responseHeaders) => throw new NotImplementedException();
+    protected override Task WriteResponseHeadersAsyncCore(GrpcMetadata responseHeaders) => throw new NotImplementedException();
 
     #endregion
 }

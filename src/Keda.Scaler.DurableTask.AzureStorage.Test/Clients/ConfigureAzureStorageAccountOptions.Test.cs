@@ -7,6 +7,8 @@ using System.Linq;
 using System.Reflection;
 using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
+using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
 using NSubstitute;
 using Xunit;
@@ -15,14 +17,24 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Clients;
 
 public class ConfigureAzureStorageAccountOptionsTest
 {
-    private readonly ScalerMetadata _metadata = new();
+    private readonly ScalerOptions _scalerOptions = new();
     private readonly ConfigureAzureStorageAccountOptions _configure;
 
     public ConfigureAzureStorageAccountOptionsTest()
     {
-        IScalerMetadataAccessor scalerMetadataAccessor = Substitute.For<IScalerMetadataAccessor>();
-        _ = scalerMetadataAccessor.ScalerMetadata.Returns(_metadata);
-        _configure = new(scalerMetadataAccessor);
+        IOptionsSnapshot<ScalerOptions> snapshot = Substitute.For<IOptionsSnapshot<ScalerOptions>>();
+        _ = snapshot.Get(default).Returns(_scalerOptions);
+        _configure = new(snapshot);
+    }
+
+    [Fact]
+    public void GivenNullOptionsSnapshot_WhenCreatingConfigure_ThenThrowArgumentNullException()
+    {
+        _ = Assert.Throws<ArgumentNullException>(() => new ConfigureAzureStorageAccountOptions(null!));
+
+        IOptionsSnapshot<ScalerOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<ScalerOptions>>();
+        _ = nullSnapshot.Get(default).Returns(default(ScalerOptions));
+        _ = Assert.Throws<ArgumentNullException>(() => new ConfigureAzureStorageAccountOptions(nullSnapshot));
     }
 
     [Theory]
@@ -41,8 +53,8 @@ public class ConfigureAzureStorageAccountOptionsTest
         if (defaultEnvValue is not null)
             disposables.Add(TestEnvironment.SetVariable(AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable, defaultEnvValue));
 
-        _metadata.Connection = connection;
-        _metadata.ConnectionFromEnv = envKey;
+        _scalerOptions.Connection = connection;
+        _scalerOptions.ConnectionFromEnv = envKey;
 
         AzureStorageAccountOptions options = new();
 
@@ -77,9 +89,9 @@ public class ConfigureAzureStorageAccountOptionsTest
         if (defaultEnvValue is not null)
             disposables.Add(TestEnvironment.SetVariable(AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable, defaultEnvValue));
 
-        _metadata.AccountName = accountName;
-        _metadata.Connection = connection;
-        _metadata.ConnectionFromEnv = envKey;
+        _scalerOptions.AccountName = accountName;
+        _scalerOptions.Connection = connection;
+        _scalerOptions.ConnectionFromEnv = envKey;
 
         AzureStorageAccountOptions options = new();
 
@@ -114,9 +126,9 @@ public class ConfigureAzureStorageAccountOptionsTest
     {
         const string AccountName = "unittest";
 
-        _metadata.AccountName = AccountName;
-        _metadata.Cloud = cloud;
-        _metadata.EndpointSuffix = endpointSuffix;
+        _scalerOptions.AccountName = AccountName;
+        _scalerOptions.Cloud = cloud;
+        _scalerOptions.EndpointSuffix = endpointSuffix;
 
         AzureStorageAccountOptions options = new();
         _configure.Configure(options);
@@ -139,17 +151,17 @@ public class ConfigureAzureStorageAccountOptionsTest
         using IDisposable client = TestEnvironment.SetVariable("AZURE_CLIENT_ID", defaultClientId);
         using IDisposable tokenFile = TestEnvironment.SetVariable("AZURE_FEDERATED_TOKEN_FILE", "/token.txt");
 
-        _metadata.AccountName = AccountName;
-        _metadata.ClientId = clientId;
-        _metadata.EntraEndpoint = entraEndpoint is not null ? new Uri(entraEndpoint, UriKind.Absolute) : null;
-        _metadata.UseManagedIdentity = true;
+        _scalerOptions.AccountName = AccountName;
+        _scalerOptions.ClientId = clientId;
+        _scalerOptions.EntraEndpoint = entraEndpoint is not null ? new Uri(entraEndpoint, UriKind.Absolute) : null;
+        _scalerOptions.UseManagedIdentity = true;
 
         AzureStorageAccountOptions options = new();
         _configure.Configure(options);
 
         Assert.Equal(AccountName, options.AccountName);
         Assert.Null(options.ConnectionString);
-        Assert.Null(options.EndpointSuffix);
+        Assert.Equal(AzureStorageServiceUri.PublicSuffix, options.EndpointSuffix);
         Assert.NotNull(options.TokenCredential);
 
         AssertClientId(options.TokenCredential, clientId ?? defaultClientId);
@@ -162,11 +174,11 @@ public class ConfigureAzureStorageAccountOptionsTest
             .GetValue(tokenCredential);
 
         Assert.NotNull(client);
-        string? actual = typeof(ManagedIdentityCredential).Assembly
+        string? actual = typeof(WorkloadIdentityCredential).Assembly
             .DefinedTypes
             .Single(x => x.FullName == "Azure.Identity.MsalClientBase`1")
             .MakeGenericType(typeof(IConfidentialClientApplication))
-            .GetProperty("EntraClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
+            .GetProperty("ClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(client) as string;
 
         Assert.Equal(expected, actual);

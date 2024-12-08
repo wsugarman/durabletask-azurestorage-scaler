@@ -2,22 +2,22 @@
 // Licensed under the MIT License.
 
 using System;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 
-internal sealed class ConfigureTaskHubOptions(IScalerMetadataAccessor accessor) : IConfigureOptions<TaskHubOptions>
+internal sealed class ConfigureTaskHubOptions(IOptionsSnapshot<ScalerOptions> scalerOptions) : IConfigureOptions<TaskHubOptions>
 {
-    private readonly IScalerMetadataAccessor _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
+    private readonly ScalerOptions _scalerOptions = scalerOptions?.Get(default) ?? throw new ArgumentNullException(nameof(scalerOptions));
 
     public void Configure(TaskHubOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        ScalerMetadata metadata = _accessor.ScalerMetadata ?? throw new InvalidOperationException(SR.ScalerMetadataNotFound);
 
-        options.MaxActivitiesPerWorker = metadata.MaxActivitiesPerWorker;
-        options.MaxOrchestrationsPerWorker = metadata.MaxOrchestrationsPerWorker;
-        options.TaskHubName = metadata.TaskHubName;
-        options.UseTablePartitionManagement = metadata.UseTablePartitionManagement;
+        options.MaxActivitiesPerWorker = _scalerOptions.MaxActivitiesPerWorker;
+        options.MaxOrchestrationsPerWorker = _scalerOptions.MaxOrchestrationsPerWorker;
+        options.TaskHubName = _scalerOptions.TaskHubName;
+        options.UseTablePartitionManagement = _scalerOptions.UseTablePartitionManagement;
     }
 }

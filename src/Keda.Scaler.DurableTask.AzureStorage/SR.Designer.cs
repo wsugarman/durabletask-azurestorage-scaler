@@ -110,7 +110,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         /// </summary>
         internal static string InvalidConnectionEnvironmentVariableFormat {
             get {
-                return ResourceManager.GetString("InvalidConnectionEnvironmentVariable", resourceCulture);
+                return ResourceManager.GetString("InvalidConnectionEnvironmentVariableFormat", resourceCulture);
             }
         }
         
@@ -147,6 +147,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         internal static string MissingCertificate {
             get {
                 return ResourceManager.GetString("MissingCertificate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Managed identity must be enabled when specifying AccountName..
+        /// </summary>
+        internal static string MissingManagedIdentity {
+            get {
+                return ResourceManager.GetString("MissingManagedIdentity", resourceCulture);
             }
         }
         

@@ -14,9 +14,6 @@ internal sealed class BlobServiceClientFactory : AzureStorageAccountClientFactor
     protected override BlobServiceClient CreateServiceClient(string connectionString)
         => new(connectionString);
 
-    protected override BlobServiceClient CreateServiceClient(Uri serviceUri)
-        => new(serviceUri);
-
     protected override BlobServiceClient CreateServiceClient(Uri serviceUri, TokenCredential credential)
         => new(serviceUri, credential);
 }

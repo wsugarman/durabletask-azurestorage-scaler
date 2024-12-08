@@ -32,14 +32,6 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
     public void GivenServiceUri_WhenGettingServiceClient_ThenReturnValidClient()
     {
         AzureStorageAccountClientFactory<TClient> factory = GetFactory();
-        TClient actual = factory.GetServiceClient(new AzureStorageAccountOptions { AccountName = "test", EndpointSuffix = AzureStorageServiceUri.PublicSuffix });
-        ValidateAccountName(actual, "test", AzureStorageServiceUri.PublicSuffix);
-    }
-
-    [Fact]
-    public void GivenServiceUriWithWorkloadIdentity_WhenGettingServiceClient_ThenReturnValidClient()
-    {
-        AzureStorageAccountClientFactory<TClient> factory = GetFactory();
         AzureStorageAccountOptions storageAccountInfo = new()
         {
             AccountName = "test",
@@ -66,7 +58,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
 
     protected abstract void ValidateEmulator(TClient actual);
 
-    private static void AssertTokenCredential<T>(TClient client) where T : TokenCredential
+    protected virtual void AssertTokenCredential<T>(TClient client) where T : TokenCredential
     {
         object? configuration = typeof(TClient)
             .GetProperty("ClientConfiguration", BindingFlags.NonPublic | BindingFlags.Instance)?

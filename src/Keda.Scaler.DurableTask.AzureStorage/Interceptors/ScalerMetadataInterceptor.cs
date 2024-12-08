@@ -5,9 +5,7 @@ using System;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Core.Interceptors;
-using Google.Protobuf.Collections;
-using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
-using Microsoft.Extensions.Configuration;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 
@@ -24,20 +22,12 @@ internal sealed class ScalerMetadataInterceptor(IScalerMetadataAccessor accessor
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(continuation);
 
-        MapField<string, string>? mapField = request switch
+        _accessor.ScalerMetadata = request switch
         {
             GetMetricsRequest r => r.ScaledObjectRef.ScalerMetadata,
             ScaledObjectRef r => r.ScalerMetadata,
             _ => null,
         };
-
-        if (mapField is not null)
-        {
-            ScalerMetadata metadata = new();
-            mapField.ToConfiguration().Bind(metadata);
-
-            _accessor.ScalerMetadata = metadata;
-        }
 
         return continuation(request, context);
     }
