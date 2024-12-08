@@ -12,7 +12,6 @@ using Azure.Data.Tables;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

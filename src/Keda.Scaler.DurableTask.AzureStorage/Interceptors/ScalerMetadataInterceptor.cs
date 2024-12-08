@@ -24,17 +24,21 @@ internal sealed class ScalerMetadataInterceptor(IScalerMetadataAccessor accessor
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(continuation);
 
-        MapField<string, string> mapField = request switch
+        MapField<string, string>? mapField = request switch
         {
             GetMetricsRequest r => r.ScaledObjectRef.ScalerMetadata,
             ScaledObjectRef r => r.ScalerMetadata,
-            _ => throw new ArgumentException(SR.InvalidRequestType, nameof(request))
+            _ => null,
         };
 
-        ScalerMetadata metadata = new();
-        mapField.ToConfiguration().Bind(metadata);
+        if (mapField is not null)
+        {
+            ScalerMetadata metadata = new();
+            mapField.ToConfiguration().Bind(metadata);
 
-        _accessor.ScalerMetadata = metadata;
+            _accessor.ScalerMetadata = metadata;
+        }
+
         return continuation(request, context);
     }
 }

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
-internal static class AzureStorageServiceClientExtensions
+internal static class IServiceCollectionExtensions
 {
     public static IServiceCollection AddAzureStorageServiceClients(this IServiceCollection services)
     {

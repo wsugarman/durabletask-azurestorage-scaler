@@ -4,7 +4,6 @@
 using System;
 using Azure.Identity;
 using Microsoft.Extensions.Options;
-using Microsoft.Identity.Client;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
