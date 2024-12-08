@@ -1,9 +1,12 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.HealthChecks;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,10 +18,16 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services
-    .AddDurableTaskScaler()
+    .AddScalerMetadata()
+    .AddAzureStorageServiceClients()
+    .AddDurableTaskScaleManager()
     .AddKubernetesHealthCheck(builder.Configuration)
     .AddTlsSupport("default", builder.Configuration)
-    .AddGrpc(o => o.Interceptors.Add<ExceptionInterceptor>());
+    .AddGrpc(o =>
+    {
+        o.Interceptors.Add<ExceptionInterceptor>();
+        o.Interceptors.Add<ScalerMetadataInterceptor>();
+    });
 
 // Note: gRPC reflection is only used for debugging, and as such it will not be included
 // in the final build artifact copied into the scaler image

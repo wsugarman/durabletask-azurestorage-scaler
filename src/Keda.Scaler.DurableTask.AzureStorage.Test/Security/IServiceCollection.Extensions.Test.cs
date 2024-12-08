@@ -45,10 +45,7 @@ public class IServiceCollectionExtensionsTest
     public void GivenCertificateAuthenticationOverrides_WhenAddingTlsSupport_ThenMapOptions()
     {
         IConfiguration config = new ConfigurationBuilder()
-            .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-            {
-                new("Security:Transport:Client:Authentication:RevocationMode", "NoCheck"),
-            })
+            .AddInMemoryCollection([new("Security:Transport:Client:Authentication:RevocationMode", "NoCheck")])
             .Build();
 
         using ServiceProvider serviceProvider = new ServiceCollection()
@@ -119,12 +116,12 @@ public class IServiceCollectionExtensionsTest
             File.WriteAllText(certPath, cert.ExportCertificatePem(key));
 
             IConfiguration config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-                {
+                .AddInMemoryCollection(
+                [
                     new("Security:Transport:Client:CaCertificatePath", useCustomCa ? certPath : null),
                     new("Security:Transport:Client:ValidateCertificate", "true"),
                     new("Security:Transport:Server:CertificatePath", certPath),
-                })
+                ])
                 .Build();
 
             IServiceCollection services = new ServiceCollection()

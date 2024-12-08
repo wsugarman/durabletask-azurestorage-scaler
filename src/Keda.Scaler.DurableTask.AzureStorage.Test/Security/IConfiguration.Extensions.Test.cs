@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
 using Microsoft.Extensions.Configuration;
 using Xunit;
@@ -31,11 +30,11 @@ public class IConfigurationExtensionsTest
     public void GivenValidConfiguration_WhenCheckingMutualTlsEnforcement_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validateClientCertificate)
     {
         IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-            {
+            .AddInMemoryCollection(
+            [
                 new("Security:Transport:Client:ValidateCertificate", validateClientCertificate.ToString()),
                 new("Security:Transport:Server:CertificatePath", certificatePath),
-            })
+            ])
             .Build();
 
         Assert.Equal(expected, configuration.EnforceMutualTls());
@@ -60,10 +59,7 @@ public class IConfigurationExtensionsTest
     public void GivenValidConfiguration_WhenCheckingTlsEnforcement_ThenReturnExpectedValue(bool expected, string? certificatePath)
     {
         IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-            {
-                new("Security:Transport:Server:CertificatePath", certificatePath),
-            })
+            .AddInMemoryCollection([new("Security:Transport:Server:CertificatePath", certificatePath)])
             .Build();
 
         Assert.Equal(expected, configuration.EnforceTls());
@@ -88,10 +84,7 @@ public class IConfigurationExtensionsTest
     public void GivenValidConfiguration_WhenCheckingCustomClientCa_ThenReturnExpectedValue(bool expected, string? certificatePath)
     {
         IConfiguration configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new KeyValuePair<string, string?>[]
-            {
-                new("Security:Transport:Client:CaCertificatePath", certificatePath),
-            })
+            .AddInMemoryCollection([new("Security:Transport:Client:CaCertificatePath", certificatePath)])
             .Build();
 
         Assert.Equal(expected, configuration.UseCustomClientCa());

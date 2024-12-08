@@ -70,20 +70,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Multiple identity-based connection options may be specified..
+        ///   Looks up a localized string similar to {0} cannot be empty or white space..
         /// </summary>
-        internal static string AmbiguousCredential {
+        internal static string EmptyOrWhiteSpaceFormat {
             get {
-                return ResourceManager.GetString("AmbiguousCredential", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Value cannot be empty or white space..
-        /// </summary>
-        internal static string EmptyOrWhiteSpace {
-            get {
-                return ResourceManager.GetString("EmptyOrWhiteSpace", resourceCulture);
+                return ResourceManager.GetString("EmptyOrWhiteSpaceFormat", resourceCulture);
             }
         }
         
@@ -93,6 +84,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         internal static string FileNotFoundFormat {
             get {
                 return ResourceManager.GetString("FileNotFoundFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} may only be used with identity-based connections..
+        /// </summary>
+        internal static string IdentityConnectionOnlyPropertyFormat {
+            get {
+                return ResourceManager.GetString("IdentityConnectionOnlyPropertyFormat", resourceCulture);
             }
         }
         
@@ -124,6 +124,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Received unknown gRPC request type..
+        /// </summary>
+        internal static string InvalidRequestType {
+            get {
+                return ResourceManager.GetString("InvalidRequestType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot specify a custom TLS client certificate issuer if client certificate validation is disabled..
         /// </summary>
         internal static string InvalidTlsClientValidation {
@@ -142,11 +151,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Value must be specified with an identity-based connection option like UseWorkloadIdentity..
+        ///   Looks up a localized string similar to Managed identity must be enabled when specifying AccountName..
         /// </summary>
-        internal static string MissingCredentialOption {
+        internal static string MissingManagedIdentity {
             get {
-                return ResourceManager.GetString("MissingCredentialOption", resourceCulture);
+                return ResourceManager.GetString("MissingManagedIdentity", resourceCulture);
             }
         }
         
@@ -160,29 +169,47 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Missing required value for private cloud..
+        ///   Looks up a localized string similar to {0} must be specified for private clouds..
         /// </summary>
-        internal static string MissingPrivateCloudValue {
+        internal static string MissingPrivateCloudPropertyFormat {
             get {
-                return ResourceManager.GetString("MissingPrivateCloudValue", resourceCulture);
+                return ResourceManager.GetString("MissingPrivateCloudPropertyFormat", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Value may only be specified for private clouds..
+        ///   Looks up a localized string similar to {0} may only be specified for private clouds..
         /// </summary>
-        internal static string PrivateCloudOnlyValue {
+        internal static string PrivateCloudOnlyPropertyFormat {
             get {
-                return ResourceManager.GetString("PrivateCloudOnlyValue", resourceCulture);
+                return ResourceManager.GetString("PrivateCloudOnlyPropertyFormat", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Value may only be specified with an Azure Storage account name..
+        ///   Looks up a localized string similar to Cannot find scaler metadata for current request..
         /// </summary>
-        internal static string ServiceUriOnlyValue {
+        internal static string ScalerMetadataNotFound {
             get {
-                return ResourceManager.GetString("ServiceUriOnlyValue", resourceCulture);
+                return ResourceManager.GetString("ScalerMetadataNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {0} may only be specified with an Azure Storage account name..
+        /// </summary>
+        internal static string ServiceUriOnlyPropertyFormat {
+            get {
+                return ResourceManager.GetString("ServiceUriOnlyPropertyFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unknown cloud &apos;{0}&apos;..
+        /// </summary>
+        internal static string UnknownCloudValueFormat {
+            get {
+                return ResourceManager.GetString("UnknownCloudValueFormat", resourceCulture);
             }
         }
         

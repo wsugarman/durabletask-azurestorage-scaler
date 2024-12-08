@@ -74,7 +74,7 @@ internal sealed class CertificateFileMonitor : IDisposable
 
         try
         {
-            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) == 1, this);
             if (_certificate is not null)
             {
                 certificate = _certificate;
@@ -97,7 +97,7 @@ internal sealed class CertificateFileMonitor : IDisposable
 
         try
         {
-            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) == 1, this);
             if (_certificate is null)
                 UpdateCertificate();
 
@@ -115,7 +115,7 @@ internal sealed class CertificateFileMonitor : IDisposable
 
         try
         {
-            ObjectDisposedException.ThrowIf(Thread.VolatileRead(ref _disposed) == 1, this);
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) == 1, this);
 
             X509Certificate2 certificate = File.Load();
             _logger.LoadedCertificate(certificate.Thumbprint, File.Path);
@@ -142,7 +142,7 @@ internal sealed class CertificateFileMonitor : IDisposable
     [ExcludeFromCodeCoverage(Justification = "It is difficult to deterministically exercise the disposal race condition.")]
     private void OnChanged(object? sender, FileSystemEventArgs args)
     {
-        if (Thread.VolatileRead(ref _disposed) == 0)
+        if (Volatile.Read(ref _disposed) == 0)
             UpdateCertificate(throwOnError: false);
     }
 
