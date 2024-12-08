@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
@@ -36,6 +38,12 @@ public sealed class TaskHubTest : IDisposable
 
     public TaskHubTest(ITestOutputHelper outputHelper)
     {
+        List<string> partitionIds = Enumerable
+            .Repeat(TaskHubName, PartitionCount)
+            .Select(ControlQueue.GetName)
+            .ToList();
+
+        _ = _partitionManager.GetPartitionsAsync(default).ReturnsForAnyArgs(partitionIds);
         _ = _optionsSnapshot.Get(default).Returns(new TaskHubOptions { TaskHubName = TaskHubName });
         _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
         _taskHub = new(_partitionManager, _queueServiceClient, _optionsSnapshot, _loggerFactory);
@@ -91,11 +99,12 @@ public sealed class TaskHubTest : IDisposable
         using CancellationTokenSource cts = new();
         TaskHubQueueUsage actual = await _taskHub.GetUsageAsync(cts.Token);
 
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 1)));
-        _ = _queueServiceClient.Received(0).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 2)));
-        _ = await controlQueue0.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
-        _ = await controlQueue1.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
+        _ = await _partitionManager.Received(1).GetPartitionsAsync(cts.Token);
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 0));
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 1));
+        _ = _queueServiceClient.Received(0).GetQueueClient(ControlQueue.GetName(TaskHubName, 2));
+        _ = await controlQueue0.Received(1).GetPropertiesAsync(cts.Token);
+        _ = await controlQueue1.Received(1).GetPropertiesAsync(cts.Token);
 
         Assert.Same(TaskHubQueueUsage.None, actual);
     }
@@ -127,14 +136,15 @@ public sealed class TaskHubTest : IDisposable
         using CancellationTokenSource cts = new();
         TaskHubQueueUsage actual = await _taskHub.GetUsageAsync(cts.Token);
 
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 1)));
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 2)));
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(WorkItemQueue.GetName(TaskHubName)));
-        _ = await controlQueue0.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
-        _ = await controlQueue1.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
-        _ = await controlQueue2.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
-        _ = await workItemQueue.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
+        _ = await _partitionManager.Received(1).GetPartitionsAsync(cts.Token);
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 0));
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 1));
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 2));
+        _ = _queueServiceClient.Received(1).GetQueueClient(WorkItemQueue.GetName(TaskHubName));
+        _ = await controlQueue0.Received(1).GetPropertiesAsync(cts.Token);
+        _ = await controlQueue1.Received(1).GetPropertiesAsync(cts.Token);
+        _ = await controlQueue2.Received(1).GetPropertiesAsync(cts.Token);
+        _ = await workItemQueue.Received(1).GetPropertiesAsync(cts.Token);
 
         Assert.Same(TaskHubQueueUsage.None, actual);
     }
@@ -166,14 +176,15 @@ public sealed class TaskHubTest : IDisposable
         using CancellationTokenSource cts = new();
         TaskHubQueueUsage actual = await _taskHub.GetUsageAsync(cts.Token);
 
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 0)));
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 1)));
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(ControlQueue.GetName(TaskHubName, 2)));
-        _ = _queueServiceClient.Received(1).GetQueueClient(Arg.Is(WorkItemQueue.GetName(TaskHubName)));
-        _ = await controlQueue0.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
-        _ = await controlQueue1.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
-        _ = await controlQueue2.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
-        _ = await workItemQueue.Received(1).GetPropertiesAsync(Arg.Is(cts.Token));
+        _ = await _partitionManager.Received(1).GetPartitionsAsync(cts.Token);
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 0));
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 1));
+        _ = _queueServiceClient.Received(1).GetQueueClient(ControlQueue.GetName(TaskHubName, 2));
+        _ = _queueServiceClient.Received(1).GetQueueClient(WorkItemQueue.GetName(TaskHubName));
+        _ = await controlQueue0.Received(1).GetPropertiesAsync(cts.Token);
+        _ = await controlQueue1.Received(1).GetPropertiesAsync(cts.Token);
+        _ = await controlQueue2.Received(1).GetPropertiesAsync(cts.Token);
+        _ = await workItemQueue.Received(1).GetPropertiesAsync(cts.Token);
 
         Assert.Equal(PartitionCount, actual.ControlQueueMessages.Count);
         Assert.Equal(3, actual.ControlQueueMessages[0]);

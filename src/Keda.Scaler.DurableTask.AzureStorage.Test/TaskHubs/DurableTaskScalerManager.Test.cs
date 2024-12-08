@@ -42,26 +42,26 @@ public sealed class DurableTaskScalerManagerTest : IDisposable
 
     [Fact]
     public void GivenNullTaskHub_WhenCreatingScalerManager_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => Substitute.For<DurableTaskScaleManager>(null!, _optionsSnapshot, _loggerFactory));
+        => Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(null!, _optionsSnapshot, _loggerFactory));
 
     [Fact]
     public void GivenNullOptionsSnapshot_WhenCreatingScalerManager_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => Substitute.For<DurableTaskScaleManager>(_taskHub, null!, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, null!, _loggerFactory));
 
         IOptionsSnapshot<TaskHubOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(TaskHubOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => Substitute.For<DurableTaskScaleManager>(_taskHub, nullSnapshot, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, nullSnapshot, _loggerFactory));
     }
 
     [Fact]
     public void GivenNullLoggerFactory_WhenCreatingScalerManager_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => Substitute.For<DurableTaskScaleManager>(_taskHub, _optionsSnapshot, null!));
+        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, _optionsSnapshot, null!));
 
         ILoggerFactory nullFactory = Substitute.For<ILoggerFactory>();
         _ = nullFactory.CreateLogger(default!).ReturnsForAnyArgs(default(ILogger));
-        _ = Assert.Throws<ArgumentNullException>(() => Substitute.For<DurableTaskScaleManager>(_taskHub, _optionsSnapshot, nullFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, _optionsSnapshot, nullFactory));
     }
 
     [Fact]
@@ -128,13 +128,28 @@ public sealed class DurableTaskScalerManagerTest : IDisposable
         Assert.True(actual);
     }
 
+    private sealed class ExampleDurableTaskScaleManager(ITaskHub taskHub, IOptionsSnapshot<TaskHubOptions> optionsSnapshot, ILoggerFactory loggerFactory)
+        : DurableTaskScaleManager(taskHub, optionsSnapshot, loggerFactory)
+    {
+        protected override int GetWorkerCount(TaskHubQueueUsage usage)
+            => default;
+    }
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Type must be public for mocking.")]
     public abstract class MockScaleManager(ITaskHub taskHub, IOptionsSnapshot<TaskHubOptions> optionsSnapshot, ILoggerFactory loggerFactory)
         : DurableTaskScaleManager(taskHub, optionsSnapshot, loggerFactory)
     {
+        public sealed override MetricSpec KedaMetricSpec => base.KedaMetricSpec;
+
+        public sealed override ValueTask<MetricValue> GetKedaMetricValueAsync(CancellationToken cancellationToken = default)
+            => base.GetKedaMetricValueAsync(cancellationToken);
+
+        public sealed override ValueTask<bool> IsActiveAsync(CancellationToken cancellationToken = default)
+            => base.IsActiveAsync(cancellationToken);
+
         public abstract int GetRequiredWorkerCount(TaskHubQueueUsage usage);
 
-        protected override int GetWorkerCount(TaskHubQueueUsage usage)
+        protected sealed override int GetWorkerCount(TaskHubQueueUsage usage)
             => GetRequiredWorkerCount(usage);
     }
 }

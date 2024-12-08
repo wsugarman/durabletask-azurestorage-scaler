@@ -4,6 +4,7 @@
 using System;
 using Azure.Data.Tables;
 using Azure.Storage.Blobs;
+using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -18,7 +19,7 @@ public class IServiceCollectionExtensionsTest
 
     [Fact]
     public void GivenNullServiceCollection_WhenAddingDurableTaskScaleManager_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => IServiceCollectionExtensions.AddDurableTaskScaleManager(null!));
+        => Assert.Throws<ArgumentNullException>(() => AzureStorage.TaskHubs.IServiceCollectionExtensions.AddDurableTaskScaleManager(null!));
 
     [Fact]
     public void GivenServiceCollection_WhenAddingDurableTaskScalerManager_ThenRegisterServices()
@@ -26,7 +27,7 @@ public class IServiceCollectionExtensionsTest
         IServiceCollection services = _servicCollection.AddDurableTaskScaleManager();
 
         ServiceDescriptor configure = Assert.Single(services, x => x.ServiceType == typeof(IConfigureOptions<TaskHubOptions>));
-        Assert.Equal(ServiceLifetime.Singleton, configure.Lifetime);
+        Assert.Equal(ServiceLifetime.Scoped, configure.Lifetime);
         Assert.Equal(typeof(ConfigureTaskHubOptions), configure.ImplementationType);
 
         ServiceDescriptor blobPartitionManager = Assert.Single(services, x => x.ServiceType == typeof(BlobPartitionManager));
@@ -53,8 +54,9 @@ public class IServiceCollectionExtensionsTest
     public void GivenTablePartitionManagement_WhenResolvingPartitionManager_ThenResolveTablePartitionManager()
     {
         IServiceCollection services = _servicCollection
-            .Configure<TaskHubOptions>(x => x.UseTablePartitionManagement = true)
+            .Configure<ScalerOptions>(x => x.UseTablePartitionManagement = true)
             .AddScoped(sp => Substitute.For<TableServiceClient>())
+            .AddLogging()
             .AddDurableTaskScaleManager();
 
         using ServiceProvider serviceProvider = services.BuildServiceProvider();
@@ -67,8 +69,9 @@ public class IServiceCollectionExtensionsTest
     public void GivenBlobPartitionManagement_WhenResolvingPartitionManager_ThenResolveBlobPartitionManager()
     {
         IServiceCollection services = _servicCollection
-            .Configure<TaskHubOptions>(x => x.UseTablePartitionManagement = false)
+            .Configure<ScalerOptions>(x => x.UseTablePartitionManagement = false)
             .AddScoped(sp => Substitute.For<BlobServiceClient>())
+            .AddLogging()
             .AddDurableTaskScaleManager();
 
         using ServiceProvider serviceProvider = services.BuildServiceProvider();

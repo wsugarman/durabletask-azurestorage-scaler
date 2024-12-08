@@ -121,6 +121,7 @@ public class ConfigureAzureStorageAccountOptionsTest
 
         _scalerOptions.AccountName = AccountName;
         _scalerOptions.Cloud = cloud;
+        _scalerOptions.EntraEndpoint = new Uri("https://entra.unit.test", UriKind.Absolute);
         _scalerOptions.EndpointSuffix = endpointSuffix;
 
         AzureStorageAccountOptions options = new();

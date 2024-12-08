@@ -29,7 +29,7 @@ public class IServiceCollectionExtensionsTest
 
         ServiceDescriptor configure = Assert.Single(services, x => x.ServiceType == typeof(IConfigureOptions<ScalerOptions>));
         Assert.Equal(ServiceLifetime.Scoped, configure.Lifetime);
-        Assert.Equal(typeof(ScalerMetadataAccessor), configure.ImplementationType);
+        Assert.Equal(typeof(ConfigureScalerOptions), configure.ImplementationType);
 
         ServiceDescriptor[] validators = services.Where(x => x.ServiceType == typeof(IValidateOptions<ScalerOptions>)).ToArray();
         Assert.Equal(2, validators.Length);

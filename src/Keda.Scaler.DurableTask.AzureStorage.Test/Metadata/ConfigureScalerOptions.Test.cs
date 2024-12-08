@@ -40,7 +40,7 @@ public class ConfigureScalerOptionsTest
             { nameof(ScalerOptions.Connection), "Connection" },
             { nameof(ScalerOptions.ConnectionFromEnv), "ConnectionFromEnv" },
             { "endpointsuffix", "EndpointSuffix" },
-            { "ENTRAENDPOINT", "https://unit.test.login" },
+            { "ENTRAENDPOINT", "https://unit.test.login/" },
             { nameof(ScalerOptions.MaxActivitiesPerWorker), "1" },
             { nameof(ScalerOptions.MaxOrchestrationsPerWorker), "2" },
             { nameof(ScalerOptions.TaskHubName), "TaskHubName" },
@@ -58,7 +58,7 @@ public class ConfigureScalerOptionsTest
         Assert.Equal("Connection", options.Connection);
         Assert.Equal("ConnectionFromEnv", options.ConnectionFromEnv);
         Assert.Equal("EndpointSuffix", options.EndpointSuffix);
-        Assert.Equal("https://unit.test.login", options.EntraEndpoint?.AbsoluteUri);
+        Assert.Equal("https://unit.test.login/", options.EntraEndpoint?.AbsoluteUri);
         Assert.Equal(1, options.MaxActivitiesPerWorker);
         Assert.Equal(2, options.MaxOrchestrationsPerWorker);
         Assert.Equal("TaskHubName", options.TaskHubName);
