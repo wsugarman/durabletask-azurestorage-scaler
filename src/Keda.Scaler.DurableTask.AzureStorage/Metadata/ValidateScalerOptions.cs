@@ -1,9 +1,9 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using Keda.Scaler.DurableTask.AzureStorage.Clients;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Metadata;
@@ -67,8 +67,11 @@ internal sealed class ValidateScalerOptions : IValidateOptions<ScalerOptions>
         if (!options.UseManagedIdentity)
             failures.Add(SR.MissingManagedIdentity);
 
+        if (!AzureCloudEndpoints.TryParseEnvironment(options.Cloud, out CloudEnvironment cloud))
+            failures.Add(SRF.Format(SRF.UnknownCloudValue, options.Cloud));
+
         // Validate private cloud properties
-        if (string.Equals(options.Cloud, CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
+        if (cloud is CloudEnvironment.Private)
         {
             if (string.IsNullOrWhiteSpace(options.EndpointSuffix))
                 failures.Add(SRF.Format(SRF.MissingPrivateCloudProperty, nameof(ScalerOptions.EndpointSuffix)));

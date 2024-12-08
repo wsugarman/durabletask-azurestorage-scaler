@@ -28,45 +28,25 @@ internal sealed class ConfigureAzureStorageAccountOptions(IOptionsSnapshot<Scale
     private void ConfigureUriBasedConnection(AzureStorageAccountOptions options)
     {
         options.AccountName = _scalerOptions.AccountName;
-        options.EndpointSuffix = GetEndpointSuffix();
-        options.TokenCredential = CreateTokenCredential();
+
+        if (AzureCloudEndpoints.TryParseEnvironment(_scalerOptions.Cloud, out CloudEnvironment cloud))
+        {
+            AzureCloudEndpoints endpoints = cloud is CloudEnvironment.Private
+                ? new AzureCloudEndpoints(_scalerOptions.EntraEndpoint!, _scalerOptions.EndpointSuffix!)
+                : AzureCloudEndpoints.ForEnvironment(cloud);
+
+            options.EndpointSuffix = endpoints.StorageSuffix;
+            options.TokenCredential = CreateTokenCredential(endpoints.AuthorityHost);
+        }
     }
 
-    private string? GetEndpointSuffix()
-    {
-        if (_scalerOptions.Cloud is null || _scalerOptions.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureStorageServiceUri.PublicSuffix;
-        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureStorageServiceUri.USGovernmentSuffix;
-        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureStorageServiceUri.ChinaSuffix;
-        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
-            return _scalerOptions.EndpointSuffix;
-        else
-            return null;
-    }
-
-    private Uri? GetAuthorityHost()
-    {
-        if (_scalerOptions.Cloud is null || _scalerOptions.Cloud.Equals(CloudEnvironment.AzurePublicCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureAuthorityHosts.AzurePublicCloud;
-        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureUSGovernmentCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureAuthorityHosts.AzureGovernment;
-        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.AzureChinaCloud, StringComparison.OrdinalIgnoreCase))
-            return AzureAuthorityHosts.AzureChina;
-        else if (_scalerOptions.Cloud.Equals(CloudEnvironment.Private, StringComparison.OrdinalIgnoreCase))
-            return _scalerOptions.EntraEndpoint;
-        else
-            return null;
-    }
-
-    private WorkloadIdentityCredential? CreateTokenCredential()
+    private WorkloadIdentityCredential? CreateTokenCredential(Uri authorityHost)
     {
         if (_scalerOptions.UseManagedIdentity)
         {
             WorkloadIdentityCredentialOptions options = new()
             {
-                AuthorityHost = GetAuthorityHost(),
+                AuthorityHost = authorityHost,
             };
 
             if (!string.IsNullOrWhiteSpace(_scalerOptions.ClientId))

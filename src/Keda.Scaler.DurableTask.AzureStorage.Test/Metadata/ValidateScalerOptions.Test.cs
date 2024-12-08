@@ -32,7 +32,7 @@ public class ValidateScalerOptionsTest
     [Theory]
     [InlineData("")]
     [InlineData("    ")]
-    [InlineData(CloudEnvironment.AzurePublicCloud)]
+    [InlineData(nameof(CloudEnvironment.AzurePublicCloud))]
     public void GivenConnectionStringWithCloud_WhenValidatingOptions_ThenReturnFailure(string cloud)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -146,6 +146,19 @@ public class ValidateScalerOptionsTest
             });
     }
 
+    [Fact]
+    public void GivenUnresolvedCloud_WhenValidatingOptions_ThenReturnFailure()
+    {
+        GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
+            "foobar",
+            o =>
+            {
+                o.AccountName = "unittest";
+                o.Cloud = "foobar";
+                o.UseManagedIdentity = true;
+            });
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("    ")]
@@ -156,8 +169,9 @@ public class ValidateScalerOptionsTest
             m =>
             {
                 m.AccountName = "unittest";
-                m.Cloud = CloudEnvironment.Private;
+                m.Cloud = nameof(CloudEnvironment.Private);
                 m.EndpointSuffix = endpointSuffix;
+                m.EntraEndpoint = new Uri("https://unit.test.login");
                 m.UseManagedIdentity = true;
             });
     }
@@ -170,7 +184,8 @@ public class ValidateScalerOptionsTest
             m =>
             {
                 m.AccountName = "unittest";
-                m.Cloud = CloudEnvironment.Private;
+                m.Cloud = nameof(CloudEnvironment.Private);
+                m.EndpointSuffix = "core.unit.test";
                 m.EntraEndpoint = null;
                 m.UseManagedIdentity = true;
             });
@@ -184,7 +199,7 @@ public class ValidateScalerOptionsTest
             m =>
             {
                 m.AccountName = "unittest";
-                m.Cloud = CloudEnvironment.AzurePublicCloud;
+                m.Cloud = nameof(CloudEnvironment.AzurePublicCloud);
                 m.EndpointSuffix = AzureStorageServiceUri.USGovernmentSuffix;
                 m.UseManagedIdentity = true;
             });
@@ -198,7 +213,7 @@ public class ValidateScalerOptionsTest
             m =>
             {
                 m.AccountName = "unittest";
-                m.Cloud = CloudEnvironment.AzurePublicCloud;
+                m.Cloud = nameof(CloudEnvironment.AzurePublicCloud);
                 m.EntraEndpoint = AzureAuthorityHosts.AzureChina;
                 m.UseManagedIdentity = true;
             });

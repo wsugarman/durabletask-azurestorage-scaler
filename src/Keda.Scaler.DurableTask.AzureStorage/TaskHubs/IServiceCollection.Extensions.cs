@@ -15,7 +15,6 @@ internal static class IServiceCollectionExtensions
 
         return services
             .AddScoped<IConfigureOptions<TaskHubOptions>, ConfigureTaskHubOptions>()
-            .AddSingleton<IValidateOptions<TaskHubOptions>, ValidateTaskHubOptions>()
             .AddScoped<BlobPartitionManager>()
             .AddScoped<TablePartitionManager>()
             .AddScoped<ITaskHubPartitionManager>(x =>

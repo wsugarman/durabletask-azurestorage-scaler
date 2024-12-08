@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.Extensions.Options;
 
@@ -15,31 +14,13 @@ internal sealed class ValidateAzureStorageAccountOptions(IOptionsSnapshot<Scaler
     public ValidateOptionsResult Validate(string? name, AzureStorageAccountOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        List<string> failures = options.AccountName is null
-            ? ValidateStringBasedConnection(options)
-            : ValidateUriBasedConnection(options);
 
-        return failures.Count is 0 ? ValidateOptionsResult.Success : ValidateOptionsResult.Fail(failures);
-    }
+        if (options.AccountName is null && string.IsNullOrWhiteSpace(options.ConnectionString))
+        {
+            string failure = SRF.Format(SRF.InvalidConnectionEnvironmentVariable, _scalerOptions.ConnectionFromEnv ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable);
+            return ValidateOptionsResult.Fail(failure);
+        }
 
-    private List<string> ValidateStringBasedConnection(AzureStorageAccountOptions options)
-    {
-        List<string> failures = [];
-
-        if (string.IsNullOrWhiteSpace(options.ConnectionString))
-            failures.Add(SRF.Format(SRF.InvalidConnectionEnvironmentVariable, _scalerOptions.ConnectionFromEnv ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable));
-
-        return failures;
-    }
-
-    private List<string> ValidateUriBasedConnection(AzureStorageAccountOptions options)
-    {
-        List<string> failures = [];
-
-        // Note: EndpointSuffix can only be null for invalid clouds at this point
-        if (string.IsNullOrWhiteSpace(options.EndpointSuffix))
-            failures.Add(SRF.Format(SRF.UnknownCloudValue, _scalerOptions.Cloud));
-
-        return failures;
+        return ValidateOptionsResult.Success;
     }
 }

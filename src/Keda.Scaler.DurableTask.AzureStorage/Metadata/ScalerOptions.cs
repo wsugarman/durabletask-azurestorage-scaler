@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Metadata;
@@ -85,12 +86,14 @@ public sealed class ScalerOptions
     /// Gets or sets the maximum number of activity work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
+    [Range(1, int.MaxValue)]
     public int MaxActivitiesPerWorker { get; set; } = 10;
 
     /// <summary>
     /// Gets or sets the maximum number of orchestration work items that a single worker may process at any time.
     /// </summary>
     /// <value>The positive number of work items.</value>
+    [Range(1, int.MaxValue)]
     public int MaxOrchestrationsPerWorker { get; set; } = 5;
 
     /// <summary>
@@ -98,6 +101,7 @@ public sealed class ScalerOptions
     /// </summary>
     /// <remarks>If unspecified, the default name is <c>"TestHubName"</c>.</remarks>
     /// <value>The name of the task hub.</value>
+    [Required]
     public string TaskHubName { get; set; } = "TestHubName";
 
     /// <summary>

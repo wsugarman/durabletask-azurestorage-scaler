@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
@@ -56,8 +55,7 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<GetMetricsRequest, GetMetricsResponse>());
 
-        IReadOnlyDictionary<string, string?>? actual = _metadataAccessor.Received(1).ScalerMetadata;
-        Assert.Same(request.ScaledObjectRef.ScalerMetadata, actual);
+        Assert.Same(request.ScaledObjectRef.ScalerMetadata, _metadataAccessor.ScalerMetadata);
     }
 
     [Fact]
@@ -76,8 +74,7 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<ScaledObjectRef, GetMetricSpecResponse>());
 
-        IReadOnlyDictionary<string, string?>? actual = _metadataAccessor.Received(1).ScalerMetadata;
-        Assert.Same(scaledObjectRef.ScalerMetadata, actual);
+        Assert.Same(scaledObjectRef.ScalerMetadata, _metadataAccessor.ScalerMetadata);
     }
 
     [Fact]
@@ -89,7 +86,7 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<object, object>());
 
-        Assert.Null(_metadataAccessor.DidNotReceive().ScalerMetadata);
+        Assert.Null(_metadataAccessor.ScalerMetadata);
     }
 
     private static UnaryServerMethod<TRequest, TResponse> CreateSimpleHandler<TRequest, TResponse>()

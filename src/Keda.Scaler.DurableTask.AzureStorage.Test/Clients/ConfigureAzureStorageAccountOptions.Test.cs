@@ -112,16 +112,9 @@ public class ConfigureAzureStorageAccountOptionsTest
 
     [Theory]
     [InlineData(AzureStorageServiceUri.PublicSuffix, null, null)]
-    [InlineData(AzureStorageServiceUri.PublicSuffix, CloudEnvironment.AzurePublicCloud, null)]
-    [InlineData(AzureStorageServiceUri.PublicSuffix, "azurepubliccloud", null)]
-    [InlineData(AzureStorageServiceUri.USGovernmentSuffix, CloudEnvironment.AzureUSGovernmentCloud, null)]
+    [InlineData(AzureStorageServiceUri.PublicSuffix, nameof(CloudEnvironment.AzurePublicCloud), null)]
     [InlineData(AzureStorageServiceUri.USGovernmentSuffix, "AZUREUSGOVERNMENTCLOUD", null)]
-    [InlineData(AzureStorageServiceUri.ChinaSuffix, CloudEnvironment.AzureChinaCloud, null)]
-    [InlineData(AzureStorageServiceUri.ChinaSuffix, "azureCHINAcloud", null)]
-    [InlineData("unit.test.cloud", CloudEnvironment.Private, "unit.test.cloud")]
     [InlineData("unit.test.cloud", "priVATE", "unit.test.cloud")]
-    [InlineData(null, "AzureUnknownCloud", null)]
-    [InlineData(null, CloudEnvironment.Private, null)]
     public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureEndpointBasedOnCloud(string? expected, string? cloud, string? endpointSuffix)
     {
         const string AccountName = "unittest";

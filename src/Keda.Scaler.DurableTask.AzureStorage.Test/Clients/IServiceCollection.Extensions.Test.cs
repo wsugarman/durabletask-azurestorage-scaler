@@ -39,7 +39,7 @@ public class IServiceCollectionExtensionsTest
         Assert.Equal(typeof(TableServiceClientFactory), tableFactory.ImplementationType);
 
         ServiceDescriptor configure = Assert.Single(services, x => x.ServiceType == typeof(IConfigureOptions<AzureStorageAccountOptions>));
-        Assert.Equal(ServiceLifetime.Singleton, configure.Lifetime);
+        Assert.Equal(ServiceLifetime.Scoped, configure.Lifetime);
         Assert.Equal(typeof(ConfigureAzureStorageAccountOptions), configure.ImplementationType);
 
         ServiceDescriptor validate = Assert.Single(services, x => x.ServiceType == typeof(IValidateOptions<AzureStorageAccountOptions>));

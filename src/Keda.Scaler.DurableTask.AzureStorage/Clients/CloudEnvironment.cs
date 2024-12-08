@@ -3,13 +3,33 @@
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 
-internal static class CloudEnvironment
+/// <summary>
+/// Represents an Azure cloud environment.
+/// </summary>
+public enum CloudEnvironment
 {
-    public const string Private = nameof(Private);
+    /// <summary>
+    /// Specifies an unknown Azure cloud.
+    /// </summary>
+    Unknown,
 
-    public const string AzurePublicCloud = nameof(AzurePublicCloud);
+    /// <summary>
+    /// Specifies Azure Stack Hub or an air-gapped cloud.
+    /// </summary>
+    Private,
 
-    public const string AzureUSGovernmentCloud = nameof(AzureUSGovernmentCloud);
+    /// <summary>
+    /// Specifies the public Azure cloud.
+    /// </summary>
+    AzurePublicCloud,
 
-    public const string AzureChinaCloud = nameof(AzureChinaCloud);
+    /// <summary>
+    /// Specifies the US government Azure cloud.
+    /// </summary>
+    AzureUSGovernmentCloud,
+
+    /// <summary>
+    /// Specifies the Chinese Azure cloud.
+    /// </summary>
+    AzureChinaCloud,
 }

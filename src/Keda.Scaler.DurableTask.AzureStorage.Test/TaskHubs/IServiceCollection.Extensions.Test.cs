@@ -29,10 +29,6 @@ public class IServiceCollectionExtensionsTest
         Assert.Equal(ServiceLifetime.Singleton, configure.Lifetime);
         Assert.Equal(typeof(ConfigureTaskHubOptions), configure.ImplementationType);
 
-        ServiceDescriptor validate = Assert.Single(services, x => x.ServiceType == typeof(IValidateOptions<TaskHubOptions>));
-        Assert.Equal(ServiceLifetime.Singleton, validate.Lifetime);
-        Assert.Equal(typeof(ValidateTaskHubOptions), validate.ImplementationType);
-
         ServiceDescriptor blobPartitionManager = Assert.Single(services, x => x.ServiceType == typeof(BlobPartitionManager));
         Assert.Equal(ServiceLifetime.Scoped, blobPartitionManager.Lifetime);
         Assert.Equal(typeof(BlobPartitionManager), blobPartitionManager.ImplementationType);

@@ -44,19 +44,6 @@ public class ValidateAzureStorageAccountOptionsTest
             o => o.ConnectionFromEnv = variableName);
     }
 
-    [Fact]
-    public void GivenUnresolvedCloud_WhenValidatingOptions_ThenReturnFailure()
-    {
-        GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
-            nameof(ScalerOptions.Cloud),
-            o =>
-            {
-                o.AccountName = "unittest";
-                o.Cloud = "unknown";
-                o.UseManagedIdentity = true;
-            });
-    }
-
     private void GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(string failureSnippet, Action<ScalerOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);

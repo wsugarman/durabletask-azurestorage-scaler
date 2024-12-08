@@ -14,8 +14,9 @@ internal static class IServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         return services
-            .AddSingleton<IScalerMetadataAccessor, ScalerMetadataAccessor>()
-            .AddSingleton<IConfigureOptions<ScalerOptions>, ConfigureScalerOptions>()
+            .AddScoped<IScalerMetadataAccessor, ScalerMetadataAccessor>()
+            .AddScoped<IConfigureOptions<ScalerOptions>, ConfigureScalerOptions>()
+            .AddSingleton<IValidateOptions<ScalerOptions>, ValidateTaskHubScalerOptions>()
             .AddSingleton<IValidateOptions<ScalerOptions>, ValidateScalerOptions>();
     }
 }
