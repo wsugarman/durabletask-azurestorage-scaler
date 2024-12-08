@@ -46,7 +46,7 @@ internal class CertificateFile : IDisposable
         => new(this, logger);
 
     public virtual X509Certificate2 Load()
-        => X509CertificateLoader.LoadCertificateFromFile(Path);
+        => X509CertificateLoader.LoadPkcs12FromFile(Path, null);
 
     public static CertificateFile CreateFromPemFile(string certPemFilePath, string? keyPemFilePath = default)
         => new CertificatePemFile(certPemFilePath, keyPemFilePath);
