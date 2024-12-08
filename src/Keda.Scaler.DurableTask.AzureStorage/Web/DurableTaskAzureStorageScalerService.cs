@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 using Grpc.Core;
-using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 

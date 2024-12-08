@@ -5,7 +5,7 @@ using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.HealthChecks;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 using Keda.Scaler.DurableTask.AzureStorage.Security;
-using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
