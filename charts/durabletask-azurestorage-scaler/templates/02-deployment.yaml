@@ -74,8 +74,20 @@ spec:
             {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
             - name: ASPNETCORE_URLS
               value: https://+:8080;http://+:8081
-            - name: HealthCheck__Port
-              value: "8081"
+            {{- if and .Values.tls.caCert.secret .Values.tls.caCert.key }}
+            - name: Kestrel__Client__Certificate__Validation__CertificateAuthority__Path
+              value: "/cacerts/{{ .Values.tls.caCert.key }}"
+            {{- end }}
+            - name: Kestrel__Client__Certificate__Validation__Enabled
+              value: {{ not .Values.tls.unsafe | quote }}
+            {{- if .Values.tls.serverCert.keys.key }}
+            - name: Kestrel__Certificates__Default__KeyPath
+              value: "/certs/{{ .Values.tls.serverCert.keys.key }}"
+            {{- end }}
+            - name: Kestrel__Certificates__Default__Path
+              value: "/certs/{{ .Values.tls.serverCert.keys.cert }}"
+            - name: Kestrel__EndpointDefaults__ClientCertificateMode
+              value: RequireCertificate
             {{- end }}
             - name: Logging__Console__FormatterName
               value: {{ .Values.logging.format }}
@@ -83,20 +95,6 @@ spec:
               value: {{ .Values.logging.timestampFormat }}
             - name: Logging__LogLevel__Default
               value: {{ .Values.logging.level | quote }}
-            {{- if and .Values.tls.caCert.secret .Values.tls.caCert.key }}
-            - name: Security__Transport__Client__CaCertificatePath
-              value: "/cacerts/{{ .Values.tls.caCert.key }}"
-            {{- end }}
-            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.cert }}
-            - name: Security__Transport__Client__ValidateCertificate
-              value: {{ not .Values.tls.unsafe | quote }}
-            - name: Security__Transport__Server__CertificatePath
-              value: "/certs/{{ .Values.tls.serverCert.keys.cert }}"
-            {{- end }}
-            {{- if and .Values.tls.serverCert.secret .Values.tls.serverCert.keys.key }}
-            - name: Security__Transport__Server__KeyPath
-              value: "/certs/{{ .Values.tls.serverCert.keys.key }}"
-            {{- end }}
             {{- if .Values.env }}
             {{- toYaml .Values.env | nindent 12 -}}
             {{- end }}
@@ -121,14 +119,6 @@ spec:
             - name: grpc
               containerPort: 8080
               protocol: TCP
-          {{- if .Values.tls.serverCert.secret }}
-          readinessProbe:
-            grpc:
-              port: 8081
-            successThreshold: 1
-            failureThreshold: 2
-            periodSeconds: 15
-          {{- end }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

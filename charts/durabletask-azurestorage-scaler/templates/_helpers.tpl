@@ -42,7 +42,7 @@ Create chart name and version as used by the chart label.
 {{/*
 Common labels.
 */}}
-{{- define "durabletask-azurestorage-scaler.labels" }}
+{{- define "durabletask-azurestorage-scaler.labels" -}}
 helm.sh/chart: {{ include "durabletask-azurestorage-scaler.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}

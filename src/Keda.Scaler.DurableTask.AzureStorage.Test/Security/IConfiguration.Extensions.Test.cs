@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using Keda.Scaler.DurableTask.AzureStorage.Security;
+using Keda.Scaler.DurableTask.AzureStorage.Certificates;
 using Microsoft.Extensions.Configuration;
 using Xunit;
 

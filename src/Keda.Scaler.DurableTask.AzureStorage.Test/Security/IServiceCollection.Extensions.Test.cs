@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
-using Keda.Scaler.DurableTask.AzureStorage.Security;
+using Keda.Scaler.DurableTask.AzureStorage.Certificates;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Authorization;
