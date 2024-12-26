@@ -24,21 +24,12 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
 
     public string? Name => CertificateAuthenticationDefaults.AuthenticationScheme;
 
-    public void Configure(CertificateAuthenticationOptions options)
-        => Configure(Options.DefaultName, options);
-
-    public void Configure(string? name, CertificateAuthenticationOptions options)
+    public ConfigureCustomTrustStore(IOptions<ClientCertificateValidationOptions> options, ReaderWriterLockSlim certificateLock)
     {
-        options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
-        options.CustomTrustStore = _certificates;
-    }
-
-    public ConfigureCustomTrustStore(ClientCertificateValidationOptions options, ReaderWriterLockSlim certificateLock)
-    {
-        ArgumentNullException.ThrowIfNull(options?.CertificateAuthority);
+        ArgumentNullException.ThrowIfNull(options?.Value?.CertificateAuthority, nameof(options));
         ArgumentNullException.ThrowIfNull(certificateLock);
 
-        _options = options.CertificateAuthority;
+        _options = options.Value.CertificateAuthority;
         _certificateLock = certificateLock;
         _certificates = [_options.Load()];
         _fileProvider = new PhysicalFileProvider(Path.GetDirectoryName(_options.Path)!);
@@ -49,6 +40,15 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
                 Thread.Sleep(_options.ReloadDelayMs);
                 Reload(_options.Load());
             });
+    }
+
+    public void Configure(CertificateAuthenticationOptions options)
+        => Configure(Options.DefaultName, options);
+
+    public void Configure(string? name, CertificateAuthenticationOptions options)
+    {
+        options.ChainTrustValidationMode = X509ChainTrustMode.CustomRootTrust;
+        options.CustomTrustStore = _certificates;
     }
 
     public void Dispose()

@@ -10,8 +10,8 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
 internal sealed class CaCertificateReaderMiddleware(RequestDelegate next, ReaderWriterLockSlim certificateLock)
 {
-    private readonly ReaderWriterLockSlim _certificateLock = certificateLock ?? throw new ArgumentNullException(nameof(certificateLock));
     private readonly RequestDelegate _next = next ?? throw new ArgumentNullException(nameof(next));
+    private readonly ReaderWriterLockSlim _certificateLock = certificateLock ?? throw new ArgumentNullException(nameof(certificateLock));
 
     public async Task InvokeAsync(HttpContext context)
     {

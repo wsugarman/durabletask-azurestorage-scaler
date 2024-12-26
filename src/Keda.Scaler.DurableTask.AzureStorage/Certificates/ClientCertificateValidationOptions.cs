@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
@@ -13,6 +14,7 @@ internal sealed class ClientCertificateValidationOptions
 
     public bool Enable { get; set; } = true;
 
+    [ValidateObjectMembers]
     public CaCertificateFileOptions? CertificateAuthority { get; set; }
 
     public X509RevocationMode RevocationMode { get; set; } = X509RevocationMode.Online;

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Threading;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,13 +12,14 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
 internal static class IServiceCollectionExtensions
 {
-    public static IServiceCollection AddTlsSupport(this IServiceCollection services, string policyName, IConfiguration configuration)
+    public static IServiceCollection AddMutualTlsSupport(this IServiceCollection services, string policyName, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentException.ThrowIfNullOrWhiteSpace(policyName);
         ArgumentNullException.ThrowIfNull(configuration);
 
         _ = services
+            .AddSingleton<IValidateOptions<ClientCertificateValidationOptions>, ValidateClientCertificateValidationOptions>()
             .AddOptions<ClientCertificateValidationOptions>()
             .BindConfiguration(ClientCertificateValidationOptions.DefaultKey);
 
@@ -32,9 +34,9 @@ internal static class IServiceCollectionExtensions
         if (configuration.ValidateClientCertificate())
         {
             _ = services
-            .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
-            .AddCertificate()
-            .AddCertificateCache();
+                .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
+                .AddCertificate()
+                .AddCertificateCache();
 
             _ = services
                 .AddAuthorization(o => o
@@ -45,6 +47,7 @@ internal static class IServiceCollectionExtensions
             if (configuration.UseCustomClientCa())
             {
                 _ = services
+                    .AddSingleton(sp => new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion))
                     .AddSingleton<ConfigureCustomTrustStore>()
                     .AddSingleton<IConfigureOptions<CertificateAuthenticationOptions>>(p => p.GetRequiredService<ConfigureCustomTrustStore>())
                     .AddSingleton<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>(p => p.GetRequiredService<ConfigureCustomTrustStore>());

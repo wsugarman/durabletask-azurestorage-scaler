@@ -23,7 +23,7 @@ builder.Services
     .AddScalerMetadata()
     .AddAzureStorageServiceClients()
     .AddDurableTaskScaleManager()
-    .AddTlsSupport(PolicyName, builder.Configuration)
+    .AddMutualTlsSupport(PolicyName, builder.Configuration)
     .AddGrpc(o =>
     {
         o.Interceptors.Add<ExceptionInterceptor>();
@@ -46,7 +46,11 @@ WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline
 if (app.Configuration.ValidateClientCertificate())
-    _ = app.UseAuthentication();
+{
+    _ = app
+        .UseMiddleware<CaCertificateReaderMiddleware>()
+        .UseAuthentication();
+}
 
 GrpcServiceEndpointConventionBuilder grpcBuilder = app.MapGrpcService<DurableTaskAzureStorageScalerService>();
 if (app.Configuration.ValidateClientCertificate())
