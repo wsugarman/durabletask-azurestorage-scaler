@@ -81,7 +81,7 @@ runs:
           --coverage-output-format cobertura \
           --coverage-settings "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \
           --no-build \
-          --project "./src/Keda.Scaler.DurableTask.AzureStorage.Tests/Keda.Scaler.DurableTask.AzureStorage.Tests.csproj" \
+          --project "./src/Keda.Scaler.DurableTask.AzureStorage.Test/Keda.Scaler.DurableTask.AzureStorage.Test.csproj" \
           --results-directory "${{ inputs.testResultsDirectory }}" \
           --verbosity normal
 
