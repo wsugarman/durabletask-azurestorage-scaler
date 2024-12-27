@@ -35,6 +35,7 @@ jobs:
           azureTenantId: ${{ secrets.AZURE_TENANT_ID }}
           buildConfiguration: Release
           certificateProfileName: ${{ secrets.AZURE_CODESIGNING_PROFILE_NAME }}
+          coverageFileName: coverage.cobertura.xml
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           repositoryUri: ${{ github.server_url }}/${{ github.repository }}
           sign: 'true'
