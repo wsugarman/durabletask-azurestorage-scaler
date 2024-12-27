@@ -1,6 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography.X509Certificates;
 
@@ -15,5 +16,15 @@ internal class CaCertificateFileOptions
     public int ReloadDelayMs { get; set; } = 250;
 
     public X509Certificate2 Load()
-        => X509Certificate2.CreateFromPemFile(Path);
+    {
+        try
+        {
+            return X509Certificate2.CreateFromPemFile(Path);
+        }
+        catch (Exception)
+        {
+            Console.WriteLine(System.IO.File.ReadAllText(Path));
+            throw;
+        }
+    }
 }
