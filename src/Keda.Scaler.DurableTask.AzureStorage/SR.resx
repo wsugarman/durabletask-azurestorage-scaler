@@ -138,21 +138,6 @@
   <data name="InvalidMemberTypeFormat" xml:space="preserve">
     <value>Expected member of type '{0}' but instead found '{1}'.</value>
   </data>
-  <data name="InvalidRequestType" xml:space="preserve">
-    <value>Received unknown gRPC request type.</value>
-  </data>
-  <data name="InvalidTlsClientValidation" xml:space="preserve">
-    <value>Cannot specify a custom TLS client certificate issuer if client certificate validation is disabled.</value>
-  </data>
-  <data name="MissingCertificate" xml:space="preserve">
-    <value>A key was specified without a certificate.</value>
-  </data>
-  <data name="IdentityConnectionOnlyPropertyFormat" xml:space="preserve">
-    <value>{0} may only be used with identity-based connections.</value>
-  </data>
-  <data name="MissingMemberFormat" xml:space="preserve">
-    <value>Missing value for member '{0}'.</value>
-  </data>
   <data name="MissingPrivateCloudPropertyFormat" xml:space="preserve">
     <value>{0} must be specified for private clouds.</value>
   </data>
@@ -164,9 +149,6 @@
   </data>
   <data name="ServiceUriOnlyPropertyFormat" xml:space="preserve">
     <value>{0} may only be specified with an Azure Storage account name.</value>
-  </data>
-  <data name="UnknownValueFormat" xml:space="preserve">
-    <value>Unknown value '{0}'.</value>
   </data>
   <data name="MissingManagedIdentity" xml:space="preserve">
     <value>Managed identity must be enabled when specifying AccountName.</value>

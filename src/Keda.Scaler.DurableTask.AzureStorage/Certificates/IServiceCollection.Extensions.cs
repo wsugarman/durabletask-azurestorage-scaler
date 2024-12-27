@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
+[ExcludeFromCodeCoverage(Justification = "Tested in CI via Helm")]
 internal static class IServiceCollectionExtensions
 {
     public static IServiceCollection AddMutualTlsSupport(this IServiceCollection services, string policyName, IConfiguration configuration)

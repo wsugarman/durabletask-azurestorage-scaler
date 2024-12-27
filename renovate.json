@@ -31,26 +31,20 @@
     {
       "groupName": "gRPC",
       "matchPackageNames": [
-        "Grpc.{/,}**"
-      ]
-    },
-    {
-      "groupName": "MSTest",
-      "matchPackageNames": [
-        "MSTest.{/,}**"
+        "Grpc.**"
       ]
     },
     {
       "groupName": "NSubstitute",
       "matchPackageNames": [
-        "NSubstitute.{/,}**"
+        "NSubstitute**"
       ]
     },
     {
       "groupName": "XUnit",
       "matchPackageNames": [
-        "xunit{/,}**",
-        "MartinCostello.Logging.XUnit{/,}**"
+        "xunit**",
+        "MartinCostello.Logging.XUnit**"
       ]
     }
   ],

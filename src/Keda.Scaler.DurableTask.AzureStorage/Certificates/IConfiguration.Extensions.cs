@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
@@ -21,18 +22,24 @@ internal static class IConfigurationExtensions
 
     public static bool UseCustomClientCa(this IConfiguration configuration)
     {
-        return configuration.ValidateClientCertificate()
-            && !string.IsNullOrWhiteSpace(configuration.GetSection("Kestrel:Client:Certificate:Validation:CertificateAuthority:Path").Value);
+        if (!configuration.IsTlsEnforced())
+            return false;
+
+        ClientCertificateValidationOptions options = configuration.GetCertificateValidationOptions();
+        return options.Enable && options.CertificateAuthority is not null;
     }
 
     public static bool ValidateClientCertificate(this IConfiguration configuration)
-    {
-        if (configuration.IsTlsEnforced())
-        {
-            string? value = configuration.GetSection("Kestrel:Client:Certificate:Validation:Enabled").Value;
-            return string.IsNullOrWhiteSpace(value) || (bool.TryParse(value, out bool enabled) && enabled);
-        }
+        => configuration.IsTlsEnforced() && configuration.GetCertificateValidationOptions().Enable;
 
-        return false;
+    private static ClientCertificateValidationOptions GetCertificateValidationOptions(this IConfiguration configuration)
+    {
+        ClientCertificateValidationOptions options = new();
+        configuration.GetSection(ClientCertificateValidationOptions.DefaultKey).Bind(options);
+        ValidateOptionsResult result = ValidateClientCertificateValidationOptions.Instance.Validate(Options.DefaultName, options);
+        if (result.Failed)
+            throw new OptionsValidationException(Options.DefaultName, typeof(ClientCertificateValidationOptions), result.Failures);
+
+        return options;
     }
 }

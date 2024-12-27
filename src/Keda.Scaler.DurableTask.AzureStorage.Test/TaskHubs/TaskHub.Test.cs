@@ -75,7 +75,21 @@ public sealed class TaskHubTest
     }
 
     [Fact]
-    public async ValueTask GivenMissingControlQueue_WhenGettingUsage_ThenReturnNullMonitor()
+    public async ValueTask GivenNoPartitions_WhenGettingUsage_ThenReturnNoUsage()
+    {
+        _ = _partitionManager.GetPartitionsAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs([]);
+
+        using CancellationTokenSource cts = new();
+        TaskHubQueueUsage actual = await _taskHub.GetUsageAsync(cts.Token);
+
+        _ = await _partitionManager.Received(1).GetPartitionsAsync(cts.Token);
+        _ = _queueServiceClient.DidNotReceiveWithAnyArgs().GetQueueClient(default);
+
+        Assert.Same(TaskHubQueueUsage.None, actual);
+    }
+
+    [Fact]
+    public async ValueTask GivenMissingControlQueue_WhenGettingUsage_ThenReturnNoUsage()
     {
         QueueClient controlQueue0 = Substitute.For<QueueClient>();
         QueueClient controlQueue1 = Substitute.For<QueueClient>();
@@ -104,7 +118,7 @@ public sealed class TaskHubTest
     }
 
     [Fact]
-    public async ValueTask GivenMissingWorkItemQueue_WhenGettingUsage_ThenReturnNullMonitor()
+    public async ValueTask GivenMissingWorkItemQueue_WhenGettingUsage_ThenReturnNoUsage()
     {
         QueueClient controlQueue0 = Substitute.For<QueueClient>();
         QueueClient controlQueue1 = Substitute.For<QueueClient>();

@@ -44,6 +44,14 @@ public class ValidateAzureStorageAccountOptionsTest
             o => o.ConnectionFromEnv = variableName);
     }
 
+    [Fact]
+    public void GivenValidConnectionString_WhenValidatingOptions_ThenReturnSuccess()
+        => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.Connection = "foo=bar");
+
+    [Fact]
+    public void GivenValidAccountName_WhenValidatingOptions_ThenReturnSuccess()
+        => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.AccountName = "unittest");
+
     private void GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(string failureSnippet, Action<ScalerOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
@@ -59,5 +67,20 @@ public class ValidateAzureStorageAccountOptionsTest
 
         string failureMessage = Assert.Single(result.Failures);
         Assert.Contains(failureSnippet, failureMessage, StringComparison.Ordinal);
+    }
+
+    private void GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(Action<ScalerOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        AzureStorageAccountOptions options = new();
+        configure(_scalerOptions);
+        _configure.Configure(options);
+
+        ValidateOptionsResult result = _validate.Validate(Options.DefaultName, options);
+
+        Assert.True(result.Succeeded);
+        Assert.False(result.Failed);
+        Assert.Null(result.Failures);
     }
 }

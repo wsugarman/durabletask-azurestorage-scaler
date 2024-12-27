@@ -30,6 +30,10 @@ public sealed class DurableTaskAzureStorageScalerServiceTest
     }
 
     [Fact]
+    public void GivenNullScalerManager_WhenCreatingService_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
+
+    [Fact]
     public Task GivenNullRequest_WhenGettingMetrics_ThenThrowArgumentNullException()
         => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetrics(null!, new MockServerCallContext()));
 
