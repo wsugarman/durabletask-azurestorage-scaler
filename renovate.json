@@ -30,27 +30,27 @@
     },
     {
       "groupName": "gRPC",
-      "matchPackagePrefixes": [
-        "Grpc."
+      "matchPackageNames": [
+        "Grpc.{/,}**"
       ]
     },
     {
       "groupName": "MSTest",
-      "matchPackagePrefixes": [
-        "MSTest."
+      "matchPackageNames": [
+        "MSTest.{/,}**"
       ]
     },
     {
       "groupName": "NSubstitute",
-      "matchPackagePrefixes": [
-        "NSubstitute."
+      "matchPackageNames": [
+        "NSubstitute.{/,}**"
       ]
     },
     {
       "groupName": "XUnit",
-      "matchPackagePrefixes": [
-        "xunit",
-        "MartinCostello.Logging.XUnit"
+      "matchPackageNames": [
+        "xunit{/,}**",
+        "MartinCostello.Logging.XUnit{/,}**"
       ]
     }
   ],
