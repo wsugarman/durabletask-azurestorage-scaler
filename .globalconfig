@@ -117,7 +117,7 @@ dotnet_diagnostic.CA1511.severity = error # Use ArgumentException throw helper
 dotnet_diagnostic.CA1512.severity = error # Use ArgumentOutOfRangeException throw helper
 dotnet_diagnostic.CA1513.severity = error # Use ObjectDisposedException throw helper
 dotnet_diagnostic.CA1514.severity = error # Avoid redundant length argument
-dotnet_diagnostic.CA1515.severity = error # Consider making public types internal
+dotnet_diagnostic.CA1515.severity = none  # Consider making public types internal
 
 # -----------------------------------
 # Naming rules
@@ -219,7 +219,7 @@ dotnet_diagnostic.IL3003.severity = error # 'RequiresAssemblyFilesAttribute' ann
 
 dotnet_diagnostic.CA2000.severity = error # Dispose objects before losing scope
 dotnet_diagnostic.CA2002.severity = error # Do not lock on objects with weak identity
-dotnet_diagnostic.CA2007.severity = error # Do not directly await a Task
+dotnet_diagnostic.CA2007.severity = none  # Do not directly await a Task
 dotnet_diagnostic.CA2008.severity = error # Do not create tasks without passing a TaskScheduler
 dotnet_diagnostic.CA2009.severity = error # Do not call ToImmutableCollection on an ImmutableCollection value
 dotnet_diagnostic.CA2011.severity = error # Do not assign property within its setter

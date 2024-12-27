@@ -1,5 +1,5 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:8.0.404-cbl-mariner2.0-amd64@sha256:eb8c477171d81c29df578b0010b1004fb5a361677daab3322ac50ea9311aa865 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0.100-azurelinux3.0@sha256:ae97f61dd5e71486ac9631dfb48192deed168b73e3f22fa32d45544eb4262694 AS build
 ARG BUILD_CONFIGURATION=Release
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/example/"]
 COPY ["./tests/Keda.Scaler.Functions.Worker.DurableTask.Examples/", "/example/src/"]
@@ -11,7 +11,7 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" -c $BUILD_CONFIGURATION -warnaserror -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated8.0-mariner@sha256:4896e50c4fea8d35f81c8a74004be9d735892b7739b6167b21ea929c23b12988 AS runtime
+FROM mcr.microsoft.com/azure-functions/dotnet-isolated:4-dotnet-isolated9.0-mariner@sha256:fde1ccb6491d83505a5dcbfd9c7e49b8b2df6d8612abcd46fe24529f77db7d7b AS runtime
 RUN chown -R $APP_UID /azure-functions-host
 ENV ASPNETCORE_URLS=http://+:8080 \
     AzureFunctionsJobHost__FileWatchingEnabled=false \

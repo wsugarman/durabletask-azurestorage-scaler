@@ -120,11 +120,8 @@
   <data name="AmbiguousConnection" xml:space="preserve">
     <value>Multiple Azure Storage connection values may not be specified.</value>
   </data>
-  <data name="AmbiguousCredential" xml:space="preserve">
-    <value>Multiple identity-based connection options may be specified.</value>
-  </data>
-  <data name="EmptyOrWhiteSpace" xml:space="preserve">
-    <value>Value cannot be empty or white space.</value>
+  <data name="EmptyOrWhiteSpaceFormat" xml:space="preserve">
+    <value>{0} cannot be empty or white space.</value>
   </data>
   <data name="FileNotFoundFormat" xml:space="preserve">
     <value>Unable to find the specified file at '{0}'.</value>
@@ -132,11 +129,17 @@
   <data name="InternalServerError" xml:space="preserve">
     <value>There was an internal server error. Please check the logs for details and ensure your deployment is correct.</value>
   </data>
+  <data name="UnknownCloudValueFormat" xml:space="preserve">
+    <value>Unknown cloud '{0}'.</value>
+  </data>
   <data name="InvalidConnectionEnvironmentVariableFormat" xml:space="preserve">
     <value>The connection environment variable '{0}' could not be resolved.</value>
   </data>
   <data name="InvalidMemberTypeFormat" xml:space="preserve">
     <value>Expected member of type '{0}' but instead found '{1}'.</value>
+  </data>
+  <data name="InvalidRequestType" xml:space="preserve">
+    <value>Received unknown gRPC request type.</value>
   </data>
   <data name="InvalidTlsClientValidation" xml:space="preserve">
     <value>Cannot specify a custom TLS client certificate issuer if client certificate validation is disabled.</value>
@@ -144,22 +147,28 @@
   <data name="MissingCertificate" xml:space="preserve">
     <value>A key was specified without a certificate.</value>
   </data>
-  <data name="MissingCredentialOption" xml:space="preserve">
-    <value>Value must be specified with an identity-based connection option like UseWorkloadIdentity.</value>
+  <data name="IdentityConnectionOnlyPropertyFormat" xml:space="preserve">
+    <value>{0} may only be used with identity-based connections.</value>
   </data>
   <data name="MissingMemberFormat" xml:space="preserve">
     <value>Missing value for member '{0}'.</value>
   </data>
-  <data name="MissingPrivateCloudValue" xml:space="preserve">
-    <value>Missing required value for private cloud.</value>
+  <data name="MissingPrivateCloudPropertyFormat" xml:space="preserve">
+    <value>{0} must be specified for private clouds.</value>
   </data>
-  <data name="PrivateCloudOnlyValue" xml:space="preserve">
-    <value>Value may only be specified for private clouds.</value>
+  <data name="PrivateCloudOnlyPropertyFormat" xml:space="preserve">
+    <value>{0} may only be specified for private clouds.</value>
   </data>
-  <data name="ServiceUriOnlyValue" xml:space="preserve">
-    <value>Value may only be specified with an Azure Storage account name.</value>
+  <data name="ScalerMetadataNotFound" xml:space="preserve">
+    <value>Cannot find scaler metadata for current request.</value>
+  </data>
+  <data name="ServiceUriOnlyPropertyFormat" xml:space="preserve">
+    <value>{0} may only be specified with an Azure Storage account name.</value>
   </data>
   <data name="UnknownValueFormat" xml:space="preserve">
     <value>Unknown value '{0}'.</value>
+  </data>
+  <data name="MissingManagedIdentity" xml:space="preserve">
+    <value>Managed identity must be enabled when specifying AccountName.</value>
   </data>
 </root>

@@ -19,7 +19,7 @@ internal sealed class FileExistsAttribute : ValidationAttribute
                 return new ValidationResult(SRF.Format(SRF.InvalidMemberTypeFormat, "string", value.GetType().Name), [validationContext.MemberName!]);
 
             if (!File.Exists(filePath))
-                return new ValidationResult(SRF.Format(SRF.FileNotFoundFormat, filePath), [validationContext.MemberName!]);
+                return new ValidationResult(SRF.Format(SRF.FileNotFound, filePath), [validationContext.MemberName!]);
         }
 
         return ValidationResult.Success;

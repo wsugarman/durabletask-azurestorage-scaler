@@ -2,17 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
-using Google.Protobuf.Collections;
 using Grpc.Core;
-using Keda.Scaler.DurableTask.AzureStorage.Accounts;
-using Keda.Scaler.DurableTask.AzureStorage.Protobuf;
-using Keda.Scaler.DurableTask.AzureStorage.TaskHub;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 
@@ -21,51 +13,19 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Web;
 /// </summary>
 public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScalerBase
 {
-    // Let R = the recommended number of workers
-    //     A = the number of activity work items
-    //     O = the number of orchestration work items
-    //     M = the user-specified maximum activity work item count per worker
-    //     N = the number of orchestration partitions per worker
-    //     P = P/1 = O/N = the optimal number of workers for the orchestrations
-    //
-    // Then R = A/M + O/N
-    //        = A/M + P/1
-    //        = (A*1 + P*M)/(M*1)
-    //        = (A + P*M)/M
-    //
-    // From the HPA definition, the computation of targetAverageValue uses the following formulua:
-    // (See https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details)
-    // Let T = the target metric
-    //     V = the metric value
-    //     D = the desired number of workers
-    //
-    // Then D = ceil[V/T] = R
-    // Therefore V/T = (A + P*M)/M
-    // And in turn V = A + P*M
-    //             T = M
-
-    private readonly IServiceProvider _serviceProvider;
-    private readonly AzureStorageTaskHubClient _taskHubClient;
-    private readonly IOrchestrationAllocator _partitionAllocator;
-    private readonly ILogger _logger;
-
-    internal const string MetricName = "TaskHubScale";
-
-    private static readonly ValidateScalerMetadata MetadataValidator = new();
+    private readonly DurableTaskScaleManager _scaleManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DurableTaskAzureStorageScalerService"/> class
     /// with the given service container.
     /// </summary>
-    /// <param name="serviceProvider">An <see cref="IServiceProvider"/> whose services are used to determine the necessary scale.</param>
-    /// <exception cref="ArgumentNullException"><paramref name="serviceProvider"/> is <see langword="null"/>.</exception>
-    public DurableTaskAzureStorageScalerService(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _taskHubClient = _serviceProvider.GetRequiredService<AzureStorageTaskHubClient>();
-        _partitionAllocator = _serviceProvider.GetRequiredService<IOrchestrationAllocator>();
-        _logger = _serviceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(LogCategories.Default);
-    }
+    /// <param name="scaleManager">The scale manager for determining how to scale the workers.</param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="scaleManager"/> is <see langword="null"/>.
+    /// </exception>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0290:Use primary constructor", Justification = "Preserve separate XML doc for class and ctor.")]
+    public DurableTaskAzureStorageScalerService(DurableTaskScaleManager scaleManager)
+        => _scaleManager = scaleManager ?? throw new ArgumentNullException(nameof(scaleManager));
 
     /// <summary>
     /// Asynchronously returns the metric values measured by the KEDA external scaler.
@@ -84,28 +44,12 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(context);
 
-        ScalerMetadata metadata = ParseScalerMetadata(request.ScaledObjectRef.ScalerMetadata);
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
-
-        ITaskHubQueueMonitor monitor = await _taskHubClient
-            .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
-            .ConfigureAwait(false);
-
-        TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
-        int workerCount = _partitionAllocator.GetWorkerCount(usage.ControlQueueMessages, metadata.MaxOrchestrationsPerWorker);
-        long metricValue = usage.WorkItemQueueMessages + (workerCount * metadata.MaxActivitiesPerWorker);
-
-        _logger.ComputedScalerMetricValue(metadata.TaskHubName, metricValue);
         return new GetMetricsResponse
         {
             MetricValues =
             {
-                new MetricValue
-                {
-                    MetricName = MetricName,
-                    MetricValue_ = metricValue,
-                },
-            },
+                await _scaleManager.GetKedaMetricValueAsync(context.CancellationToken)
+            }
         };
     }
 
@@ -126,21 +70,13 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(context);
 
-        ScalerMetadata metadata = ParseScalerMetadata(request.ScalerMetadata);
-
-        _logger.ComputedScalerMetricTarget(metadata.TaskHubName, metadata.MaxActivitiesPerWorker);
-        return Task.FromResult(
-            new GetMetricSpecResponse
+        return Task.FromResult(new GetMetricSpecResponse
+        {
+            MetricSpecs =
             {
-                MetricSpecs =
-                {
-                    new MetricSpec
-                    {
-                        MetricName = MetricName,
-                        TargetSize = metadata.MaxActivitiesPerWorker,
-                    },
-                },
-            });
+                _scaleManager.KedaMetricSpec,
+            }
+        });
     }
 
     /// <summary>
@@ -162,38 +98,9 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(context);
 
-        ScalerMetadata metadata = ParseScalerMetadata(request.ScalerMetadata);
-        AzureStorageAccountInfo accountInfo = metadata.GetAccountInfo();
-
-        ITaskHubQueueMonitor monitor = await _taskHubClient
-            .GetMonitorAsync(accountInfo, metadata.TaskHubName, context.CancellationToken)
-            .ConfigureAwait(false);
-
-        TaskHubQueueUsage usage = await monitor.GetUsageAsync(context.CancellationToken).ConfigureAwait(false);
-
-        if (usage.HasActivity)
+        return new IsActiveResponse
         {
-            _logger.DetectedActiveTaskHub(metadata.TaskHubName);
-            return new IsActiveResponse { Result = true };
-        }
-        else
-        {
-            _logger.DetectedInactiveTaskHub(metadata.TaskHubName);
-            return new IsActiveResponse { Result = false };
-        }
-    }
-
-    private static ScalerMetadata ParseScalerMetadata(MapField<string, string> mapField)
-    {
-        ArgumentNullException.ThrowIfNull(mapField);
-
-        ScalerMetadata metadata = new();
-        mapField.ToConfiguration().Bind(metadata);
-
-        ValidateOptionsResult result = MetadataValidator.Validate(null, metadata);
-        if (result.Failed)
-            throw new ValidationException(result.FailureMessage);
-
-        return metadata;
+            Result = await _scaleManager.IsActiveAsync(context.CancellationToken),
+        };
     }
 }

@@ -25,7 +25,7 @@ internal sealed class ExceptionInterceptor(ILoggerFactory loggerFactory) : Inter
 
         try
         {
-            return await continuation(request, context).ConfigureAwait(false);
+            return await continuation(request, context);
         }
         catch (ValidationException v)
         {
