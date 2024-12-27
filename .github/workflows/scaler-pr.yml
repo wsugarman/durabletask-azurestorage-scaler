@@ -26,6 +26,7 @@ jobs:
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
           buildConfiguration: Release
+          coverageFileName: coverage.cobertura.xml
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           sign: 'false'
           testResultsDirectory: ${{ runner.temp }}/TestResults
@@ -34,7 +35,7 @@ jobs:
         uses: ./.github/actions/code-coverage
         with:
           codecovToken: ${{ secrets.CODECOV_TOKEN }}
-          reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
+          reportPath: ${{ runner.temp }}/TestResults/coverage.cobertura.xml
 
       - name: Build Docker Image
         uses: ./.github/actions/docker-build
