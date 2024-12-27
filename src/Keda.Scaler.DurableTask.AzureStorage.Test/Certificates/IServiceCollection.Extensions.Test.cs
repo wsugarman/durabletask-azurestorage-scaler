@@ -3,6 +3,7 @@
 
 using System;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using Keda.Scaler.DurableTask.AzureStorage.Certificates;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Certificate;
@@ -59,8 +60,7 @@ public class IServiceCollectionExtensionsTest
             .AddInMemoryCollection(
             [
                 new("Kestrel:Certificates:Default:Path", "/example/cert.pem"),
-                new("Kestrel:Client:Certificate:Validation:CertificateAuthority:Path", null),
-                new("Kestrel:Client:Certificate:Validation:Enabled", "true"),
+                new($"{ClientCertificateValidationOptions.DefaultKey}:{nameof(ClientCertificateValidationOptions.Enable)}", "true"),
             ])
             .Build();
 
@@ -85,8 +85,8 @@ public class IServiceCollectionExtensionsTest
             .AddInMemoryCollection(
             [
                 new("Kestrel:Certificates:Default:Path", "/example/cert.pem"),
-                new("Kestrel:Client:Certificate:Validation:CertificateAuthority:Path", "/example/ca.crt"),
-                new("Kestrel:Client:Certificate:Validation:Enabled", "true"),
+                new($"{ClientCertificateValidationOptions.DefaultKey}:{nameof(ClientCertificateValidationOptions.CertificateAuthority)}:{nameof(CaCertificateFileOptions.Path)}", "/example/ca.crt"),
+                new($"{ClientCertificateValidationOptions.DefaultKey}:{nameof(ClientCertificateValidationOptions.Enable)}", "true"),
             ])
             .Build();
 
@@ -108,5 +108,21 @@ public class IServiceCollectionExtensionsTest
         actual = Assert.Single(services, s => s.ServiceType == typeof(ConfigureCustomTrustStore));
         Assert.Equal(typeof(ConfigureCustomTrustStore), actual.ImplementationType);
         Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
+    }
+
+    [Fact]
+    public void GivenUserSpecifiedRevocationMode_WhenAddingMutualTlsSupport_ThenSetRevocationMode()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+            .AddInMemoryCollection([new($"{ClientCertificateValidationOptions.DefaultKey}:{nameof(ClientCertificateValidationOptions.RevocationMode)}", nameof(X509RevocationMode.NoCheck))])
+            .Build();
+
+        IServiceProvider serviceProvider = new ServiceCollection()
+            .AddSingleton(config)
+            .AddMutualTlsSupport("default", config)
+            .BuildServiceProvider();
+
+        IOptionsSnapshot<CertificateAuthenticationOptions> options = serviceProvider.GetRequiredService<IOptionsSnapshot<CertificateAuthenticationOptions>>();
+        Assert.Equal(X509RevocationMode.NoCheck, options.Get(CertificateAuthenticationDefaults.AuthenticationScheme).RevocationMode);
     }
 }

@@ -331,14 +331,23 @@ runs:
 
         set -e
 
+    - name: Build Integration Test
+      shell: bash
+      run: |
+        dotnet build "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
+          --configuration "${{ inputs.buildConfiguration }}" \
+          "--property:ContinuousIntegrationBuild=true" \
+          -warnaserror
+
     - name: Test Scaler
       shell: bash
       run: |
         kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 > /dev/null &
-        dotnet test "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
-          -c "${{ inputs.buildConfiguration }}" \
-          -p:ContinuousIntegrationBuild=true \
-          -warnaserror
+        dotnet run \
+          --configuration "${{ inputs.buildConfiguration }}" \
+          --no-build \
+          --project "./tests/Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" \
+          --verbosity normal
       env:
         DurableTask__ConnectionName: DurableTask:ConnectionString
         DurableTask__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;'

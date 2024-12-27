@@ -88,15 +88,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0} may only be used with identity-based connections..
-        /// </summary>
-        internal static string IdentityConnectionOnlyPropertyFormat {
-            get {
-                return ResourceManager.GetString("IdentityConnectionOnlyPropertyFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to There was an internal server error. Please check the logs for details and ensure your deployment is correct..
         /// </summary>
         internal static string InternalServerError {
@@ -124,47 +115,11 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Received unknown gRPC request type..
-        /// </summary>
-        internal static string InvalidRequestType {
-            get {
-                return ResourceManager.GetString("InvalidRequestType", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Cannot specify a custom TLS client certificate issuer if client certificate validation is disabled..
-        /// </summary>
-        internal static string InvalidTlsClientValidation {
-            get {
-                return ResourceManager.GetString("InvalidTlsClientValidation", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to A key was specified without a certificate..
-        /// </summary>
-        internal static string MissingCertificate {
-            get {
-                return ResourceManager.GetString("MissingCertificate", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Managed identity must be enabled when specifying AccountName..
         /// </summary>
         internal static string MissingManagedIdentity {
             get {
                 return ResourceManager.GetString("MissingManagedIdentity", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Missing value for member &apos;{0}&apos;..
-        /// </summary>
-        internal static string MissingMemberFormat {
-            get {
-                return ResourceManager.GetString("MissingMemberFormat", resourceCulture);
             }
         }
         
@@ -210,15 +165,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         internal static string UnknownCloudValueFormat {
             get {
                 return ResourceManager.GetString("UnknownCloudValueFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Unknown value &apos;{0}&apos;..
-        /// </summary>
-        internal static string UnknownValueFormat {
-            get {
-                return ResourceManager.GetString("UnknownValueFormat", resourceCulture);
             }
         }
     }

@@ -231,6 +231,28 @@ public class ValidateScalerOptionsTest
             });
     }
 
+    [Fact]
+    public void GivenValidConnectionString_WhenValidatingOptions_ThenReturnSuccess()
+        => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.Connection = "foo=bar");
+
+    [Fact]
+    public void GivenValidConnectionStringVariable_WhenValidatingOptions_ThenReturnSuccess()
+    {
+        string key = Guid.NewGuid().ToString("N");
+        using IDisposable connectionVariable = TestEnvironment.SetVariable(key, "foo=bar");
+        GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.ConnectionFromEnv = key);
+    }
+
+    [Fact]
+    public void GivenValidAccountName_WhenValidatingOptions_ThenReturnSuccess()
+    {
+        GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o =>
+        {
+            o.AccountName = "unittest";
+            o.UseManagedIdentity = true;
+        });
+    }
+
     private void GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(string failureSnippet, Action<ScalerOptions> configure)
     {
         ArgumentNullException.ThrowIfNull(configure);
@@ -245,5 +267,19 @@ public class ValidateScalerOptionsTest
 
         string failureMessage = Assert.Single(result.Failures);
         Assert.Contains(failureSnippet, failureMessage, StringComparison.Ordinal);
+    }
+
+    private void GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(Action<ScalerOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        ScalerOptions options = new();
+        configure(options);
+
+        ValidateOptionsResult result = _validate.Validate(Options.DefaultName, options);
+
+        Assert.True(result.Succeeded);
+        Assert.False(result.Failed);
+        Assert.Null(result.Failures);
     }
 }

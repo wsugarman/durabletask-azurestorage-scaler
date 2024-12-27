@@ -1,34 +1,27 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
-using System;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
-public sealed class OptimalDurableTaskScaleManagerTest : IDisposable
+public sealed class OptimalDurableTaskScaleManagerTest
 {
     private readonly ITaskHub _taskHub = Substitute.For<ITaskHub>();
     private readonly TaskHubOptions _options = new() { TaskHubName = "UnitTest" };
-    private readonly ILoggerFactory _loggerFactory;
     private readonly MockOptimalScaleManager _scaleManager;
 
-    public OptimalDurableTaskScaleManagerTest(ITestOutputHelper outputHelper)
+    public OptimalDurableTaskScaleManagerTest()
     {
         IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = _optionsSnapshot.Get(default).Returns(_options);
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-        _scaleManager = new MockOptimalScaleManager(_taskHub, _optionsSnapshot, _loggerFactory);
+        _scaleManager = new MockOptimalScaleManager(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
     }
-
-    public void Dispose()
-        => _loggerFactory.Dispose();
 
     [Theory]
     [InlineData(0, 3)]

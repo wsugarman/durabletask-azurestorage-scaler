@@ -8,6 +8,7 @@ using System.Threading;
 using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
 
@@ -17,6 +18,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
 {
     private readonly CaCertificateFileOptions _options;
     private readonly ReaderWriterLockSlim _certificateLock;
+    private readonly ILogger _logger;
     private readonly PhysicalFileProvider _fileProvider;
     private readonly IDisposable _changeTokenRegistration;
     private X509Certificate2Collection _certificates;
@@ -25,13 +27,15 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
     public string? Name => CertificateAuthenticationDefaults.AuthenticationScheme;
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Certificate disposed in collection.")]
-    public ConfigureCustomTrustStore(IOptions<ClientCertificateValidationOptions> options, ReaderWriterLockSlim certificateLock)
+    public ConfigureCustomTrustStore(IOptions<ClientCertificateValidationOptions> options, ReaderWriterLockSlim certificateLock, ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(options?.Value?.CertificateAuthority, nameof(options));
         ArgumentNullException.ThrowIfNull(certificateLock);
+        ArgumentNullException.ThrowIfNull(loggerFactory);
 
         _options = options.Value.CertificateAuthority;
         _certificateLock = certificateLock;
+        _logger = loggerFactory.CreateLogger(LogCategories.Security);
         _certificates = [LoadPemFile(_options.Path)];
         _fileProvider = new PhysicalFileProvider(Path.GetDirectoryName(_options.Path)!);
         _reloadToken = new ConfigurationReloadToken();
@@ -73,6 +77,8 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
             _certificates = [certificate];
             ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _reloadToken, new ConfigurationReloadToken());
             previousToken.OnReload();
+
+            _logger.ReloadedCustomCertificateAuthority(_options.Path, certificate.Thumbprint);
         }
         finally
         {

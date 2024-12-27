@@ -7,27 +7,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Interceptors;
 
-public sealed class ExceptionInterceptorTest : IDisposable
+public sealed class ExceptionInterceptorTest
 {
-    private readonly ILoggerFactory _loggerFactory;
-    private readonly ExceptionInterceptor _interceptor;
-
-    public ExceptionInterceptorTest(ITestOutputHelper outputHelper)
-    {
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-        _interceptor = new(_loggerFactory);
-    }
-
-    public void Dispose()
-        => _loggerFactory.Dispose();
+    private readonly ExceptionInterceptor _interceptor = new(NullLoggerFactory.Instance);
 
     [Fact]
     public void GivenNullLoggerFactory_WhenCreatingInterceptor_ThenThrowArgumentNullException()
@@ -50,7 +39,7 @@ public sealed class ExceptionInterceptorTest : IDisposable
     [InlineData(StatusCode.Internal, typeof(OperationCanceledException), false)]
     [InlineData(StatusCode.Internal, typeof(NullReferenceException), false)]
     [InlineData(StatusCode.Internal, typeof(OutOfMemoryException), true)]
-    public async Task GivenCaughtException_WhenHandlingUnaryRequest_ThenThrowRpcException(StatusCode expected, Type exceptionType, bool canceled)
+    public async ValueTask GivenCaughtException_WhenHandlingUnaryRequest_ThenThrowRpcException(StatusCode expected, Type exceptionType, bool canceled)
     {
         using CancellationTokenSource tokenSource = new();
         if (canceled)
@@ -67,7 +56,7 @@ public sealed class ExceptionInterceptorTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenNoException_WhenHandlingUnaryRequest_ThenReturnContinuation()
+    public async ValueTask GivenNoException_WhenHandlingUnaryRequest_ThenReturnContinuation()
     {
         Request request = new();
         Response response = new();

@@ -6,35 +6,32 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 
-public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
+public sealed class DurableTaskAzureStorageScalerServiceTest
 {
     private readonly ITaskHub _taskHub = Substitute.For<ITaskHub>();
     private readonly TaskHubOptions _options = new() { TaskHubName = "UnitTest" };
-    private readonly ILoggerFactory _loggerFactory;
     private readonly DurableTaskScaleManager _scaleManager;
     private readonly DurableTaskAzureStorageScalerService _service;
 
-    public DurableTaskAzureStorageScalerServiceTest(ITestOutputHelper outputHelper)
+    public DurableTaskAzureStorageScalerServiceTest()
     {
         IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = _optionsSnapshot.Get(default).Returns(_options);
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-        _scaleManager = Substitute.For<DurableTaskScaleManager>(_taskHub, _optionsSnapshot, _loggerFactory);
+        _scaleManager = Substitute.For<DurableTaskScaleManager>(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
         _service = new(_scaleManager);
     }
 
-    public void Dispose()
-        => _loggerFactory.Dispose();
+    [Fact]
+    public void GivenNullScalerManager_WhenCreatingService_ThenThrowArgumentNullException()
+        => Assert.Throws<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
 
     [Fact]
     public Task GivenNullRequest_WhenGettingMetrics_ThenThrowArgumentNullException()
@@ -45,7 +42,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetrics(new GetMetricsRequest(), null!));
 
     [Fact]
-    public async Task GivenRequest_WhenGettingMetrics_ThenReturnMetricValues()
+    public async ValueTask GivenRequest_WhenGettingMetrics_ThenReturnMetricValues()
     {
         MetricValue expected = new()
         {
@@ -53,7 +50,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
             MetricValue_ = 42,
         };
 
-        _ = _scaleManager.GetKedaMetricValueAsync(default).ReturnsForAnyArgs(expected);
+        _ = _scaleManager.GetKedaMetricValueAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(expected);
 
         using CancellationTokenSource cts = new();
         GetMetricsResponse actual = await _service.GetMetrics(new GetMetricsRequest(), new MockServerCallContext(cts.Token));
@@ -71,7 +68,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetricSpec(new ScaledObjectRef(), null!));
 
     [Fact]
-    public async Task GivenRequest_WhenGettingMetricSpec_ThenReturnMetricTarget()
+    public async ValueTask GivenRequest_WhenGettingMetricSpec_ThenReturnMetricTarget()
     {
         MetricSpec expected = new()
         {
@@ -97,9 +94,9 @@ public sealed class DurableTaskAzureStorageScalerServiceTest : IDisposable
         => Assert.ThrowsAsync<ArgumentNullException>(() => _service.IsActive(new ScaledObjectRef(), null!));
 
     [Fact]
-    public async Task GivenRequest_WhenCheckingIfActive_ThenReturnResponse()
+    public async ValueTask GivenRequest_WhenCheckingIfActive_ThenReturnResponse()
     {
-        _ = _scaleManager.IsActiveAsync(default).ReturnsForAnyArgs(true);
+        _ = _scaleManager.IsActiveAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(true);
 
         using CancellationTokenSource cts = new();
         IsActiveResponse actual = await _service.IsActive(new ScaledObjectRef(), new MockServerCallContext(cts.Token));

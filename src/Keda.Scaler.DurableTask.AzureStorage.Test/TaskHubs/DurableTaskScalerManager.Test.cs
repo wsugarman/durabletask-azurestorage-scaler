@@ -5,26 +5,24 @@ using System;
 using System.Threading.Tasks;
 using System.Threading;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using Xunit;
-using Xunit.Abstractions;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
-public sealed class DurableTaskScalerManagerTest : IDisposable
+public sealed class DurableTaskScalerManagerTest
 {
     private readonly ITaskHub _taskHub = Substitute.For<ITaskHub>();
     private readonly IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
-    private readonly ILoggerFactory _loggerFactory;
     private readonly MockScaleManager _scaleManager;
 
     private const string TaskHubName = "UnitTest";
     private const int MaxActivitiesPerWorker = 5;
 
-    public DurableTaskScalerManagerTest(ITestOutputHelper outputHelper)
+    public DurableTaskScalerManagerTest()
     {
         TaskHubOptions options = new()
         {
@@ -33,25 +31,21 @@ public sealed class DurableTaskScalerManagerTest : IDisposable
         };
 
         _ = _optionsSnapshot.Get(default).Returns(options);
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-        _scaleManager = Substitute.For<MockScaleManager>(_taskHub, _optionsSnapshot, _loggerFactory);
+        _scaleManager = Substitute.For<MockScaleManager>(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
     }
-
-    public void Dispose()
-        => _loggerFactory.Dispose();
 
     [Fact]
     public void GivenNullTaskHub_WhenCreatingScalerManager_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(null!, _optionsSnapshot, _loggerFactory));
+        => Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(null!, _optionsSnapshot, NullLoggerFactory.Instance));
 
     [Fact]
     public void GivenNullOptionsSnapshot_WhenCreatingScalerManager_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, null!, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, null!, NullLoggerFactory.Instance));
 
         IOptionsSnapshot<TaskHubOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(TaskHubOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, nullSnapshot, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new ExampleDurableTaskScaleManager(_taskHub, nullSnapshot, NullLoggerFactory.Instance));
     }
 
     [Fact]
@@ -73,9 +67,9 @@ public sealed class DurableTaskScalerManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenNoActivity_WhenGettingMetricValues_ThenReturnZero()
+    public async ValueTask GivenNoActivity_WhenGettingMetricValues_ThenReturnZero()
     {
-        _ = _taskHub.GetUsageAsync(default).ReturnsForAnyArgs(TaskHubQueueUsage.None);
+        _ = _taskHub.GetUsageAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(TaskHubQueueUsage.None);
 
         using CancellationTokenSource cts = new();
         MetricValue actual = await _scaleManager.GetKedaMetricValueAsync(cts.Token);
@@ -87,10 +81,10 @@ public sealed class DurableTaskScalerManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenActivity_WhenGettingMetricValues_ThenReturnDerivedValue()
+    public async ValueTask GivenActivity_WhenGettingMetricValues_ThenReturnDerivedValue()
     {
         TaskHubQueueUsage usage = new([1, 2, 3, 4], 2);
-        _ = _taskHub.GetUsageAsync(default).ReturnsForAnyArgs(usage);
+        _ = _taskHub.GetUsageAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(usage);
         _ = _scaleManager.GetRequiredWorkerCount(default!).ReturnsForAnyArgs(3);
 
         using CancellationTokenSource cts = new();
@@ -103,9 +97,9 @@ public sealed class DurableTaskScalerManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenNoActivity_WhenCheckingIfActive_ThenReturnFalse()
+    public async ValueTask GivenNoActivity_WhenCheckingIfActive_ThenReturnFalse()
     {
-        _ = _taskHub.GetUsageAsync(default).ReturnsForAnyArgs(TaskHubQueueUsage.None);
+        _ = _taskHub.GetUsageAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(TaskHubQueueUsage.None);
 
         using CancellationTokenSource cts = new();
         bool actual = await _scaleManager.IsActiveAsync(cts.Token);
@@ -115,10 +109,10 @@ public sealed class DurableTaskScalerManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenActivity_WhenCheckingIfActive_ThenReturnTrue()
+    public async ValueTask GivenActivity_WhenCheckingIfActive_ThenReturnTrue()
     {
         TaskHubQueueUsage usage = new([1, 2, 3, 4], 2);
-        _ = _taskHub.GetUsageAsync(default).ReturnsForAnyArgs(usage);
+        _ = _taskHub.GetUsageAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(usage);
         _ = _scaleManager.GetRequiredWorkerCount(default!).ReturnsForAnyArgs(3);
 
         using CancellationTokenSource cts = new();

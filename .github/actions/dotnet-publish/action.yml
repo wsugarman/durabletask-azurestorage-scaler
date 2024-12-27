@@ -31,6 +31,10 @@ inputs:
     default: 'https://wcus.codesigning.azure.net/'
     description: The URI of the Azure Code Signing Service.
     required: false
+  coverageFileName:
+    default: coverage.cobertura.xml
+    description: The name of the code coverage file.
+    required: false
   fileVersion:
     description: The scaler assembly's file version.
     required: true
@@ -63,31 +67,31 @@ runs:
       shell: bash
       run: |
         dotnet build "./src/Scaler.sln" \
-          -c "${{ inputs.buildConfiguration }}" \
-          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
+          --configuration "${{ inputs.buildConfiguration }}" \
+          "--property:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
           -warnaserror
 
     - name: Test
       shell: bash
       run: |
-        export DOTNET_USE_POLLING_FILE_WATCHER=true && dotnet test "./src/Scaler.sln" \
-          -c "${{ inputs.buildConfiguration }}" \
-          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
-          -warnaserror \
+        dotnet run \
+          --configuration "${{ inputs.buildConfiguration }}" \
+          --coverage \
+          --coverage-output "${{ inputs.coverageFileName }}" \
+          --coverage-output-format cobertura \
+          --coverage-settings "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \
           --no-build \
+          --project "./src/Keda.Scaler.DurableTask.AzureStorage.Test/Keda.Scaler.DurableTask.AzureStorage.Test.csproj" \
           --results-directory "${{ inputs.testResultsDirectory }}" \
-          --collect "XPlat Code Coverage" \
-          -s "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings"
+          --verbosity normal
 
     - name: Publish
       shell: bash
       run: |
         dotnet publish "./src/Keda.Scaler.DurableTask.AzureStorage/Keda.Scaler.DurableTask.AzureStorage.csproj" \
-          -c "${{ inputs.buildConfiguration }}" \
-          "-p:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
-          -warnaserror \
+          --configuration "${{ inputs.buildConfiguration }}" \
           --no-build \
-          -o "${{ runner.temp }}/app"
+          --output "${{ runner.temp }}/app"
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: az login

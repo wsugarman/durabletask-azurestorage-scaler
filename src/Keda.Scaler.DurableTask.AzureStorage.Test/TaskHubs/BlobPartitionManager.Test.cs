@@ -13,27 +13,25 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
-public sealed class BlobPartitionManagerTest : IDisposable
+public sealed class BlobPartitionManagerTest
 {
     private readonly BlobClient _blobClient = Substitute.For<BlobClient>();
     private readonly IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
-    private readonly ILoggerFactory _loggerFactory;
     private readonly BlobPartitionManager _partitionManager;
 
     private const string TaskHubName = "UnitTest";
     private static readonly Func<BinaryData, BlobDownloadResult> BlobDownloadResultFactory = CreateBlobDownloadResultFactory();
 
-    public BlobPartitionManagerTest(ITestOutputHelper outputHelper)
+    public BlobPartitionManagerTest()
     {
         BlobServiceClient blobServiceClient = Substitute.For<BlobServiceClient>();
         BlobContainerClient blobContainerClient = Substitute.For<BlobContainerClient>();
@@ -41,26 +39,22 @@ public sealed class BlobPartitionManagerTest : IDisposable
         _ = blobServiceClient.GetBlobContainerClient(default!).ReturnsForAnyArgs(blobContainerClient);
         _ = blobContainerClient.GetBlobClient(default!).ReturnsForAnyArgs(_blobClient);
         _ = _optionsSnapshot.Get(default).Returns(new TaskHubOptions { TaskHubName = TaskHubName });
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-        _partitionManager = new(blobServiceClient, _optionsSnapshot, _loggerFactory);
+        _partitionManager = new(blobServiceClient, _optionsSnapshot, NullLoggerFactory.Instance);
     }
-
-    public void Dispose()
-        => _loggerFactory.Dispose();
 
     [Fact]
     public void GivenNullClient_WhenCreatingBlobPartitionManager_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new BlobPartitionManager(null!, _optionsSnapshot, _loggerFactory));
+        => Assert.Throws<ArgumentNullException>(() => new BlobPartitionManager(null!, _optionsSnapshot, NullLoggerFactory.Instance));
 
     [Fact]
     public void GivenNullOptionsSnapshot_WhenCreatingBlobPartitionManager_ThenThrowArgumentNullException()
     {
         BlobServiceClient serviceClient = Substitute.For<BlobServiceClient>();
-        _ = Assert.Throws<ArgumentNullException>(() => new BlobPartitionManager(serviceClient, null!, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new BlobPartitionManager(serviceClient, null!, NullLoggerFactory.Instance));
 
         IOptionsSnapshot<TaskHubOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(TaskHubOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => new BlobPartitionManager(serviceClient, nullSnapshot, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new BlobPartitionManager(serviceClient, nullSnapshot, NullLoggerFactory.Instance));
     }
 
     [Fact]
@@ -75,11 +69,11 @@ public sealed class BlobPartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenNullTaskHubMetadata_WhenGettingPartitions_ThenReturnEmptyList()
+    public async ValueTask GivenNullTaskHubMetadata_WhenGettingPartitions_ThenReturnEmptyList()
     {
         BlobDownloadResult downloadResult = BlobDownloadResultFactory(BinaryData.FromString("null"));
         Response<BlobDownloadResult> response = Response.FromValue(downloadResult, Substitute.For<Response>());
-        _ = _blobClient.DownloadContentAsync(default).ReturnsForAnyArgs(Task.FromResult(response));
+        _ = _blobClient.DownloadContentAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(Task.FromResult(response));
 
         using CancellationTokenSource cts = new();
         IReadOnlyList<string> actual = await _partitionManager.GetPartitionsAsync(cts.Token);
@@ -89,10 +83,10 @@ public sealed class BlobPartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenMissingTaskHubMetadata_WhenGettingPartitions_ThenReturnEmptyList()
+    public async ValueTask GivenMissingTaskHubMetadata_WhenGettingPartitions_ThenReturnEmptyList()
     {
         _ = _blobClient
-            .DownloadContentAsync(default)
+            .DownloadContentAsync(TestContext.Current.CancellationToken)
             .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Blob not found"));
 
         using CancellationTokenSource cts = new();
@@ -103,12 +97,12 @@ public sealed class BlobPartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenUnexpectedBlobError_WhenGettingPartitions_ThenReturnEmptyList()
+    public async ValueTask GivenUnexpectedBlobError_WhenGettingPartitions_ThenReturnEmptyList()
     {
         RequestFailedException expected = new((int)HttpStatusCode.Unauthorized, "Unauthorized");
 
         _ = _blobClient
-            .DownloadContentAsync(default)
+            .DownloadContentAsync(TestContext.Current.CancellationToken)
             .ThrowsAsyncForAnyArgs(expected);
 
         using CancellationTokenSource cts = new();
@@ -119,7 +113,7 @@ public sealed class BlobPartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenValidTaskHub_WhenGettingPartitions_ThenReturnPartitions()
+    public async ValueTask GivenValidTaskHub_WhenGettingPartitions_ThenReturnPartitions()
     {
         string json = JsonSerializer.Serialize(new
         {
@@ -130,7 +124,7 @@ public sealed class BlobPartitionManagerTest : IDisposable
 
         BlobDownloadResult downloadResult = BlobDownloadResultFactory(BinaryData.FromString(json));
         Response<BlobDownloadResult> response = Response.FromValue(downloadResult, Substitute.For<Response>());
-        _ = _blobClient.DownloadContentAsync(default).ReturnsForAnyArgs(Task.FromResult(response));
+        _ = _blobClient.DownloadContentAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(Task.FromResult(response));
 
         using CancellationTokenSource cts = new();
         IReadOnlyList<string> actual = await _partitionManager.GetPartitionsAsync(cts.Token);

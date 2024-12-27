@@ -24,7 +24,7 @@ public class CaCertificateReaderMiddlewareTests
         => Assert.Throws<ArgumentNullException>(() => new CaCertificateReaderMiddleware(NextAsync, null!));
 
     [Fact]
-    public async Task GivenNoOtherReaders_WhenInvokingMiddleware_ThenEnterReadLock()
+    public async ValueTask GivenNoOtherReaders_WhenInvokingMiddleware_ThenEnterReadLock()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
 
@@ -36,46 +36,46 @@ public class CaCertificateReaderMiddlewareTests
     }
 
     [Fact]
-    public async Task GivenOtherReader_WhenInvokingMiddleware_ThenEnterReadLock()
+    public async ValueTask GivenOtherReader_WhenInvokingMiddleware_ThenEnterReadLock()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
         using ManualResetEventSlim readEvent = new(initialState: false);
-        using ManualResetEventSlim resetEvent = new(initialState: false);
+        using ManualResetEventSlim middlewareEvent = new(initialState: false);
 
-        DefaultHttpContext context = new();
+        DefaultHttpContext context = new() { RequestAborted = TestContext.Current.CancellationToken };
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
         // Start the reader
-        Task readerTask = ReadAsync(readerWriterLock, readEvent, resetEvent.WaitHandle);
-        readEvent.Wait();
+        Task readerTask = ReadAsync(readerWriterLock, readEvent, middlewareEvent, TestContext.Current.CancellationToken);
+        readEvent.Wait(TestContext.Current.CancellationToken);
 
         await middleware.InvokeAsync(context);
 
-        resetEvent.Set();
+        middlewareEvent.Set();
         await readerTask;
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
     [Fact]
-    public async Task GivenWriter_WhenInvokingMiddleware_ThenWaitForWriter()
+    public async ValueTask GivenWriter_WhenInvokingMiddleware_ThenWaitForWriter()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
         using ManualResetEventSlim writeEvent = new(initialState: false);
-        using ManualResetEventSlim resetEvent = new(initialState: false);
+        using ManualResetEventSlim middlewareEvent = new(initialState: false);
 
-        DefaultHttpContext context = new();
+        DefaultHttpContext context = new() { RequestAborted = TestContext.Current.CancellationToken };
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
         // Start the writer
-        Task writerTask = WriteAsync(readerWriterLock, writeEvent, resetEvent.WaitHandle);
-        writeEvent.Wait();
+        Task writerTask = WriteAsync(readerWriterLock, writeEvent, middlewareEvent, TestContext.Current.CancellationToken);
+        writeEvent.Wait(TestContext.Current.CancellationToken);
 
         // Wait for the middleware to wait on its read
-        Task httpTask = Task.Run(() => middleware.InvokeAsync(context));
+        Task httpTask = Task.Run(() => middleware.InvokeAsync(context), TestContext.Current.CancellationToken);
         while (readerWriterLock.WaitingReadCount is 0)
-            await Task.Delay(100);
+            await Task.Delay(100, TestContext.Current.CancellationToken);
 
-        resetEvent.Set();
+        middlewareEvent.Set();
         await Task.WhenAll(writerTask, httpTask);
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
 
@@ -87,37 +87,39 @@ public class CaCertificateReaderMiddlewareTests
         return Task.CompletedTask;
     }
 
-    private static Task ReadAsync(ReaderWriterLockSlim readerWriterLock, ManualResetEventSlim readEvent, WaitHandle waitHandle)
+    private static Task ReadAsync(ReaderWriterLockSlim readerWriterLock, ManualResetEventSlim readEvent, ManualResetEventSlim continueEvent, CancellationToken cancellationToken)
     {
         return Task.Run(() =>
-        {
-            try
             {
-                readerWriterLock.EnterReadLock();
-                readEvent.Set();
-                Assert.True(waitHandle.WaitOne());
-            }
-            finally
-            {
-                readerWriterLock.ExitReadLock();
-            }
-        });
+                try
+                {
+                    readerWriterLock.EnterReadLock();
+                    readEvent.Set();
+                    continueEvent.Wait(cancellationToken);
+                }
+                finally
+                {
+                    readerWriterLock.ExitReadLock();
+                }
+            },
+            cancellationToken);
     }
 
-    private static Task WriteAsync(ReaderWriterLockSlim readerWriterLock, ManualResetEventSlim writeEvent, WaitHandle waitHandle)
+    private static Task WriteAsync(ReaderWriterLockSlim readerWriterLock, ManualResetEventSlim writeEvent, ManualResetEventSlim continueEvent, CancellationToken cancellationToken)
     {
         return Task.Run(() =>
-        {
-            try
             {
-                readerWriterLock.EnterWriteLock();
-                writeEvent.Set();
-                Assert.True(waitHandle.WaitOne());
-            }
-            finally
-            {
-                readerWriterLock.ExitWriteLock();
-            }
-        });
+                try
+                {
+                    readerWriterLock.EnterWriteLock();
+                    writeEvent.Set();
+                    continueEvent.Wait(cancellationToken);
+                }
+                finally
+                {
+                    readerWriterLock.ExitWriteLock();
+                }
+            },
+            cancellationToken);
     }
 }
