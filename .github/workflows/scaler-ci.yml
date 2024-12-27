@@ -45,7 +45,7 @@ jobs:
         uses: ./.github/actions/code-coverage
         with:
           codecovToken: ${{ secrets.CODECOV_TOKEN }}
-          reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
+          reportPath: ${{ runner.temp }}/TestResults/coverage.cobertura.xml
 
   validate:
     name: Validate
