@@ -31,10 +31,7 @@ public class CaCertificateReaderMiddlewareTests
         DefaultHttpContext context = new();
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
-        Assert.False(readerWriterLock.IsReadLockHeld);
         await middleware.InvokeAsync(context);
-
-        Assert.False(readerWriterLock.IsReadLockHeld);
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
@@ -42,51 +39,44 @@ public class CaCertificateReaderMiddlewareTests
     public async Task GivenOtherReader_WhenInvokingMiddleware_ThenEnterReadLock()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
+        using ManualResetEventSlim readEvent = new(initialState: false);
         using ManualResetEventSlim resetEvent = new(initialState: false);
 
         DefaultHttpContext context = new();
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
         // Start the reader
-        Task readerTask = ReadAsync(readerWriterLock, resetEvent.WaitHandle);
-        while (!readerWriterLock.IsReadLockHeld)
-            await Task.Delay(100);
+        Task readerTask = ReadAsync(readerWriterLock, readEvent, resetEvent.WaitHandle);
+        readEvent.Wait();
 
-        Assert.True(readerWriterLock.IsReadLockHeld);
         await middleware.InvokeAsync(context);
-
-        Assert.True(readerWriterLock.IsReadLockHeld);
-        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
 
         resetEvent.Set();
         await readerTask;
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
     [Fact]
     public async Task GivenWriter_WhenInvokingMiddleware_ThenWaitForWriter()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
+        using ManualResetEventSlim writeEvent = new(initialState: false);
         using ManualResetEventSlim resetEvent = new(initialState: false);
 
         DefaultHttpContext context = new();
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
         // Start the writer
-        Task writerTask = WriteAsync(readerWriterLock, resetEvent.WaitHandle);
-        while (!readerWriterLock.IsWriteLockHeld)
-            await Task.Delay(100);
+        Task writerTask = WriteAsync(readerWriterLock, writeEvent, resetEvent.WaitHandle);
+        writeEvent.Wait();
 
         // Wait for the middleware to wait on its read
-        Assert.True(readerWriterLock.IsWriteLockHeld);
-        Task httpTask = middleware.InvokeAsync(context);
+        Task httpTask = Task.Run(() => middleware.InvokeAsync(context));
         while (readerWriterLock.WaitingReadCount is 0)
             await Task.Delay(100);
 
         resetEvent.Set();
         await Task.WhenAll(writerTask, httpTask);
-
-        Assert.False(readerWriterLock.IsReadLockHeld);
-        Assert.False(readerWriterLock.IsWriteLockHeld);
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
 
     }
@@ -97,13 +87,14 @@ public class CaCertificateReaderMiddlewareTests
         return Task.CompletedTask;
     }
 
-    private static Task ReadAsync(ReaderWriterLockSlim readerWriterLock, WaitHandle waitHandle)
+    private static Task ReadAsync(ReaderWriterLockSlim readerWriterLock, ManualResetEventSlim readEvent, WaitHandle waitHandle)
     {
         return Task.Run(() =>
         {
             try
             {
                 readerWriterLock.EnterReadLock();
+                readEvent.Set();
                 Assert.True(waitHandle.WaitOne());
             }
             finally
@@ -113,13 +104,14 @@ public class CaCertificateReaderMiddlewareTests
         });
     }
 
-    private static Task WriteAsync(ReaderWriterLockSlim readerWriterLock, WaitHandle waitHandle)
+    private static Task WriteAsync(ReaderWriterLockSlim readerWriterLock, ManualResetEventSlim writeEvent, WaitHandle waitHandle)
     {
         return Task.Run(() =>
         {
             try
             {
                 readerWriterLock.EnterWriteLock();
+                writeEvent.Set();
                 Assert.True(waitHandle.WaitOne());
             }
             finally

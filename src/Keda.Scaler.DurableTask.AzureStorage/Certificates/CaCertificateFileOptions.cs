@@ -15,5 +15,5 @@ internal class CaCertificateFileOptions
     public int ReloadDelayMs { get; set; } = 250;
 
     public X509Certificate2 Load()
-        => X509CertificateLoader.LoadCertificateFromFile(Path);
+        => X509Certificate2.CreateFromPemFile(Path);
 }

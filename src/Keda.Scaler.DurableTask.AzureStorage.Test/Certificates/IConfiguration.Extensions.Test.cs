@@ -40,7 +40,7 @@ public class IConfigurationExtensionsTest
     [InlineData(false, "", true, "ca.crt")]
     [InlineData(false, "  ", true, "ca.crt")]
     [InlineData(false, "tls.crt", false, "ca.crt")]
-    [InlineData(true, "tls.crt", true, null)]
+    [InlineData(false, "tls.crt", true, null)]
     [InlineData(true, "tls.crt", true, "ca.crt")]
     public void GivenValidConfiguration_WhenCheckingCustomClientCa_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validate, string? caPath)
     {

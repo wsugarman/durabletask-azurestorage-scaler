@@ -46,7 +46,7 @@ public class IServiceCollectionExtensionsTest
         Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
 
         _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureNamedOptions<CertificateAuthenticationOptions>));
+        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>));
         Assert.DoesNotContain(services, s => s.ServiceType == typeof(IAuthenticationService));
         Assert.DoesNotContain(services, s => s.ServiceType == typeof(IAuthorizationService));
         Assert.DoesNotContain(services, s => s.ServiceType == typeof(ConfigureCustomTrustStore));
@@ -71,7 +71,7 @@ public class IServiceCollectionExtensionsTest
         Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
 
         _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureNamedOptions<CertificateAuthenticationOptions>));
+        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>));
         _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthenticationService));
         _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthorizationService));
         _ = Assert.Single(services, s => s.ServiceType == typeof(ICertificateValidationCache));
@@ -85,7 +85,7 @@ public class IServiceCollectionExtensionsTest
             .AddInMemoryCollection(
             [
                 new("Kestrel:Certificates:Default:Path", "/example/cert.pem"),
-                new("Kestrel:Client:Certificate:Validation:CertificateAuthority:Path", null),
+                new("Kestrel:Client:Certificate:Validation:CertificateAuthority:Path", "/example/ca.crt"),
                 new("Kestrel:Client:Certificate:Validation:Enabled", "true"),
             ])
             .Build();
@@ -99,7 +99,7 @@ public class IServiceCollectionExtensionsTest
         Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
 
         _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>));
-        Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureNamedOptions<CertificateAuthenticationOptions>)));
+        Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
         _ = Assert.Single(services, s => s.ServiceType == typeof(IOptionsChangeTokenSource<CertificateAuthenticationOptions>));
         _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthenticationService));
         _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthorizationService));

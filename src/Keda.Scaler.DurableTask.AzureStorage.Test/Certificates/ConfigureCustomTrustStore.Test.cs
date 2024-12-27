@@ -15,9 +15,21 @@ using Microsoft.AspNetCore.Authentication.Certificate;
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Certificates;
 
 [Collection(nameof(CertificateTestCollection))]
-public class ConfigureCustomTrustStoreTest(TestDirectory directory) : IClassFixture<TestDirectory>
+public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 {
-    private readonly TestDirectory _directory = directory;
+    private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+    public Task InitializeAsync()
+    {
+        _ = Directory.CreateDirectory(_testDirectory);
+        return Task.CompletedTask;
+    }
+
+    public Task DisposeAsync()
+    {
+        Directory.Delete(_testDirectory, recursive: true);
+        return Task.CompletedTask;
+    }
 
     [Fact]
     public void GivenNullOptions_WhenCreatingConfigure_ThenThrowArgumentNullException()
@@ -44,11 +56,11 @@ public class ConfigureCustomTrustStoreTest(TestDirectory directory) : IClassFixt
     {
         // Create the certificate and write to disk
         const string CertName = "example.crt";
-        string certPath = Path.Combine(_directory.Path, CertName);
+        string certPath = Path.Combine(_testDirectory, CertName);
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-        await File.WriteAllBytesAsync(certPath, expected.Export(X509ContentType.Pkcs12));
+        await WritePemAsync(expected, key, certPath);
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -71,11 +83,11 @@ public class ConfigureCustomTrustStoreTest(TestDirectory directory) : IClassFixt
     {
         // Create the certificate and write to disk
         const string CertName = "example.crt";
-        string certPath = Path.Combine(_directory.Path, CertName);
+        string certPath = Path.Combine(_testDirectory, CertName);
 
         using RSA key1 = RSA.Create();
         using X509Certificate2 expected1 = key1.CreateSelfSignedCertificate();
-        await File.WriteAllBytesAsync(certPath, expected1.Export(X509ContentType.Pkcs12));
+        await WritePemAsync(expected1, key1, certPath);
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -97,7 +109,7 @@ public class ConfigureCustomTrustStoreTest(TestDirectory directory) : IClassFixt
 
         using RSA key2 = RSA.Create();
         using X509Certificate2 expected2 = key2.CreateSelfSignedCertificate();
-        await File.WriteAllBytesAsync(certPath, expected2.Export(X509ContentType.Pkcs12));
+        await WritePemAsync(expected2, key2, certPath);
 
         // Check for the updated certificate
         do
@@ -108,4 +120,7 @@ public class ConfigureCustomTrustStoreTest(TestDirectory directory) : IClassFixt
 
         Assert.Equal(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
     }
+
+    private static Task WritePemAsync(X509Certificate2 cert, RSA key, string path)
+        => File.WriteAllTextAsync(path, cert.ExportCertificatePem() + Environment.NewLine + key.ExportRSAPrivateKeyPem());
 }

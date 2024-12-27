@@ -19,11 +19,12 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
     private readonly ReaderWriterLockSlim _certificateLock;
     private readonly PhysicalFileProvider _fileProvider;
     private readonly IDisposable _changeTokenRegistration;
-    private X509Certificate2Collection _certificates = [];
-    private ConfigurationReloadToken _reloadToken = new();
+    private X509Certificate2Collection _certificates;
+    private ConfigurationReloadToken _reloadToken;
 
     public string? Name => CertificateAuthenticationDefaults.AuthenticationScheme;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Certificate disposed in collection.")]
     public ConfigureCustomTrustStore(IOptions<ClientCertificateValidationOptions> options, ReaderWriterLockSlim certificateLock)
     {
         ArgumentNullException.ThrowIfNull(options?.Value?.CertificateAuthority, nameof(options));
@@ -33,6 +34,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
         _certificateLock = certificateLock;
         _certificates = [_options.Load()];
         _fileProvider = new PhysicalFileProvider(Path.GetDirectoryName(_options.Path)!);
+        _reloadToken = new ConfigurationReloadToken();
         _changeTokenRegistration = ChangeToken.OnChange(
             () => _fileProvider.Watch(Path.GetFileName(_options.Path)),
             () =>
