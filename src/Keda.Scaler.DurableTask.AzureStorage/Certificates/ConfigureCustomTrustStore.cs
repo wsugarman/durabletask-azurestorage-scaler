@@ -32,7 +32,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
 
         _options = options.Value.CertificateAuthority;
         _certificateLock = certificateLock;
-        _certificates = [_options.Load()];
+        _certificates = [LoadPemFile(_options.Path)];
         _fileProvider = new PhysicalFileProvider(Path.GetDirectoryName(_options.Path)!);
         _reloadToken = new ConfigurationReloadToken();
         _changeTokenRegistration = ChangeToken.OnChange(
@@ -40,7 +40,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
             () =>
             {
                 Thread.Sleep(_options.ReloadDelayMs);
-                Reload(_options.Load());
+                Reload(LoadPemFile(_options.Path));
             });
     }
 
@@ -79,4 +79,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
             _certificateLock.ExitWriteLock();
         }
     }
+
+    private static X509Certificate2 LoadPemFile(string path)
+        => X509CertificateLoader.LoadCertificateFromFile(path);
 }

@@ -3,14 +3,14 @@
 
 using System;
 using System.IO;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Certificates;
+using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.Options;
 using Xunit;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.Certificate;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Certificates;
 
@@ -60,7 +60,7 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-        await WritePemAsync(expected, key, certPath);
+        await File.WriteAllTextAsync(certPath, expected.ExportCertificatePem());
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -87,7 +87,7 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 
         using RSA key1 = RSA.Create();
         using X509Certificate2 expected1 = key1.CreateSelfSignedCertificate();
-        await WritePemAsync(expected1, key1, certPath);
+        await File.WriteAllTextAsync(certPath, expected1.ExportCertificatePem());
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -109,7 +109,7 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 
         using RSA key2 = RSA.Create();
         using X509Certificate2 expected2 = key2.CreateSelfSignedCertificate();
-        await WritePemAsync(expected2, key2, certPath);
+        await File.WriteAllTextAsync(certPath, expected2.ExportCertificatePem());
 
         // Check for the updated certificate
         do
@@ -120,7 +120,4 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 
         Assert.Equal(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
     }
-
-    private static Task WritePemAsync(X509Certificate2 cert, RSA key, string path)
-        => File.WriteAllTextAsync(path, cert.ExportCertificatePem() + Environment.NewLine + key.ExportRSAPrivateKeyPem());
 }
