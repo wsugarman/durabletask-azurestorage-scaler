@@ -10,51 +10,45 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.Data.Tables;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Keda.Scaler.DurableTask.AzureStorage.Test.Logging;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
-public sealed class TablePartitionManagerTest : IDisposable
+public sealed class TablePartitionManagerTest
 {
     private readonly TableClient _tableClient = Substitute.For<TableClient>();
     private readonly IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
-    private readonly ILoggerFactory _loggerFactory;
     private readonly TablePartitionManager _partitionManager;
 
     private const string TaskHubName = "UnitTest";
     private const string PartitionsTableName = "UnitTestPartitions";
 
-    public TablePartitionManagerTest(ITestOutputHelper outputHelper)
+    public TablePartitionManagerTest()
     {
         TableServiceClient tableServiceClient = Substitute.For<TableServiceClient>();
         _ = tableServiceClient.GetTableClient(PartitionsTableName).Returns(_tableClient);
         _ = _optionsSnapshot.Get(default).Returns(new TaskHubOptions() { TaskHubName = TaskHubName });
-        _loggerFactory = XUnitLogger.CreateFactory(outputHelper);
-        _partitionManager = new TablePartitionManager(tableServiceClient, _optionsSnapshot, _loggerFactory);
+        _partitionManager = new TablePartitionManager(tableServiceClient, _optionsSnapshot, NullLoggerFactory.Instance);
     }
-
-    public void Dispose()
-        => _loggerFactory.Dispose();
 
     [Fact]
     public void GivenNullClient_WhenCreatingTablePartitionManager_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TablePartitionManager(null!, _optionsSnapshot, _loggerFactory));
+        => Assert.Throws<ArgumentNullException>(() => new TablePartitionManager(null!, _optionsSnapshot, NullLoggerFactory.Instance));
 
     [Fact]
     public void GivenNullOptionsSnapshot_WhenCreatingTablePartitionManager_ThenThrowArgumentNullException()
     {
         TableServiceClient serviceClient = Substitute.For<TableServiceClient>();
-        _ = Assert.Throws<ArgumentNullException>(() => new TablePartitionManager(serviceClient, null!, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TablePartitionManager(serviceClient, null!, NullLoggerFactory.Instance));
 
         IOptionsSnapshot<TaskHubOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(TaskHubOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => new TablePartitionManager(serviceClient, nullSnapshot, _loggerFactory));
+        _ = Assert.Throws<ArgumentNullException>(() => new TablePartitionManager(serviceClient, nullSnapshot, NullLoggerFactory.Instance));
     }
 
     [Fact]
@@ -69,10 +63,10 @@ public sealed class TablePartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenEmptyTable_WhenGettingPartitions_ThenReturnEmptyList()
+    public async ValueTask GivenEmptyTable_WhenGettingPartitions_ThenReturnEmptyList()
     {
         _ = _tableClient
-            .QueryAsync<TableEntity>(default(string), default, default, default)
+            .QueryAsync<TableEntity>(default(string), default, default, TestContext.Current.CancellationToken)
             .ReturnsForAnyArgs(AsyncPageable<TableEntity>.FromPages([]));
 
         using CancellationTokenSource cts = new();
@@ -86,10 +80,10 @@ public sealed class TablePartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenTableNotFound_WhenGettingPartitions_ThenReturnEmptyList()
+    public async ValueTask GivenTableNotFound_WhenGettingPartitions_ThenReturnEmptyList()
     {
         _ = _tableClient
-            .QueryAsync<TableEntity>(default(string), default, default, default)
+            .QueryAsync<TableEntity>(default(string), default, default, TestContext.Current.CancellationToken)
             .ThrowsForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Table not found"));
 
         using CancellationTokenSource cts = new();
@@ -103,12 +97,12 @@ public sealed class TablePartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenUnexpectedTableError_WhenGettingPartitions_ThenReturnEmptyList()
+    public async ValueTask GivenUnexpectedTableError_WhenGettingPartitions_ThenReturnEmptyList()
     {
         RequestFailedException expected = new((int)HttpStatusCode.Unauthorized, "Unauthorized");
 
         _ = _tableClient
-            .QueryAsync<TableEntity>(default(string), default, default, default)
+            .QueryAsync<TableEntity>(default(string), default, default, TestContext.Current.CancellationToken)
             .ThrowsForAnyArgs(expected);
 
         using CancellationTokenSource cts = new();
@@ -122,10 +116,10 @@ public sealed class TablePartitionManagerTest : IDisposable
     }
 
     [Fact]
-    public async Task GivenTableWithRows_WhenGettingPartitions_ThenReturnPartitions()
+    public async ValueTask GivenTableWithRows_WhenGettingPartitions_ThenReturnPartitions()
     {
         _ = _tableClient
-            .QueryAsync<TableEntity>(default(string), default, default, default)
+            .QueryAsync<TableEntity>(default(string), default, default, TestContext.Current.CancellationToken)
             .ReturnsForAnyArgs(AsyncPageable<TableEntity>.FromPages(
                 [
                     Page<TableEntity>.FromValues(

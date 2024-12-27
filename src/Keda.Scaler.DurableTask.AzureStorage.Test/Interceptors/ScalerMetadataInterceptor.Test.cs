@@ -37,7 +37,7 @@ public class ScalerMetadataInterceptorTest
         => Assert.ThrowsAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler<GetMetricsRequest, GetMetricsResponse>(new GetMetricsRequest(), new MockServerCallContext(), null!));
 
     [Fact]
-    public async Task GivenGetMetricsRequest_WhenProcessingUnaryServerRequest_ThenCaptureMetadata()
+    public async ValueTask GivenGetMetricsRequest_WhenProcessingUnaryServerRequest_ThenCaptureMetadata()
     {
         const string TaskHubName = "UnitTest";
 
@@ -59,7 +59,7 @@ public class ScalerMetadataInterceptorTest
     }
 
     [Fact]
-    public async Task GivenScaledObjectRef_WhenProcessingUnaryServerRequest_ThenCaptureMetadata()
+    public async ValueTask GivenScaledObjectRef_WhenProcessingUnaryServerRequest_ThenCaptureMetadata()
     {
         const string TaskHubName = "UnitTest";
 
@@ -78,7 +78,7 @@ public class ScalerMetadataInterceptorTest
     }
 
     [Fact]
-    public async Task GivenUnknownRequest_WhenProcessingUnaryServerRequest_ThenSkipCapture()
+    public async ValueTask GivenUnknownRequest_WhenProcessingUnaryServerRequest_ThenSkipCapture()
     {
         using CancellationTokenSource cts = new();
         _ = await _interceptor.UnaryServerHandler(

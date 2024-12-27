@@ -19,16 +19,17 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 {
     private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
 
-    public Task InitializeAsync()
+    public ValueTask InitializeAsync()
     {
         _ = Directory.CreateDirectory(_testDirectory);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task DisposeAsync()
+    public ValueTask DisposeAsync()
     {
         Directory.Delete(_testDirectory, recursive: true);
-        return Task.CompletedTask;
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
     }
 
     [Fact]
@@ -52,7 +53,7 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GivenCertificate_WhenConfiguringOptions_ThenSetCustomTrustStore()
+    public async ValueTask GivenCertificate_WhenConfiguringOptions_ThenSetCustomTrustStore()
     {
         // Create the certificate and write to disk
         const string CertName = "example.crt";
@@ -60,7 +61,7 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-        await File.WriteAllTextAsync(certPath, expected.ExportCertificatePem());
+        await File.WriteAllTextAsync(certPath, expected.ExportCertificatePem(), TestContext.Current.CancellationToken);
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -79,7 +80,7 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
     }
 
     [Fact(Timeout = 1000 * 10)]
-    public async Task GivenCertificateFileChange_WhenConfiguringOptions_ThenUpdateCustomTrustStore()
+    public async ValueTask GivenCertificateFileChange_WhenConfiguringOptions_ThenUpdateCustomTrustStore()
     {
         // Create the certificate and write to disk
         const string CertName = "example.crt";
@@ -87,7 +88,7 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
 
         using RSA key1 = RSA.Create();
         using X509Certificate2 expected1 = key1.CreateSelfSignedCertificate();
-        await File.WriteAllTextAsync(certPath, expected1.ExportCertificatePem());
+        await File.WriteAllTextAsync(certPath, expected1.ExportCertificatePem(), TestContext.Current.CancellationToken);
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -105,11 +106,11 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
         Assert.Equal(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
 
         // Update the certificate file after a half second
-        await Task.Delay(500);
+        await Task.Delay(500, TestContext.Current.CancellationToken);
 
         using RSA key2 = RSA.Create();
         using X509Certificate2 expected2 = key2.CreateSelfSignedCertificate();
-        await File.WriteAllTextAsync(certPath, expected2.ExportCertificatePem());
+        await File.WriteAllTextAsync(certPath, expected2.ExportCertificatePem(), TestContext.Current.CancellationToken);
 
         // Check for the updated certificate
         do

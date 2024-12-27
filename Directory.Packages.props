@@ -13,7 +13,7 @@
     <PackageVersion Include="Grpc.Core.Api" Version="2.67.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.68.1" />
     <PackageVersion Include="KubernetesClient" Version="15.0.1" />
-    <PackageVersion Include="MartinCostello.Logging.XUnit" Version="0.5.1" />
+    <PackageVersion Include="MartinCostello.Logging.XUnit.v3" Version="0.5.1" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.Certificate" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Azure.DurableTask.AzureStorage" Version="2.0.1" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />
@@ -39,8 +39,7 @@
     <PackageVersion Include="NSubstitute.Analyzers.CSharp" Version="1.0.17" />
     <PackageVersion Include="System.Linq.Async" Version="6.0.1" />
     <PackageVersion Include="System.Text.Json" Version="9.0.0" />
-    <PackageVersion Include="xunit" Version="2.9.2" />
-    <PackageVersion Include="xunit.abstractions" Version="2.0.3" />
+    <PackageVersion Include="xunit.v3" Version="1.0.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.0" />
   </ItemGroup>
 
