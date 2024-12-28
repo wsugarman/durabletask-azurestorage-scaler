@@ -18,6 +18,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Update Git Config
+        run: git config --system core.longpaths true
+
       - name: Checkout
         uses: actions/checkout@v4
 

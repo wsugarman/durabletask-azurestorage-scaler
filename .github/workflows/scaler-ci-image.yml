@@ -14,6 +14,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Update Git Config
+        run: git config --system core.longpaths true
+
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -31,6 +34,7 @@ jobs:
           azureTenantId: ${{ secrets.AZURE_TENANT_ID }}
           buildConfiguration: Release
           certificateProfileName: ${{ secrets.AZURE_CODESIGNING_PROFILE_NAME }}
+          coverageFileName: coverage.cobertura.xml
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
           repositoryUri: ${{ github.server_url }}/${{ github.repository }}
           sign: 'true'
@@ -40,7 +44,7 @@ jobs:
         uses: ./.github/actions/code-coverage
         with:
           codecovToken: ${{ secrets.CODECOV_TOKEN }}
-          reportPath: ${{ runner.temp }}/TestResults/*/coverage.cobertura.xml
+          reportPath: ${{ runner.temp }}/TestResults/coverage.cobertura.xml
 
   publishImage:
     name: Publish Image
