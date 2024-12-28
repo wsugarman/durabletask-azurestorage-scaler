@@ -13,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 const string PolicyName = "default";
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 
 // Additional configuration is required to successfully run gRPC on macOS.
 // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
@@ -39,7 +39,9 @@ builder.Services.AddGrpcReflection();
 // Ensure that the client certificate validation defers to the athentication
 // provided by Microsoft.AspNetCore.Authentication.Certificate. All other settings
 // related to Kestrel will be specified via the configuration object
-_ = builder.WebHost.ConfigureKestrel(k => k.ConfigureHttpsDefaults(h => h.AllowAnyClientCertificate()));
+_ = builder.WebHost
+    .UseKestrelHttpsConfiguration()
+    .ConfigureKestrel(k => k.ConfigureHttpsDefaults(h => h.AllowAnyClientCertificate()));
 
 // Build the web app and update its middleware pipeline
 WebApplication app = builder.Build();
