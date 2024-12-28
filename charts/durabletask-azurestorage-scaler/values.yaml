@@ -53,16 +53,14 @@ podAnnotations: {}
 
 # podIdentity contains settings related to identity-based connections for the scaler pods.
 podIdentity:
-  # azureWorkload contains settings related to Azure Workload Identity.
-  azureWorkload:
-    # enabled indicates whether Azure Workload Identity is enabled for the scaler pods.
-    enabled: false
-    # clientId is the client ID of the federated identity credential whose subject is the service account.
-    clientId: ""
-    # tenantId is the tenant ID of the federated identity credential whose subject is the service account.
-    tenantId: ""
-    # tokenExpiration is the duration in seconds after which the protected service account token expires. Defaults to 3600.
-    tokenExpiration: 3600
+  # enabled indicates whether Microsoft Entra Workload Identity is enabled for the scaler pods.
+  enabled: false
+  # clientId is the client ID of the federated identity credential whose subject is the service account.
+  clientId: ""
+  # tenantId is the tenant ID of the federated identity credential whose subject is the service account.
+  tenantId: ""
+  # tokenExpiration is the duration in seconds after which the protected service account token expires. Defaults to 3600.
+  tokenExpiration: 3600
 
 # podLabels is an optional collection of Kubernetes labels added to the scaler pods.
 podLabels: {}

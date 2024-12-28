@@ -23,26 +23,25 @@ This specification describes the `external` trigger for applications that use th
 
 ### Parameter List
 - **`accountName`** - Optional name of the Azure Storage account used by the Durable Task Framework (DTFx). This value is only required when `useManagedIdentity` is `true`
-- **`activeDirectoryEndpoint`** - Optional host authority for Azure Active Directory (AAD). This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`clientId`** - Optional identity used when authenticating via managed identity. This value can only be specified when `useManagedIdentity` is `true`
-- **`cloud`** - Optional name of the cloud environment that contains the Azure Storage account. Must be a known Azure cloud environment, or `Private` for Azure Stack Hub or air-gapped clouds. If `Private` is specified, both `endpointSuffix` and `activeDirectoryEndpoint` must be specified. Defaults to the `AzurePublicCloud`. Possible values include:
+- **`cloud`** - Optional name of the cloud environment that contains the Azure Storage account. Must be a known Azure cloud environment, or `Private` for Azure Stack Hub or air-gapped clouds. If `Private` is specified, both `endpointSuffix` and `activeDirectoryEndpoint` must be specified. Defaults to the `'AzurePublicCloud'`. Possible values include:
   - `AzurePublicCloud`
   - `AzureUSGovernmentCloud`
   - `AzureChinaCloud`
-  - `AzureGermanCloud`
   - `Private`
 - **`connection`** - Optional connection string for the Azure Storage account that may be used as an alternative to `connectionFromEnv`
-- **`connectionFromEnv`** - Optional name of the environment variable your deployment uses to get the connection string. Defaults to `AzureWebJobsStorage`
+- **`connectionFromEnv`** - Optional name of the environment variable your deployment uses to get the connection string. Defaults to `'AzureWebJobsStorage'`
 - **`endpointSuffix`** - Optional suffix for the Azure Storage service URLs. This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
+- **`entraEndpoint`** - Optional host authority for Microsoft Entra. This value is only required when `cloud` is `Private`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`maxActivitiesPerWorker`** - Optional maximum number of activity work items that a single worker may process at any time. This is equivalent to `MaxConcurrentActivityFunctions`in Azure Durable Functions and `MaxConcurrentTaskActivityWorkItems` in the Durable Task Framework (DTFx). Must be greater than 0. Defaults to `10`
 - **`maxOrchestrationsPerWorker`** - Optional maximum number of orchestration work items that a single worker may process at any time. This is equivalent to `MaxConcurrentOrchestratorFunctions` in Azure Durable Functions and `MaxConcurrentTaskOrchestrationWorkItems` in the Durable Task Framework (DTFx). Must be greater than 0. Defaults to `5`
 - **`scalerAddress`** - Required address for the scaler service within the Kubernetes cluster. The format of the address is `<scaler-service-name>.<scaler-kubernetes-namespace>:<port>`. By default, the chart uses port `4370` while the service name and namespace are dependent on the Helm installation command. For example, an installation like `helm install -n keda dtfx-scaler wsugarman/durabletask-azurestorage-scaler` would use the address `dtfx-scaler.keda:4370`. For more details, please see the [service template](/charts/durabletask-azurestorage-scaler/templates/03-service.yaml) in the Helm chart
-- **`taskHubName`** - Optional name of the Durable Task Framework (DTFx) task hub. This name is used when determining the name of blob containers, tables, and queues related to the application. Defaults to `TestHubName`
-- **`useManagedIdentity`** - Optionally indicates that AAD Pod Identity or Azure Workload iIdentity should be used to authenticate between the scaler and the Azure Storage account. If `true`, `Account` must be specified, and the appropriate annotations, bindings, and/or labels must be configured for the deployment. Defaults to `false`
-- **`useWorkloadIdentity`** - Optionally indicates that Azure Workload Identity should be used to authenticate between the scaler and the Azure Storage account. If `true`, `Account` must be specified, and the Helm release must have Azure Workload Identity configured. Defaults to `false`
+- **`taskHubName`** - Optional name of the Durable Task Framework (DTFx) task hub. This name is used when determining the name of blob containers, tables, and queues related to the application. Defaults to `'TestHubName'`
+- **`useManagedIdentity`** - Optionally indicates that Microsoft Entra Workload Identity should be used to authenticate between the scaler and the Azure Storage account. If `true`, `Account` must be specified, and the scaler deployment must also include a workload identity. Defaults to `false`
+- **`useTablePartitionManagement`** - Optionally indicates that the task hub uses the newer [Partition Manager V3](https://techcommunity.microsoft.com/blog/appsonazureblog/preview-of-durable-functions-extension-v3-0-0/4000452) that relies on Azure Table Storage instead of the older Blob-based Partition Manager. Defaults to `true`
 
 ## Authentication
-The scaler supports authentication using either an [Azure Storage connection string](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) or [Azure AD Workload Identity](https://azure.github.io/azure-workload-identity/docs/). [AAD pod identity](https://github.com/Azure/aad-pod-identity) is also supported, but it has been deprecated.
+The scaler supports authentication using either an [Azure Storage connection string](https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) or [Microsoft Entra Workload Identity](https://azure.github.io/azure-workload-identity/docs/).
 
 ### Connection Strings
 Connection strings may be specified using an environment variable exposed to the deployment using the parameter `connectionFromEnv`. By default, the scaler will look for an environment variable called `AzureWebJobsStorage`. For example:
@@ -62,11 +61,11 @@ Connection strings may also be specified directly via the `connection` parameter
     - type: external
       metadata:
         scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
-        connection: <connection> # Optional. Defaults to connectionFromEnv
+        connection: DefaultEndpointsProtocol=https;AccountName=<account-name>;AccountKey=<account-key> # Optional. Defaults to connectionFromEnv
 ```
 
 ### Identity-Based Connection
-To use an identity, the scaler deployment must be configured to use Azure Workload Identity (or AAD Pod Identity if necessary). If there are multiple identities, be sure to specify the `clientId` parameter if it is not already specified for Workload Identity.
+To use an identity, the scaler deployment must be configured to use Azure Workload Identity. If there are multiple identities, be sure to specify the `clientId` parameter if it is not the default used by the deployment.
 
 An example specification that uses an identity-based connection can be seen below:
 
@@ -75,14 +74,14 @@ An example specification that uses an identity-based connection can be seen belo
     - type: external
       metadata:
         scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
-        accountName: <name>       # Optional. Required for workload identity
-        clientId: <client-id>     # Optional. Recommended if there are multiple identities
-        cloud: <cloud>            # Optional. Defaults to AzurePublicCloud
-        useWorkloadIdentity: true # Optional. Must be true for workload identity. Defaults to false
+        accountName: <account-name> # Optional. Required for workload identity
+        clientId: <client-id>       # Optional. Recommended if there are multiple identities
+        cloud: <cloud>              # Optional. Defaults to AzurePublicCloud
+        useManagedIdentity: true    # Optional. Must be true for workload identity. Defaults to false
 ```
 
 ### Transport Layer Security (TLS) Protocol
-The scaler optionally supports TLS connections as well. While the scaler deployment can be configured to use TLS, the `ScaledObject` must also include information about the client certificates as [Base64 strings](https://keda.sh/docs/2.12/scalers/external/#authentication-parameters).
+The scaler optionally supports TLS. Because the KEDA and external scaler pods are seperate, both parties must be configured for mutual TLS. To configure connections from the KEDA pod to use TLS, the corresponding `ScaledObject` must include information about the client certificates using the field `authenticationRef` and a matching `TriggerAuthentication` object containing the certificate. The scaler pods on the other hand must be configured via the Helm chart using the `tls*` values to provide a certificate (and optionally verify the client's certificate). See the chart [README](./charts/durabletask-azurestorage-scaler/README.md) for more details.
 
 ```yml
 apiVersion: keda.sh/v1alpha1
@@ -115,7 +114,7 @@ spec:
     - type: external
       metadata:
         scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
-        accountName: <name> # Optional. Required for workload identity
+        accountName: <account-name> # Optional. Required for workload identity
       authenticationRef:
         name: dtfx-scaler-auth
 ```
