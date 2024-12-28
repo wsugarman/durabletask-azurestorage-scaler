@@ -69,8 +69,8 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
 
         #region OptionsBuilder<TOptions> extensions.
         /// <summary>Registers the dependency injection container to bind <typeparamref name="TOptions"/> against the <see cref="IConfiguration"/> obtained from the DI service provider.</summary>
-        [InterceptsLocation(1, "wgqWBPyxn2CKVzq/OBRyozYEAABJU2VydmljZUNvbGxlY3Rpb24uRXh0ZW5zaW9ucy5jcw==")] // C:\Git\durabletask-azurestorage-scaler\src\Keda.Scaler.DurableTask.AzureStorage\Certificates\IServiceCollection.Extensions.cs(26,14)
-        [InterceptsLocation(1, "wgqWBPyxn2CKVzq/OBRyo+0FAABJU2VydmljZUNvbGxlY3Rpb24uRXh0ZW5zaW9ucy5jcw==")] // C:\Git\durabletask-azurestorage-scaler\src\Keda.Scaler.DurableTask.AzureStorage\Certificates\IServiceCollection.Extensions.cs(34,14)
+        [InterceptsLocation(1, "/3MNeE1JY/xkE9t5VlNxzzYEAABJU2VydmljZUNvbGxlY3Rpb24uRXh0ZW5zaW9ucy5jcw==")] // C:\Git\durabletask-azurestorage-scaler\src\Keda.Scaler.DurableTask.AzureStorage\Certificates\IServiceCollection.Extensions.cs(26,14)
+        [InterceptsLocation(1, "/3MNeE1JY/xkE9t5VlNxz+0FAABJU2VydmljZUNvbGxlY3Rpb24uRXh0ZW5zaW9ucy5jcw==")] // C:\Git\durabletask-azurestorage-scaler\src\Keda.Scaler.DurableTask.AzureStorage\Certificates\IServiceCollection.Extensions.cs(34,14)
         public static OptionsBuilder<TOptions> BindConfiguration<TOptions>(this OptionsBuilder<TOptions> optionsBuilder, string configSectionPath, Action<BinderOptions>? configureBinder = null) where TOptions : class
         {
             ArgumentNullException.ThrowIfNull(optionsBuilder);

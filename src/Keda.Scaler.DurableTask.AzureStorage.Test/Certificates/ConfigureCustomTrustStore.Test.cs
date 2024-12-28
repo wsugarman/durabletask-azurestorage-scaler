@@ -143,8 +143,10 @@ public class ConfigureCustomTrustStoreTest : IAsyncLifetime
         {
             configure.Configure(options);
             actual = Assert.Single(options.CustomTrustStore);
-        } while (actual.Thumbprint != expected2.Thumbprint || Volatile.Read(ref reloads) is 0);
+        } while (Volatile.Read(ref reloads) is 0 && !TestContext.Current.CancellationToken.IsCancellationRequested);
 
+        actual = Assert.Single(options.CustomTrustStore);
+        Assert.Equal(expected2.Thumbprint, actual.Thumbprint);
         Assert.Equal(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
         Assert.Equal(1, Volatile.Read(ref reloads));
     }

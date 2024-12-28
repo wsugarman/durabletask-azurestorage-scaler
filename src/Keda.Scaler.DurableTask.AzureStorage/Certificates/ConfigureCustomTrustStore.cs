@@ -74,6 +74,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
         {
             _certificateLock.EnterWriteLock();
 
+            _certificates[0].Dispose();
             _certificates = [certificate];
             ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _reloadToken, new ConfigurationReloadToken());
             previousToken.OnReload();
