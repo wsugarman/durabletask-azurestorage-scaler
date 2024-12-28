@@ -4,11 +4,14 @@
   <PropertyGroup>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>$(RootDirectory)</DockerfileContext>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <CompilerGeneratedFilesOutputPath>Gen</CompilerGeneratedFilesOutputPath>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
     <Protobuf Include="Protos\externalscaler.proto" GrpcServices="Server" />
   </ItemGroup>
 

@@ -30,9 +30,6 @@ spec:
         app.kubernetes.io/component: external-scaler
         app.kubernetes.io/name: {{ template "durabletask-azurestorage-scaler.fullname" . }}
         {{- include "durabletask-azurestorage-scaler.labels" . | indent 8 }}
-        {{- if .Values.podIdentity.activeDirectory.identity }}
-        aadpodidbinding: {{ .Values.podIdentity.activeDirectory.identity }}
-        {{- end }}
         {{- if .Values.podLabels }}
         {{- toYaml .Values.podLabels | nindent 8 }}
         {{- end }}
