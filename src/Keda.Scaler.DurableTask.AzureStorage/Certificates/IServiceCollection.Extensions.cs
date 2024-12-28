@@ -49,7 +49,7 @@ internal static class IServiceCollectionExtensions
             if (configuration.UseCustomClientCa())
             {
                 _ = services
-                    .AddSingleton(sp => new ReaderWriterLockSlim(LockRecursionPolicy.NoRecursion))
+                    .AddSingleton(sp => new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion))
                     .AddSingleton<ConfigureCustomTrustStore>()
                     .AddSingleton<IConfigureOptions<CertificateAuthenticationOptions>>(p => p.GetRequiredService<ConfigureCustomTrustStore>())
                     .AddSingleton<IOptionsChangeTokenSource<CertificateAuthenticationOptions>>(p => p.GetRequiredService<ConfigureCustomTrustStore>());
