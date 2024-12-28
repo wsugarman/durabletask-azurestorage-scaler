@@ -53,10 +53,6 @@ podAnnotations: {}
 
 # podIdentity contains settings related to identity-based connections for the scaler pods.
 podIdentity:
-  # activeDirectory contains settings related to the now-deprecated AAD Pod Identity.
-  activeDirectory:
-    # identity is the value of the aadpodidbinding label for scaler pods.
-    identity: ""
   # azureWorkload contains settings related to Azure Workload Identity.
   azureWorkload:
     # enabled indicates whether Azure Workload Identity is enabled for the scaler pods.
