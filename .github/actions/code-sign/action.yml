@@ -1,0 +1,84 @@
+name: code sign
+description: Signs the scaler executable.
+inputs:
+  azureClientId:
+    default: ''
+    description: The client ID for the service principal used to access the Azure Code Signing Service.
+    required: false
+  azureCodeSigningAccountName:
+    default: ''
+    description: The name of the Azure Code Signing account containing the scaler's certificate profile.
+    required: false
+  azureSubscriptionId:
+    default: ''
+    description: The Azure subscription ID containing both the Azure Code Signing Service.
+    required: false
+  azureTenantId:
+    default: ''
+    description: The Azure tenant ID for service principal used to access the Azure Code Signing Service.
+    required: false
+  certificateProfileName:
+    default: ''
+    description: The name of the certificate profile within the Azure Code Signing Service.
+  codeSigningUri:
+    default: 'https://wcus.codesigning.azure.net/'
+    description: The URI of the Azure Code Signing Service.
+    required: false
+  repositoryUri:
+    default: 'https://github.com/wsugarman/durabletask-azurestorage-scaler'
+    description: The URI of the scaler repository.
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Download Scaler Binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: app
+        path: ${{ runner.temp }}\app
+
+    - name: az login
+      uses: azure/login@v2
+      with:
+        client-id: ${{ inputs.azureClientId }}
+        tenant-id: ${{ inputs.azureTenantId }}
+        subscription-id: ${{ inputs.azureSubscriptionId }}
+
+    - name: Create Signing Catalog
+      shell: cmd
+      run: |
+        mkdir ${{ runner.temp }}\signing
+        echo ..\app\Keda.Scaler.DurableTask.AzureStorage.exe >> ${{ runner.temp }}\signing\catalog.txt
+
+    - name: Code Sign Assembly
+      uses: azure/trusted-signing-action@v0.5.0
+      with:
+        azure-client-id: ${{ inputs.azureClientId }}
+        azure-tenant-id: ${{ inputs.azureTenantId }}
+        certificate-profile-name: ${{ inputs.certificateProfileName }}
+        description: 'A KEDA external scaler for the Durable Task Azure Storage backend.'
+        description-url: ${{ inputs.repositoryUri }}
+        endpoint: ${{ inputs.codeSigningUri }}
+        exclude-azure-cli-credential: false
+        exclude-azure-developer-cli-credential: true
+        exclude-azure-powershell-credential: true
+        exclude-environment-credential: true
+        exclude-interactive-browser-credential: true
+        exclude-managed-identity-credential: true
+        exclude-shared-token-cache-credential: true
+        exclude-visual-studio-credential: true
+        exclude-visual-studio-code-credential: true
+        exclude-workload-identity-credential: true
+        file-digest: SHA256
+        files-catalog: ${{ runner.temp }}\signing\catalog.txt
+        timestamp-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        trusted-signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
+
+    - name: Update Scaler Binaries
+      uses: actions/upload-artifact@v4
+      with:
+        name: app
+        overwrite: true
+        path: ${{ runner.temp }}\app

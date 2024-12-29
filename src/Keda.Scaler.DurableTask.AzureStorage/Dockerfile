@@ -7,15 +7,22 @@ ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
 ARG FILE_VERSION=1.0.0.0
 
+RUN tdnf clean all && \
+    tdnf repolist --refresh && \
+    tdnf update -y && \
+    tdnf clean all && \
+    tdnf install clang zlib-devel -y && \
+    tdnf clean all
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/scaler/"]
 COPY ["./src/Directory.Build.props", "./src/Keda.Scaler.DurableTask.AzureStorage/", "/scaler/src/"]
 WORKDIR /scaler/src
-RUN dotnet restore "Keda.Scaler.DurableTask.AzureStorage.csproj"
+RUN dotnet restore "Keda.Scaler.DurableTask.AzureStorage.csproj" --runtime linux-x64
 RUN dotnet build "Keda.Scaler.DurableTask.AzureStorage.csproj" \
-  -c $BUILD_CONFIGURATION \
-  "-p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD;AssemblyVersion=$ASSEMBLY_VERSION;FileVersion=$FILE_VERSION;InformationalVersion=$FILE_VERSION" \
-  -warnaserror \
-  -o /app/build
+  --configuration $BUILD_CONFIGURATION \
+  --no-restore \
+  "--property:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD;AssemblyVersion=$ASSEMBLY_VERSION;FileVersion=$FILE_VERSION;InformationalVersion=$FILE_VERSION" \
+  --runtime linux-x64 \
+  -warnaserror
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
@@ -24,10 +31,10 @@ ARG ASSEMBLY_VERSION=1.0.0
 ARG FILE_VERSION=1.0.0.0
 
 RUN dotnet publish "Keda.Scaler.DurableTask.AzureStorage.csproj" \
-  -c $BUILD_CONFIGURATION \
-  "-p:ContinuousIntegrationBuild=$CONTINUOUS_INTEGRATION_BUILD;AssemblyVersion=$ASSEMBLY_VERSION;FileVersion=$FILE_VERSION;InformationalVersion=$FILE_VERSION" \
-  -warnaserror \
-  -o /app/publish
+  --configuration $BUILD_CONFIGURATION \
+  --no-build \
+  --runtime linux-x64 \
+  --output /app/publish
 
 FROM scratch AS publish-copy-false
 COPY --from=publish /app/publish /app

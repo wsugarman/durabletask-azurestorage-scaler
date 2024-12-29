@@ -2,12 +2,18 @@
 
   <!-- TODO: Use Native AOT when all dependencies support it -->
   <PropertyGroup>
+    <CompilerGeneratedFilesOutputPath>Gen</CompilerGeneratedFilesOutputPath>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>$(RootDirectory)</DockerfileContext>
+    <DockerfileContext>..\..</DockerfileContext>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
-    <CompilerGeneratedFilesOutputPath>Gen</CompilerGeneratedFilesOutputPath>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <InvariantGlobalization>true</InvariantGlobalization>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <PublishAot>true</PublishAot>
+    <SuppressTrimAnalysisWarnings>false</SuppressTrimAnalysisWarnings>
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+    <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
   </PropertyGroup>
 
   <ItemGroup>
