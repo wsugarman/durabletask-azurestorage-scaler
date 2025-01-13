@@ -16,8 +16,7 @@ Set-PSDebug -Off
 $ErrorActionPreference = "Stop"
 
 # Read the Chart.yaml
-# Note: Explicitly set TLS 1.2 in case we're behind a proxy based on:
-# https://stackoverflow.com/questions/55826791/powershell-installing-nuget-says-unable-to-access-internet-but-i-actually-can
+# Note: Explicitly set TLS 1.2 based on https://rnelson0.com/2018/05/17/powershell-in-a-post-tls1-1-world/
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 Install-Module powershell-yaml -Force -Repository PSGallery -Scope CurrentUser
 $chart = Get-Content -Path $chartPath -Raw | ConvertFrom-Yaml -Ordered
