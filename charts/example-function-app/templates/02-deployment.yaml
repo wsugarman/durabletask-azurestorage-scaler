@@ -50,12 +50,6 @@ spec:
             value: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
           - name: AzureFunctionsJobHost__Extensions__DurableTask__StorageProvider__PartitionCount
             value: {{ .Values.taskHub.partitionCount | quote }}
-          - name: AzureWebJobsSecretStorageType
-            value: kubernetes
-          - name: AzureWebJobsKubernetesSecretName
-            value: "secrets/{{ template "example-function-app.fullname" . }}"
-          - name: FUNCTIONS_LOG_PATH
-            value: /logs
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}
@@ -69,10 +63,4 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 5
-          volumeMounts:
-            - name: logs
-              mountPath: /logs
-      volumes:
-        - name: logs
-          emptyDir: {}
       serviceAccountName: {{ template "example-function-app.fullname" . }}
