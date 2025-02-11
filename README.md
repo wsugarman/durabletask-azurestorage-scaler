@@ -5,7 +5,7 @@
 [![GitHub License](https://img.shields.io/github/license/wsugarman/durabletask-azurestorage-scaler?label=License)](https://github.com/wsugarman/durabletask-azurestorage-scaler/blob/main/LICENSE)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fwsugarman%2Fdurabletask-azurestorage-scaler.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fwsugarman%2Fdurabletask-azurestorage-scaler?ref=badge_shield)
 
-A KEDA external scaler for [Durable Task Framework (DTFx)](https://github.com/Azure/durabletask) and [Azure Durable Function](https://github.com/Azure/azure-functions-durable-extension) applications in Kubernetes that rely on the Azure Storage backend.
+A KEDA external scaler for [Durable Task Framework (DTFx)](https://github.com/Azure/durabletask) and [Azure Durable Function](https://github.com/Azure/azure-functions-durable-extension) applications in Kubernetes that rely on the [Azure Storage backend](https://learn.microsoft.com/en-us/azure/azure-functions/durable/durable-functions-azure-storage-provider).
 
 ## Trigger Specification
 This specification describes the `external` trigger for applications that use the Durable Task Azure Storage provider.
