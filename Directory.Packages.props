@@ -30,7 +30,7 @@
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
     <PackageVersion Include="Microsoft.Extensions.Options" Version="9.0.4" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="9.0.4" />
-    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.4" />
+    <PackageVersion Include="Microsoft.Extensions.Options.DataAnnotations" Version="9.0.5" />
     <PackageVersion Include="Microsoft.NET.Sdk.Functions" Version="4.6.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
     <PackageVersion Include="Microsoft.Testing.Extensions.CodeCoverage" Version="17.14.2" />
