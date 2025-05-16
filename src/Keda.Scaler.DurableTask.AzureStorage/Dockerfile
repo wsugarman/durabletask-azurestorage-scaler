@@ -1,7 +1,7 @@
 ARG COPY=false
 
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:9.0.300-azurelinux3.0@sha256:c54b8ec4e9febaeebde8c53252f4fac16ae4b6381c1a1f7400094eb49ce4c752 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0.300-azurelinux3.0@sha256:8418e89b1c6ec370dab738a25c33add211e48b9f506f5a92a3839f839e68f09e AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
