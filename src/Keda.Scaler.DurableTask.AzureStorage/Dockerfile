@@ -39,7 +39,7 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/aspnet:9.0.5-azurelinux3.0-distroless@sha256:6e10cc44cd05e09074a9e2205435d85c89fc9cbb7acdbfc855d32e5791675894 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0.5-azurelinux3.0-distroless@sha256:55535e75fd10a09c6daecb4b0430e35dd5a8a052db923aed717ce6e6abf38340 AS runtime
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0 \
     DOTNET_USE_POLLING_FILE_WATCHER=true
