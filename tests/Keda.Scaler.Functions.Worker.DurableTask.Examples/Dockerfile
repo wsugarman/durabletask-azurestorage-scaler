@@ -1,5 +1,5 @@
 #See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:9.0.302-azurelinux3.0@sha256:cb7856d1abdabc25d2640e9d464e8fe319657053484eff65bea642fa7e5ebdb6 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0.302-azurelinux3.0@sha256:bfdb92331b05a780ad578230a692959329c01c053ce69f34105ab6296def5c0f AS build
 ARG BUILD_CONFIGURATION=Release
 COPY [".editorconfig", ".globalconfig", "Directory.Build.props", "Directory.Packages.props", "global.json", "NuGet.config", "/example/"]
 COPY ["./tests/Keda.Scaler.Functions.Worker.DurableTask.Examples/", "/example/src/"]
