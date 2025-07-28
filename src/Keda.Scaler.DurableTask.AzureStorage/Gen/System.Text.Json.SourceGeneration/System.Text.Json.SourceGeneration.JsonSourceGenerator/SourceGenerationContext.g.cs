@@ -8,7 +8,7 @@
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Json
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Text.Json.SourceGeneration", "9.0.11.2809")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Text.Json.SourceGeneration", "9.0.12.31616")]
     internal partial class SourceGenerationContext
     {
         private readonly static global::System.Text.Json.JsonSerializerOptions s_defaultOptions = new()

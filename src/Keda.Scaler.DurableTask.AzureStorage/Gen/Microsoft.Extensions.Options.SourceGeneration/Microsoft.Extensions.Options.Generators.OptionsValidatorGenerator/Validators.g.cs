@@ -4,7 +4,7 @@
     #pragma warning disable CS1591 // Compensate for https://github.com/dotnet/roslyn/issues/54103
     namespace Keda.Scaler.DurableTask.AzureStorage.Certificates
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.11.2809")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
     internal sealed partial class __CaCertificateFileOptionsValidator__
     {
         /// <summary>
@@ -13,7 +13,7 @@
         /// <param name="name">The name of the options instance being validated.</param>
         /// <param name="options">The options instance.</param>
         /// <returns>Validation result.</returns>
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.11.2809")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
              Justification = "The created ValidationContext object is used in a way that never call reflection")]
         public static global::Microsoft.Extensions.Options.ValidateOptionsResult Validate(string? name, global::Keda.Scaler.DurableTask.AzureStorage.Certificates.CaCertificateFileOptions options)
@@ -55,7 +55,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Certificates
         /// <param name="name">The name of the options instance being validated.</param>
         /// <param name="options">The options instance.</param>
         /// <returns>Validation result.</returns>
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.11.2809")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
              Justification = "The created ValidationContext object is used in a way that never call reflection")]
         public global::Microsoft.Extensions.Options.ValidateOptionsResult Validate(string? name, global::Keda.Scaler.DurableTask.AzureStorage.Certificates.ClientCertificateValidationOptions options)
@@ -82,7 +82,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Metadata
         /// <param name="name">The name of the options instance being validated.</param>
         /// <param name="options">The options instance.</param>
         /// <returns>Validation result.</returns>
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.11.2809")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
              Justification = "The created ValidationContext object is used in a way that never call reflection")]
         public global::Microsoft.Extensions.Options.ValidateOptionsResult Validate(string? name, global::Keda.Scaler.DurableTask.AzureStorage.Metadata.ScalerOptions options)
@@ -126,7 +126,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Metadata
 }
 namespace __OptionValidationStaticInstances
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.11.2809")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
     file static class __Attributes
     {
         internal static readonly global::System.ComponentModel.DataAnnotations.RequiredAttribute A1 = new global::System.ComponentModel.DataAnnotations.RequiredAttribute();
@@ -142,14 +142,14 @@ namespace __OptionValidationStaticInstances
 }
 namespace __OptionValidationStaticInstances
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.11.2809")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
     file static class __Validators
     {
     }
 }
 namespace __OptionValidationGeneratedAttributes
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.11.2809")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
     [global::System.AttributeUsage(global::System.AttributeTargets.Property | global::System.AttributeTargets.Field | global::System.AttributeTargets.Parameter, AllowMultiple = false)]
     file class __SourceGen__RangeAttribute : global::System.ComponentModel.DataAnnotations.ValidationAttribute
     {

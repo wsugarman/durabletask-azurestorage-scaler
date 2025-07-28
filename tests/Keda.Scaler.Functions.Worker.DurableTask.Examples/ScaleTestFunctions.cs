@@ -25,10 +25,6 @@ public static partial class ScaleTestFunctions
     /// </summary>
     /// <param name="context">The orchestration context.</param>
     /// <param name="input">The input for the scale test.</param>
-    /// <param name="cancellationToken">
-    /// The token to monitor for cancellation requests from the host.
-    /// The default value is <see cref="CancellationToken.None"/>.
-    /// </param>
     /// <returns>A task representing the asynchronous orchestration.</returns>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="context"/> or <paramref name="input"/> is <see langword="null"/>.
@@ -37,13 +33,10 @@ public static partial class ScaleTestFunctions
     [Function(nameof(RunAsync))]
     public static Task RunAsync(
         [OrchestrationTrigger] TaskOrchestrationContext context,
-        ScaleTestInput input,
-        CancellationToken cancellationToken = default)
+        ScaleTestInput input)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(input);
-
-        cancellationToken.ThrowIfCancellationRequested();
 
         ILogger logger = context.CreateReplaySafeLogger("DurableTask.AzureStorage.Keda.Tests");
         logger.StartingDelayActivity(input.ActivityCount, input.ActivityTime);
