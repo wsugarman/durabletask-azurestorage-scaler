@@ -6,7 +6,7 @@ fullnameOverride: ""
 image:
   repository: mcr.microsoft.com/azure-storage/azurite
   tag: latest
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
 
 # Maximum size of the storage volume
 storage:
