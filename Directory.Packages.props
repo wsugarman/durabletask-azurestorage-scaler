@@ -19,7 +19,7 @@
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.DurableTask" Version="1.7.1" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.5" />
-    <PackageVersion Include="Microsoft.Azure.WebJobs.Core" Version="3.0.41" />
+    <PackageVersion Include="Microsoft.Azure.WebJobs.Core" Version="3.0.42" />
     <PackageVersion Include="Microsoft.DurableTask.Client" Version="1.13.0" />
     <PackageVersion Include="Microsoft.DurableTask.Client.OrchestrationServiceClientShim" Version="1.13.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
