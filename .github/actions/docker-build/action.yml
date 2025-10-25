@@ -30,7 +30,7 @@ runs:
   steps:
     - if: ${{ inputs.copyBinaries == 'true' }}
       name: Download Scaler Binaries
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: app
         path: ./app
@@ -68,7 +68,7 @@ runs:
         docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
 
     - name: Upload Image
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: image
         path: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar
