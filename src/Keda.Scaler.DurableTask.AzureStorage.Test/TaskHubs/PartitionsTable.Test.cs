@@ -3,26 +3,27 @@
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
+[TestClass]
 public class PartitionsTableTest
 {
-    [Fact]
+    [TestMethod]
     public void GivenNullTaskHub_WhenGettingPartitionsTableName_ThenThrowArgumentException()
-        => Assert.Throws<ArgumentNullException>(() => PartitionsTable.GetName(null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => PartitionsTable.GetName(null!));
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("  \t  ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("  \t  ")]
     public void GivenEmptyOrWhiteSpaceTaskHub_WhenGettingPartitionsTableName_ThenThrowArgumentException(string taskHub)
-        => Assert.Throws<ArgumentException>(() => PartitionsTable.GetName(taskHub));
+        => Assert.ThrowsExactly<ArgumentException>(() => PartitionsTable.GetName(taskHub));
 
-    [Theory]
-    [InlineData("fooPartitions", "foo")]
-    [InlineData("BarPartitions", "Bar")]
-    [InlineData("BAZPartitions", "BAZ")]
+    [TestMethod]
+    [DataRow("fooPartitions", "foo")]
+    [DataRow("BarPartitions", "Bar")]
+    [DataRow("BAZPartitions", "BAZ")]
     public void GivenTaskHub_WhenGettingPartitionsTableName_ThenReturnExpectedValue(string expected, string taskHub)
-        => Assert.Equal(expected, PartitionsTable.GetName(taskHub));
+        => Assert.AreEqual(expected, PartitionsTable.GetName(taskHub));
 }

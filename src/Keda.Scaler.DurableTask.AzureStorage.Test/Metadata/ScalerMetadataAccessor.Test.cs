@@ -2,22 +2,66 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Metadata;
 
+[TestClass]
 public class ScalerMetadataAccessorTest
 {
-    [Fact]
-    public void GivenNoMetadata_WhenAccessingMetadata_ThenReturnNull()
-        => Assert.Null(new ScalerMetadataAccessor().ScalerMetadata);
+    public required TestContext TestContext { get; init; }
 
-    [Fact]
-    public void GivenMetadata_WhenAccessingMetadata_ThenReturnMetadata()
+    [TestMethod]
+    public void ScalerMetadata_NonNull_AssignsValue()
     {
-        IReadOnlyDictionary<string, string?> metadata = new Dictionary<string, string?> { { "key", "value" } };
-        ScalerMetadataAccessor accessor = new() { ScalerMetadata = metadata };
-        Assert.Same(metadata, accessor.ScalerMetadata);
+        ScalerMetadataAccessor accessor = new();
+        Dictionary<string, string?> metadata = [];
+
+        accessor.ScalerMetadata = metadata;
+        Assert.AreSame(metadata, accessor.ScalerMetadata);
+    }
+
+    [TestMethod]
+    public void ScalerMetadata_Null_ClearsValue()
+    {
+        ScalerMetadataAccessor accessor = new();
+        Dictionary<string, string?> metadata = [];
+
+        accessor.ScalerMetadata = metadata;
+        Assert.AreSame(metadata, accessor.ScalerMetadata);
+
+        accessor.ScalerMetadata = null;
+        Assert.IsNull(accessor.ScalerMetadata);
+    }
+
+    [TestMethod]
+    [Timeout(10 * 1000, CooperativeCancellation = true)]
+    public async ValueTask ScalerMetadata_ValuePerTask_KeepsValuesLocal()
+    {
+        const int Max = 3;
+
+        int assigned = 0;
+        using ManualResetEventSlim resetEvent = new(false);
+        ScalerMetadataAccessor accessor = new();
+
+        Task[] tasks = [.. Enumerable
+            .Repeat<object?>(null, 3)
+            .Select(_ => Task.Run(() =>
+            {
+                Dictionary<string, string?> metadata = [];
+                accessor.ScalerMetadata = metadata;
+
+                if (Interlocked.Increment(ref assigned) is Max)
+                    resetEvent.Set();
+
+                resetEvent.Wait(TestContext.CancellationToken);
+                Assert.AreSame(metadata, accessor.ScalerMetadata);
+            }, TestContext.CancellationToken))];
+
+        await Task.WhenAll(tasks);
     }
 }

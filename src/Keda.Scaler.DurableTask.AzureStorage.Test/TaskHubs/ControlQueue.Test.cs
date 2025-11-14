@@ -3,32 +3,33 @@
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
+[TestClass]
 public class ControlQueueTest
 {
-    [Fact]
+    [TestMethod]
     public void GivenNullTaskHub_WhenGettingControlQueueName_ThenThrowArgumentException()
-        => Assert.Throws<ArgumentNullException>(() => LeasesContainer.GetName(null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => LeasesContainer.GetName(null!));
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("  \t  ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("  \t  ")]
     public void GivenEmptyOrWhiteSpaceTaskHub_WhenGettingControlQueueName_ThenThrowArgumentException(string taskHub)
-        => Assert.Throws<ArgumentException>(() => LeasesContainer.GetName(taskHub));
+        => Assert.ThrowsExactly<ArgumentException>(() => LeasesContainer.GetName(taskHub));
 
-    [Theory]
-    [InlineData(-2)]
-    [InlineData(19)]
+    [TestMethod]
+    [DataRow(-2)]
+    [DataRow(19)]
     public void GivenInvalidPartition_WhenGettingControlQueueName_ThenThrowArgumentOutOfRangeException(int partition)
-        => Assert.Throws<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", partition));
+        => Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => ControlQueue.GetName("foo", partition));
 
-    [Theory]
-    [InlineData("foo-control-00", "foo", 0)]
-    [InlineData("bar-control-07", "Bar", 7)]
-    [InlineData("baz-control-15", "BAZ", 15)]
+    [TestMethod]
+    [DataRow("foo-control-00", "foo", 0)]
+    [DataRow("bar-control-07", "Bar", 7)]
+    [DataRow("baz-control-15", "BAZ", 15)]
     public void GivenTaskHub_WhenGettingControlQueueName_ThenReturnExpectedValue(string expected, string taskHub, int partition)
-        => Assert.Equal(expected, ControlQueue.GetName(taskHub, partition));
+        => Assert.AreEqual(expected, ControlQueue.GetName(taskHub, partition));
 }

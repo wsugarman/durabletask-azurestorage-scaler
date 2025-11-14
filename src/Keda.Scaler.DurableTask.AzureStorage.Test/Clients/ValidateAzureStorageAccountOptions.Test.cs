@@ -5,11 +5,12 @@ using System;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Clients;
 
+[TestClass]
 public class ValidateAzureStorageAccountOptionsTest
 {
     private readonly ScalerOptions _scalerOptions = new();
@@ -24,50 +25,45 @@ public class ValidateAzureStorageAccountOptionsTest
         _validate = new(snapshot);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullOptionsSnapshot_WhenCreatingValidate_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new ValidateAzureStorageAccountOptions(null!));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new ValidateAzureStorageAccountOptions(null!));
 
         IOptionsSnapshot<ScalerOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<ScalerOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(ScalerOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => new ValidateAzureStorageAccountOptions(nullSnapshot));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new ValidateAzureStorageAccountOptions(nullSnapshot));
     }
 
-    [Theory]
-    [InlineData("ExampleEnvVariable")]
-    [InlineData(null)]
+    [TestMethod]
+    [DataRow("ExampleEnvVariable")]
+    [DataRow(null)]
+    [DoNotParallelize]
     public void GivenUnresolvedConnectionString_WhenValidatingOptions_ThenReturnFailure(string? variableName)
     {
-        GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
-            variableName ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable,
-            o => o.ConnectionFromEnv = variableName);
-    }
-
-    [Fact]
-    public void GivenValidConnectionString_WhenValidatingOptions_ThenReturnSuccess()
-        => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.Connection = "foo=bar");
-
-    [Fact]
-    public void GivenValidAccountName_WhenValidatingOptions_ThenReturnSuccess()
-        => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.AccountName = "unittest");
-
-    private void GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(string failureSnippet, Action<ScalerOptions> configure)
-    {
-        ArgumentNullException.ThrowIfNull(configure);
+        string envVariable = variableName ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable;
+        using IDisposable env = TestEnvironment.SetVariable(envVariable, null);
 
         AzureStorageAccountOptions options = new();
-        configure(_scalerOptions);
+        _scalerOptions.ConnectionFromEnv = variableName;
         _configure.Configure(options);
 
         ValidateOptionsResult result = _validate.Validate(Options.DefaultName, options);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.Failed);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.Failed);
 
-        string failureMessage = Assert.Single(result.Failures);
-        Assert.Contains(failureSnippet, failureMessage, StringComparison.Ordinal);
+        string failureMessage = Assert.ContainsSingle(result.Failures);
+        Assert.Contains(envVariable, failureMessage, StringComparison.Ordinal);
     }
+
+    [TestMethod]
+    public void GivenValidConnectionString_WhenValidatingOptions_ThenReturnSuccess()
+        => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.Connection = "foo=bar");
+
+    [TestMethod]
+    public void GivenValidAccountName_WhenValidatingOptions_ThenReturnSuccess()
+        => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.AccountName = "unittest");
 
     private void GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(Action<ScalerOptions> configure)
     {
@@ -79,8 +75,8 @@ public class ValidateAzureStorageAccountOptionsTest
 
         ValidateOptionsResult result = _validate.Validate(Options.DefaultName, options);
 
-        Assert.True(result.Succeeded);
-        Assert.False(result.Failed);
-        Assert.Null(result.Failures);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsFalse(result.Failed);
+        Assert.IsNull(result.Failures);
     }
 }

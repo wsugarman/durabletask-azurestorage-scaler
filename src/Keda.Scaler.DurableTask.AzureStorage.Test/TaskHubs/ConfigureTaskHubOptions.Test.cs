@@ -5,11 +5,12 @@ using System;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
+[TestClass]
 public class ConfigureTaskHubOptionsTest
 {
     private readonly ScalerOptions _scalerOptions = new();
@@ -22,21 +23,21 @@ public class ConfigureTaskHubOptionsTest
         _configure = new(snapshot);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullOptionsSnapshot_WhenCreatingConfigure_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new ConfigureTaskHubOptions(null!));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new ConfigureTaskHubOptions(null!));
 
         IOptionsSnapshot<ScalerOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<ScalerOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(ScalerOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => new ConfigureTaskHubOptions(nullSnapshot));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new ConfigureTaskHubOptions(nullSnapshot));
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullOptions_WhenConfiguring_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => _configure.Configure(null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => _configure.Configure(null!));
 
-    [Fact]
+    [TestMethod]
     public void GivenScalerMetadata_WhenConfiguring_ThenCopyProperties()
     {
         _scalerOptions.MaxActivitiesPerWorker = 17;
@@ -47,9 +48,9 @@ public class ConfigureTaskHubOptionsTest
         TaskHubOptions actual = new();
         _configure.Configure(actual);
 
-        Assert.Equal(_scalerOptions.MaxActivitiesPerWorker, actual.MaxActivitiesPerWorker);
-        Assert.Equal(_scalerOptions.MaxOrchestrationsPerWorker, actual.MaxOrchestrationsPerWorker);
-        Assert.Equal(_scalerOptions.TaskHubName, actual.TaskHubName);
-        Assert.Equal(_scalerOptions.UseTablePartitionManagement, actual.UseTablePartitionManagement);
+        Assert.AreEqual(_scalerOptions.MaxActivitiesPerWorker, actual.MaxActivitiesPerWorker);
+        Assert.AreEqual(_scalerOptions.MaxOrchestrationsPerWorker, actual.MaxOrchestrationsPerWorker);
+        Assert.AreEqual(_scalerOptions.TaskHubName, actual.TaskHubName);
+        Assert.AreEqual(_scalerOptions.UseTablePartitionManagement, actual.UseTablePartitionManagement);
     }
 }

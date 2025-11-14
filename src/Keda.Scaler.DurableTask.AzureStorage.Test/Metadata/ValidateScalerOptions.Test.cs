@@ -6,18 +6,19 @@ using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.Extensions.Options;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Metadata;
 
+[TestClass]
 public class ValidateScalerOptionsTest
 {
     private readonly ValidateScalerOptions _validate = new();
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("    ")]
-    [InlineData("123-456-789")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("    ")]
+    [DataRow("123-456-789")]
     public void GivenConnectionStringWithClientId_WhenValidatingOptions_ThenReturnFailure(string clientId)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -29,10 +30,10 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("    ")]
-    [InlineData(nameof(CloudEnvironment.AzurePublicCloud))]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("    ")]
+    [DataRow(nameof(CloudEnvironment.AzurePublicCloud))]
     public void GivenConnectionStringWithCloud_WhenValidatingOptions_ThenReturnFailure(string cloud)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -44,10 +45,10 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("    ")]
-    [InlineData(AzureStorageServiceUri.PublicSuffix)]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("    ")]
+    [DataRow(AzureStorageServiceUri.PublicSuffix)]
     public void GivenConnectionStringWithEndpointSuffix_WhenValidatingOptions_ThenReturnFailure(string endpointSuffix)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -59,7 +60,7 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenConnectionStringWithEntraEndpoint_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -71,7 +72,7 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenConnectionStringWithManagedIdentity_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -83,9 +84,9 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("    ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("    ")]
     public void GivenBlankConnection_WhenValidatingOptions_ThenReturnFailure(string connection)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -93,9 +94,9 @@ public class ValidateScalerOptionsTest
             m => m.Connection = connection);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("    ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("    ")]
     public void GivenBlankConnectionEnv_WhenValidatingOptions_ThenReturnFailure(string connectionEnv)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -103,7 +104,7 @@ public class ValidateScalerOptionsTest
             m => m.ConnectionFromEnv = connectionEnv);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenBothConnectionAndConectionEnv_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -115,10 +116,10 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Theory]
-    [InlineData("Foo=Bar", null)]
-    [InlineData(null, "ExampleEnvVariable")]
-    [InlineData("Foo=Bar", "ExampleEnvVariable")]
+    [TestMethod]
+    [DataRow("Foo=Bar", null)]
+    [DataRow(null, "ExampleEnvVariable")]
+    [DataRow("Foo=Bar", "ExampleEnvVariable")]
     public void GivenAccountNameWithConnectionString_WhenValidatingOptions_ThenReturnFailure(string? connection, string? connectionEnv)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -132,9 +133,9 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("    ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("    ")]
     public void GivenBlankAccountName_WhenValidatingOptions_ThenReturnFailure(string accountName)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -146,7 +147,7 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenUnresolvedCloud_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -159,9 +160,9 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("    ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("    ")]
     public void GivenPrivateCloudWithoutEndpointSuffix_WhenValidatingOptions_ThenReturnFailure(string endpointSuffix)
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -176,7 +177,7 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenPrivateCloudWithoutEntraEndpoint_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -191,7 +192,7 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNonPrivateCloudWithEndpointSuffix_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -205,7 +206,7 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNonPrivateCloudWithEntraEndpoint_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -219,7 +220,7 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNoManagedIdentity_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
@@ -231,11 +232,11 @@ public class ValidateScalerOptionsTest
             });
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenValidConnectionString_WhenValidatingOptions_ThenReturnSuccess()
         => GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.Connection = "foo=bar");
 
-    [Fact]
+    [TestMethod]
     public void GivenValidConnectionStringVariable_WhenValidatingOptions_ThenReturnSuccess()
     {
         string key = Guid.NewGuid().ToString("N");
@@ -243,7 +244,7 @@ public class ValidateScalerOptionsTest
         GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o => o.ConnectionFromEnv = key);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenValidAccountName_WhenValidatingOptions_ThenReturnSuccess()
     {
         GivenValidCombination_WhenValidatingOptions_ThenReturnSuccess(o =>
@@ -262,10 +263,10 @@ public class ValidateScalerOptionsTest
 
         ValidateOptionsResult result = _validate.Validate(Options.DefaultName, options);
 
-        Assert.False(result.Succeeded);
-        Assert.True(result.Failed);
+        Assert.IsFalse(result.Succeeded);
+        Assert.IsTrue(result.Failed);
 
-        string failureMessage = Assert.Single(result.Failures);
+        string failureMessage = Assert.ContainsSingle(result.Failures);
         Assert.Contains(failureSnippet, failureMessage, StringComparison.Ordinal);
     }
 
@@ -278,8 +279,8 @@ public class ValidateScalerOptionsTest
 
         ValidateOptionsResult result = _validate.Validate(Options.DefaultName, options);
 
-        Assert.True(result.Succeeded);
-        Assert.False(result.Failed);
-        Assert.Null(result.Failures);
+        Assert.IsTrue(result.Succeeded);
+        Assert.IsFalse(result.Failed);
+        Assert.IsNull(result.Failures);
     }
 }
