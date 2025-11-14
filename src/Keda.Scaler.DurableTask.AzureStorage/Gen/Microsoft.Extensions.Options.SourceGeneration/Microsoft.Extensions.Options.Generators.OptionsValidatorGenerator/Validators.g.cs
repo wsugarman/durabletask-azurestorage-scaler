@@ -4,7 +4,7 @@
     #pragma warning disable CS1591 // Compensate for https://github.com/dotnet/roslyn/issues/54103
     namespace Keda.Scaler.DurableTask.AzureStorage.Certificates
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "10.0.13.2411")]
     internal sealed partial class __CaCertificateFileOptionsValidator__
     {
         /// <summary>
@@ -13,13 +13,20 @@
         /// <param name="name">The name of the options instance being validated.</param>
         /// <param name="options">The options instance.</param>
         /// <returns>Validation result.</returns>
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "10.0.13.2411")]
+        #if !NET10_0_OR_GREATER
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
              Justification = "The created ValidationContext object is used in a way that never call reflection")]
+        #endif
         public static global::Microsoft.Extensions.Options.ValidateOptionsResult Validate(string? name, global::Keda.Scaler.DurableTask.AzureStorage.Certificates.CaCertificateFileOptions options)
         {
             global::Microsoft.Extensions.Options.ValidateOptionsResultBuilder? builder = null;
+            #if NET10_0_OR_GREATER
+            string displayName = string.IsNullOrEmpty(name) ? "CaCertificateFileOptions.Validate" : $"{name}.Validate";
+            var context = new global::System.ComponentModel.DataAnnotations.ValidationContext(options, displayName, null, null);
+            #else
             var context = new global::System.ComponentModel.DataAnnotations.ValidationContext(options);
+            #endif
             var validationResults = new global::System.Collections.Generic.List<global::System.ComponentModel.DataAnnotations.ValidationResult>();
             var validationAttributes = new global::System.Collections.Generic.List<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(1);
 
@@ -55,13 +62,20 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Certificates
         /// <param name="name">The name of the options instance being validated.</param>
         /// <param name="options">The options instance.</param>
         /// <returns>Validation result.</returns>
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "10.0.13.2411")]
+        #if !NET10_0_OR_GREATER
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
              Justification = "The created ValidationContext object is used in a way that never call reflection")]
+        #endif
         public global::Microsoft.Extensions.Options.ValidateOptionsResult Validate(string? name, global::Keda.Scaler.DurableTask.AzureStorage.Certificates.ClientCertificateValidationOptions options)
         {
             global::Microsoft.Extensions.Options.ValidateOptionsResultBuilder? builder = null;
+            #if NET10_0_OR_GREATER
+            string displayName = string.IsNullOrEmpty(name) ? "ClientCertificateValidationOptions.Validate" : $"{name}.Validate";
+            var context = new global::System.ComponentModel.DataAnnotations.ValidationContext(options, displayName, null, null);
+            #else
             var context = new global::System.ComponentModel.DataAnnotations.ValidationContext(options);
+            #endif
 
             if (options.CertificateAuthority is not null)
             {
@@ -82,13 +96,20 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Metadata
         /// <param name="name">The name of the options instance being validated.</param>
         /// <param name="options">The options instance.</param>
         /// <returns>Validation result.</returns>
-        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "10.0.13.2411")]
+        #if !NET10_0_OR_GREATER
         [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
              Justification = "The created ValidationContext object is used in a way that never call reflection")]
+        #endif
         public global::Microsoft.Extensions.Options.ValidateOptionsResult Validate(string? name, global::Keda.Scaler.DurableTask.AzureStorage.Metadata.ScalerOptions options)
         {
             global::Microsoft.Extensions.Options.ValidateOptionsResultBuilder? builder = null;
+            #if NET10_0_OR_GREATER
+            string displayName = string.IsNullOrEmpty(name) ? "ScalerOptions.Validate" : $"{name}.Validate";
+            var context = new global::System.ComponentModel.DataAnnotations.ValidationContext(options, displayName, null, null);
+            #else
             var context = new global::System.ComponentModel.DataAnnotations.ValidationContext(options);
+            #endif
             var validationResults = new global::System.Collections.Generic.List<global::System.ComponentModel.DataAnnotations.ValidationResult>();
             var validationAttributes = new global::System.Collections.Generic.List<global::System.ComponentModel.DataAnnotations.ValidationAttribute>(1);
 
@@ -126,7 +147,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Metadata
 }
 namespace __OptionValidationStaticInstances
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "10.0.13.2411")]
     file static class __Attributes
     {
         internal static readonly global::System.ComponentModel.DataAnnotations.RequiredAttribute A1 = new global::System.ComponentModel.DataAnnotations.RequiredAttribute();
@@ -142,14 +163,14 @@ namespace __OptionValidationStaticInstances
 }
 namespace __OptionValidationStaticInstances
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "10.0.13.2411")]
     file static class __Validators
     {
     }
 }
 namespace __OptionValidationGeneratedAttributes
 {
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "9.0.12.31616")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Extensions.Options.SourceGeneration", "10.0.13.2411")]
     [global::System.AttributeUsage(global::System.AttributeTargets.Property | global::System.AttributeTargets.Field | global::System.AttributeTargets.Parameter, AllowMultiple = false)]
     file class __SourceGen__RangeAttribute : global::System.ComponentModel.DataAnnotations.ValidationAttribute
     {
