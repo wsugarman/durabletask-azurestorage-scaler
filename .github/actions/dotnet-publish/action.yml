@@ -66,7 +66,7 @@ runs:
     - name: Build
       shell: bash
       run: |
-        dotnet build "./src/Scaler.sln" \
+        dotnet build "./src/Scaler.slnx" \
           --configuration "${{ inputs.buildConfiguration }}" \
           "--property:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
           -warnaserror
