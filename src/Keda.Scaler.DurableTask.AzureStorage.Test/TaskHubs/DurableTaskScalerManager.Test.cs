@@ -16,15 +16,22 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 [TestClass]
 public sealed class DurableTaskScalerManagerTest
 {
-    private readonly ITaskHub _taskHub = Substitute.For<ITaskHub>();
-    private readonly IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
+    private readonly TestContext _testContext;
+    private readonly ITaskHub _taskHub;
+    private readonly IOptionsSnapshot<TaskHubOptions> _optionsSnapshot;
     private readonly MockScaleManager _scaleManager;
 
     private const string TaskHubName = "UnitTest";
     private const int MaxActivitiesPerWorker = 5;
 
-    public DurableTaskScalerManagerTest()
+    public DurableTaskScalerManagerTest(TestContext testContext)
     {
+        ArgumentNullException.ThrowIfNull(testContext);
+
+        _testContext = testContext;
+        _taskHub = Substitute.For<ITaskHub>();
+        _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
+
         TaskHubOptions options = new()
         {
             MaxActivitiesPerWorker = MaxActivitiesPerWorker,
@@ -34,8 +41,6 @@ public sealed class DurableTaskScalerManagerTest
         _ = _optionsSnapshot.Get(default).Returns(options);
         _scaleManager = Substitute.For<MockScaleManager>(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
     }
-
-    public required TestContext TestContext { get; init; }
 
     [TestMethod]
     public void GivenNullTaskHub_WhenCreatingScalerManager_ThenThrowArgumentNullException()
@@ -72,7 +77,7 @@ public sealed class DurableTaskScalerManagerTest
     [TestMethod]
     public async ValueTask GivenNoActivity_WhenGettingMetricValues_ThenReturnZero()
     {
-        _ = _taskHub.GetUsageAsync(TestContext.CancellationToken).ReturnsForAnyArgs(TaskHubQueueUsage.None);
+        _ = _taskHub.GetUsageAsync(_testContext.CancellationToken).ReturnsForAnyArgs(TaskHubQueueUsage.None);
 
         using CancellationTokenSource cts = new();
         MetricValue actual = await _scaleManager.GetKedaMetricValueAsync(cts.Token);
@@ -87,7 +92,7 @@ public sealed class DurableTaskScalerManagerTest
     public async ValueTask GivenActivity_WhenGettingMetricValues_ThenReturnDerivedValue()
     {
         TaskHubQueueUsage usage = new([1, 2, 3, 4], 2);
-        _ = _taskHub.GetUsageAsync(TestContext.CancellationToken).ReturnsForAnyArgs(usage);
+        _ = _taskHub.GetUsageAsync(_testContext.CancellationToken).ReturnsForAnyArgs(usage);
         _ = _scaleManager.GetRequiredWorkerCount(default!).ReturnsForAnyArgs(3);
 
         using CancellationTokenSource cts = new();
@@ -102,7 +107,7 @@ public sealed class DurableTaskScalerManagerTest
     [TestMethod]
     public async ValueTask GivenNoActivity_WhenCheckingIfActive_ThenReturnFalse()
     {
-        _ = _taskHub.GetUsageAsync(TestContext.CancellationToken).ReturnsForAnyArgs(TaskHubQueueUsage.None);
+        _ = _taskHub.GetUsageAsync(_testContext.CancellationToken).ReturnsForAnyArgs(TaskHubQueueUsage.None);
 
         using CancellationTokenSource cts = new();
         bool actual = await _scaleManager.IsActiveAsync(cts.Token);
@@ -115,7 +120,7 @@ public sealed class DurableTaskScalerManagerTest
     public async ValueTask GivenActivity_WhenCheckingIfActive_ThenReturnTrue()
     {
         TaskHubQueueUsage usage = new([1, 2, 3, 4], 2);
-        _ = _taskHub.GetUsageAsync(TestContext.CancellationToken).ReturnsForAnyArgs(usage);
+        _ = _taskHub.GetUsageAsync(_testContext.CancellationToken).ReturnsForAnyArgs(usage);
         _ = _scaleManager.GetRequiredWorkerCount(default!).ReturnsForAnyArgs(3);
 
         using CancellationTokenSource cts = new();

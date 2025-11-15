@@ -1,6 +1,7 @@
 // Copyright © William Sugarman.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -13,7 +14,13 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Metadata;
 [TestClass]
 public class ScalerMetadataAccessorTest
 {
-    public required TestContext TestContext { get; init; }
+    private readonly TestContext _testContext;
+
+    public ScalerMetadataAccessorTest(TestContext testContext)
+    {
+        ArgumentNullException.ThrowIfNull(testContext);
+        _testContext = testContext;
+    }
 
     [TestMethod]
     public void ScalerMetadata_NonNull_AssignsValue()
@@ -58,9 +65,9 @@ public class ScalerMetadataAccessorTest
                 if (Interlocked.Increment(ref assigned) is Max)
                     resetEvent.Set();
 
-                resetEvent.Wait(TestContext.CancellationToken);
+                resetEvent.Wait(_testContext.CancellationToken);
                 Assert.AreSame(metadata, accessor.ScalerMetadata);
-            }, TestContext.CancellationToken))];
+            }, _testContext.CancellationToken))];
 
         await Task.WhenAll(tasks);
     }

@@ -20,17 +20,20 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Certificates;
 [DoNotParallelize]
 public sealed class ConfigureCustomTrustStoreTest : IDisposable
 {
-    private readonly string _testDirectory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+    private readonly TestContext _testContext;
+    private readonly DirectoryInfo _testDirectory;
 
-    public required TestContext TestContext { get; init; }
+    public ConfigureCustomTrustStoreTest(TestContext testContext)
+    {
+        ArgumentNullException.ThrowIfNull(testContext);
 
-    [TestInitialize]
-    public void TestInitialize()
-        => Directory.CreateDirectory(_testDirectory);
+        _testContext = testContext;
+        _testDirectory = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString()));
+    }
 
     public void Dispose()
     {
-        Directory.Delete(_testDirectory, recursive: true);
+        _testDirectory.Delete(recursive: true);
         GC.SuppressFinalize(this);
     }
 
@@ -67,11 +70,11 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
     {
         // Create the certificate and write to disk
         const string CertName = "example.crt";
-        string certPath = Path.Combine(_testDirectory, CertName);
+        string certPath = Path.Combine(_testDirectory.FullName, CertName);
 
         using RSA key = RSA.Create();
         using X509Certificate2 expected = key.CreateSelfSignedCertificate();
-        await File.WriteAllTextAsync(certPath, expected.ExportCertificatePem(), TestContext.CancellationToken);
+        await File.WriteAllTextAsync(certPath, expected.ExportCertificatePem(), _testContext.CancellationToken);
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -104,11 +107,11 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
     {
         // Create the certificate and write to disk
         const string CertName = "example.crt";
-        string certPath = Path.Combine(_testDirectory, CertName);
+        string certPath = Path.Combine(_testDirectory.FullName, CertName);
 
         using RSA key1 = RSA.Create();
         using X509Certificate2 expected1 = key1.CreateSelfSignedCertificate();
-        await File.WriteAllTextAsync(certPath, expected1.ExportCertificatePem(), TestContext.CancellationToken);
+        await File.WriteAllTextAsync(certPath, expected1.ExportCertificatePem(), _testContext.CancellationToken);
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -137,14 +140,14 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         // Update the certificate file
         using RSA key2 = RSA.Create();
         using X509Certificate2 expected2 = key2.CreateSelfSignedCertificate();
-        await File.WriteAllTextAsync(certPath, expected2.ExportCertificatePem(), TestContext.CancellationToken);
+        await File.WriteAllTextAsync(certPath, expected2.ExportCertificatePem(), _testContext.CancellationToken);
 
         // Check for the updated certificate
         do
         {
             configure.Configure(options);
             actual = Assert.ContainsSingle(options.CustomTrustStore);
-        } while (Volatile.Read(ref reloads) is 0 && !TestContext.CancellationToken.IsCancellationRequested);
+        } while (Volatile.Read(ref reloads) is 0 && !_testContext.CancellationToken.IsCancellationRequested);
 
         actual = Assert.ContainsSingle(options.CustomTrustStore);
         Assert.AreEqual(expected2.Thumbprint, actual.Thumbprint);

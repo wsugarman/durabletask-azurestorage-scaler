@@ -16,20 +16,25 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 [TestClass]
 public sealed class DurableTaskAzureStorageScalerServiceTest
 {
-    private readonly ITaskHub _taskHub = Substitute.For<ITaskHub>();
-    private readonly TaskHubOptions _options = new() { TaskHubName = "UnitTest" };
+    private readonly TestContext _testContext;
+    private readonly ITaskHub _taskHub;
+    private readonly TaskHubOptions _options;
     private readonly DurableTaskScaleManager _scaleManager;
     private readonly DurableTaskAzureStorageScalerService _service;
 
-    public DurableTaskAzureStorageScalerServiceTest()
+    public DurableTaskAzureStorageScalerServiceTest(TestContext testContext)
     {
+        ArgumentNullException.ThrowIfNull(testContext);
+
+        _testContext = testContext;
+        _taskHub = Substitute.For<ITaskHub>();
+        _options = new() { TaskHubName = "UnitTest" };
+
         IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = _optionsSnapshot.Get(default).Returns(_options);
         _scaleManager = Substitute.For<DurableTaskScaleManager>(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
         _service = new(_scaleManager);
     }
-
-    public required TestContext TestContext { get; init; }
 
     [TestMethod]
     public void GivenNullScalerManager_WhenCreatingService_ThenThrowArgumentNullException()
@@ -52,7 +57,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest
             MetricValue_ = 42,
         };
 
-        _ = _scaleManager.GetKedaMetricValueAsync(TestContext.CancellationToken).ReturnsForAnyArgs(expected);
+        _ = _scaleManager.GetKedaMetricValueAsync(_testContext.CancellationToken).ReturnsForAnyArgs(expected);
 
         using CancellationTokenSource cts = new();
         GetMetricsResponse actual = await _service.GetMetrics(new GetMetricsRequest(), new MockServerCallContext(cts.Token));
@@ -98,7 +103,7 @@ public sealed class DurableTaskAzureStorageScalerServiceTest
     [TestMethod]
     public async ValueTask GivenRequest_WhenCheckingIfActive_ThenReturnResponse()
     {
-        _ = _scaleManager.IsActiveAsync(TestContext.CancellationToken).ReturnsForAnyArgs(true);
+        _ = _scaleManager.IsActiveAsync(_testContext.CancellationToken).ReturnsForAnyArgs(true);
 
         using CancellationTokenSource cts = new();
         IsActiveResponse actual = await _service.IsActive(new ScaledObjectRef(), new MockServerCallContext(cts.Token));
