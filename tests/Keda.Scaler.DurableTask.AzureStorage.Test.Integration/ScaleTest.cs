@@ -97,6 +97,7 @@ public sealed partial class ScaleTest : IAsyncDisposable
     }
 
     [TestMethod]
+    [Timeout(10 * 60 * 1000, CooperativeCancellation = true)]
     public async Task GivenMultipleActivities_WhenRunningOrchestrationInstance_ThenScaleUp()
     {
         const int ExpectedActivityWorkers = 3;
@@ -126,6 +127,7 @@ public sealed partial class ScaleTest : IAsyncDisposable
     }
 
     [TestMethod]
+    [Timeout(10 * 60 * 1000, CooperativeCancellation = true)]
     public async Task GivenMultipleOrchestrationInstances_WhenRunningOrchestrationsConcurrently_ThenScaleUp()
     {
         const int OrchestrationCount = 3;

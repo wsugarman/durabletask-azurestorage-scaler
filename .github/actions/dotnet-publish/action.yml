@@ -74,16 +74,15 @@ runs:
     - name: Test
       shell: bash
       run: |
-        dotnet run \
-          --configuration "${{ inputs.buildConfiguration }}" \
+        dotnet test \
           --coverage \
           --coverage-output "${{ inputs.coverageFileName }}" \
           --coverage-output-format cobertura \
-          --coverage-settings "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \
+          --coverage-settings "$GITHUB_WORKSPACE/src/CodeCoverage.config" \
+          --configuration "${{ inputs.buildConfiguration }}" \
           --no-build \
-          --project "./src/Keda.Scaler.DurableTask.AzureStorage.Test/Keda.Scaler.DurableTask.AzureStorage.Test.csproj" \
           --results-directory "${{ inputs.testResultsDirectory }}" \
-          --verbosity normal
+          --solution "./src/Scaler.slnx"
 
     - name: Publish
       shell: bash
