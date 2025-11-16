@@ -11,7 +11,7 @@ namespace System.Runtime.CompilerServices
     using System;
     using System.CodeDom.Compiler;
 
-    [GeneratedCode("Microsoft.Extensions.Configuration.Binder.SourceGeneration", "9.0.12.31616")]
+    [GeneratedCode("Microsoft.Extensions.Configuration.Binder.SourceGeneration", "10.0.13.2411")]
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
     file sealed class InterceptsLocationAttribute : Attribute
     {
@@ -32,7 +32,7 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
     using System.Globalization;
     using System.Runtime.CompilerServices;
 
-    [GeneratedCode("Microsoft.Extensions.Configuration.Binder.SourceGeneration", "9.0.12.31616")]
+    [GeneratedCode("Microsoft.Extensions.Configuration.Binder.SourceGeneration", "10.0.13.2411")]
     file static class BindingExtensions
     {
         #region IConfiguration extensions.
@@ -134,7 +134,7 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
         {
             ValidateConfigurationKeys(typeof(global::Keda.Scaler.DurableTask.AzureStorage.Certificates.CaCertificateFileOptions), s_configKeys_CaCertificateFileOptions, configuration, binderOptions);
 
-            if (configuration["Path"] is string value2)
+            if (TryGetConfigurationValue(configuration, key: "Path", out string? value2))
             {
                 instance.Path = value2;
             }
@@ -147,9 +147,12 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["ReloadDelayMs"] is string value3 && !string.IsNullOrEmpty(value3))
+            if (TryGetConfigurationValue(configuration, key: "ReloadDelayMs", out string? value3))
             {
-                instance.ReloadDelayMs = ParseInt(value3, configuration.GetSection("ReloadDelayMs").Path);
+                if (!string.IsNullOrEmpty(value3))
+                {
+                    instance.ReloadDelayMs = ParseInt(value3, configuration.GetSection("ReloadDelayMs").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
@@ -161,30 +164,37 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
         {
             ValidateConfigurationKeys(typeof(global::Keda.Scaler.DurableTask.AzureStorage.Certificates.ClientCertificateValidationOptions), s_configKeys_ClientCertificateValidationOptions, configuration, binderOptions);
 
-            if (configuration["Enable"] is string value4 && !string.IsNullOrEmpty(value4))
+            if (TryGetConfigurationValue(configuration, key: "Enable", out string? value4))
             {
-                instance.Enable = ParseBool(value4, configuration.GetSection("Enable").Path);
+                if (!string.IsNullOrEmpty(value4))
+                {
+                    instance.Enable = ParseBool(value4, configuration.GetSection("Enable").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
                 instance.Enable = instance.Enable;
             }
 
-            if (AsConfigWithChildren(configuration.GetSection("CertificateAuthority")) is IConfigurationSection section5)
+            var value5 = configuration.GetSection("CertificateAuthority");
+            if (AsConfigWithChildren(value5) is IConfigurationSection section6)
             {
-                global::Keda.Scaler.DurableTask.AzureStorage.Certificates.CaCertificateFileOptions? temp7 = instance.CertificateAuthority;
-                temp7 ??= new global::Keda.Scaler.DurableTask.AzureStorage.Certificates.CaCertificateFileOptions();
-                BindCore(section5, ref temp7, defaultValueIfNotFound: false, binderOptions);
-                instance.CertificateAuthority = temp7;
+                global::Keda.Scaler.DurableTask.AzureStorage.Certificates.CaCertificateFileOptions? temp8 = instance.CertificateAuthority;
+                temp8 ??= new global::Keda.Scaler.DurableTask.AzureStorage.Certificates.CaCertificateFileOptions();
+                BindCore(section6, ref temp8, defaultValueIfNotFound: false, binderOptions);
+                instance.CertificateAuthority = temp8;
             }
             else
             {
                 instance.CertificateAuthority = instance.CertificateAuthority;
             }
 
-            if (configuration["RevocationMode"] is string value8 && !string.IsNullOrEmpty(value8))
+            if (TryGetConfigurationValue(configuration, key: "RevocationMode", out string? value9))
             {
-                instance.RevocationMode = ParseEnum<global::System.Security.Cryptography.X509Certificates.X509RevocationMode>(value8, configuration.GetSection("RevocationMode").Path);
+                if (!string.IsNullOrEmpty(value9))
+                {
+                    instance.RevocationMode = ParseEnum<global::System.Security.Cryptography.X509Certificates.X509RevocationMode>(value9, configuration.GetSection("RevocationMode").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
@@ -196,18 +206,24 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
         {
             ValidateConfigurationKeys(typeof(global::Microsoft.AspNetCore.Authentication.Certificate.CertificateValidationCacheOptions), s_configKeys_CertificateValidationCacheOptions, configuration, binderOptions);
 
-            if (configuration["CacheEntryExpiration"] is string value9 && !string.IsNullOrEmpty(value9))
+            if (TryGetConfigurationValue(configuration, key: "CacheEntryExpiration", out string? value10))
             {
-                instance.CacheEntryExpiration = ParseSystemTimeSpan(value9, configuration.GetSection("CacheEntryExpiration").Path);
+                if (!string.IsNullOrEmpty(value10))
+                {
+                    instance.CacheEntryExpiration = ParseSystemTimeSpan(value10, configuration.GetSection("CacheEntryExpiration").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
                 instance.CacheEntryExpiration = instance.CacheEntryExpiration;
             }
 
-            if (configuration["CacheSize"] is string value10 && !string.IsNullOrEmpty(value10))
+            if (TryGetConfigurationValue(configuration, key: "CacheSize", out string? value11))
             {
-                instance.CacheSize = ParseInt(value10, configuration.GetSection("CacheSize").Path);
+                if (!string.IsNullOrEmpty(value11))
+                {
+                    instance.CacheSize = ParseInt(value11, configuration.GetSection("CacheSize").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
@@ -219,9 +235,9 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
         {
             ValidateConfigurationKeys(typeof(global::Keda.Scaler.DurableTask.AzureStorage.Metadata.ScalerOptions), s_configKeys_ScalerOptions, configuration, binderOptions);
 
-            if (configuration["AccountName"] is string value11)
+            if (TryGetConfigurationValue(configuration, key: "AccountName", out string? value12))
             {
-                instance.AccountName = value11;
+                instance.AccountName = value12;
             }
             else if (defaultValueIfNotFound)
             {
@@ -232,9 +248,9 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["ClientId"] is string value12)
+            if (TryGetConfigurationValue(configuration, key: "ClientId", out string? value13))
             {
-                instance.ClientId = value12;
+                instance.ClientId = value13;
             }
             else if (defaultValueIfNotFound)
             {
@@ -245,9 +261,9 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["Cloud"] is string value13)
+            if (TryGetConfigurationValue(configuration, key: "Cloud", out string? value14))
             {
-                instance.Cloud = value13;
+                instance.Cloud = value14;
             }
             else if (defaultValueIfNotFound)
             {
@@ -258,9 +274,9 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["Connection"] is string value14)
+            if (TryGetConfigurationValue(configuration, key: "Connection", out string? value15))
             {
-                instance.Connection = value14;
+                instance.Connection = value15;
             }
             else if (defaultValueIfNotFound)
             {
@@ -271,9 +287,9 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["ConnectionFromEnv"] is string value15)
+            if (TryGetConfigurationValue(configuration, key: "ConnectionFromEnv", out string? value16))
             {
-                instance.ConnectionFromEnv = value15;
+                instance.ConnectionFromEnv = value16;
             }
             else if (defaultValueIfNotFound)
             {
@@ -284,9 +300,9 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["EndpointSuffix"] is string value16)
+            if (TryGetConfigurationValue(configuration, key: "EndpointSuffix", out string? value17))
             {
-                instance.EndpointSuffix = value16;
+                instance.EndpointSuffix = value17;
             }
             else if (defaultValueIfNotFound)
             {
@@ -297,9 +313,19 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["EntraEndpoint"] is string value17 && !string.IsNullOrEmpty(value17))
+            if (TryGetConfigurationValue(configuration, key: "EntraEndpoint", out string? value18))
             {
-                instance.EntraEndpoint = ParseSystemUri(value17, configuration.GetSection("EntraEndpoint").Path);
+                if (value18 is null)
+                {
+                    instance.EntraEndpoint = null;
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(value18))
+                    {
+                        instance.EntraEndpoint = ParseSystemUri(value18, configuration.GetSection("EntraEndpoint").Path);
+                    }
+                }
             }
             else if (defaultValueIfNotFound)
             {
@@ -310,27 +336,33 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["MaxActivitiesPerWorker"] is string value18 && !string.IsNullOrEmpty(value18))
+            if (TryGetConfigurationValue(configuration, key: "MaxActivitiesPerWorker", out string? value19))
             {
-                instance.MaxActivitiesPerWorker = ParseInt(value18, configuration.GetSection("MaxActivitiesPerWorker").Path);
+                if (!string.IsNullOrEmpty(value19))
+                {
+                    instance.MaxActivitiesPerWorker = ParseInt(value19, configuration.GetSection("MaxActivitiesPerWorker").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
                 instance.MaxActivitiesPerWorker = instance.MaxActivitiesPerWorker;
             }
 
-            if (configuration["MaxOrchestrationsPerWorker"] is string value19 && !string.IsNullOrEmpty(value19))
+            if (TryGetConfigurationValue(configuration, key: "MaxOrchestrationsPerWorker", out string? value20))
             {
-                instance.MaxOrchestrationsPerWorker = ParseInt(value19, configuration.GetSection("MaxOrchestrationsPerWorker").Path);
+                if (!string.IsNullOrEmpty(value20))
+                {
+                    instance.MaxOrchestrationsPerWorker = ParseInt(value20, configuration.GetSection("MaxOrchestrationsPerWorker").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
                 instance.MaxOrchestrationsPerWorker = instance.MaxOrchestrationsPerWorker;
             }
 
-            if (configuration["TaskHubName"] is string value20)
+            if (TryGetConfigurationValue(configuration, key: "TaskHubName", out string? value21))
             {
-                instance.TaskHubName = value20;
+                instance.TaskHubName = value21;
             }
             else if (defaultValueIfNotFound)
             {
@@ -341,23 +373,41 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
                 }
             }
 
-            if (configuration["UseTablePartitionManagement"] is string value21 && !string.IsNullOrEmpty(value21))
+            if (TryGetConfigurationValue(configuration, key: "UseTablePartitionManagement", out string? value22))
             {
-                instance.UseTablePartitionManagement = ParseBool(value21, configuration.GetSection("UseTablePartitionManagement").Path);
+                if (!string.IsNullOrEmpty(value22))
+                {
+                    instance.UseTablePartitionManagement = ParseBool(value22, configuration.GetSection("UseTablePartitionManagement").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
                 instance.UseTablePartitionManagement = instance.UseTablePartitionManagement;
             }
 
-            if (configuration["UseManagedIdentity"] is string value22 && !string.IsNullOrEmpty(value22))
+            if (TryGetConfigurationValue(configuration, key: "UseManagedIdentity", out string? value23))
             {
-                instance.UseManagedIdentity = ParseBool(value22, configuration.GetSection("UseManagedIdentity").Path);
+                if (!string.IsNullOrEmpty(value23))
+                {
+                    instance.UseManagedIdentity = ParseBool(value23, configuration.GetSection("UseManagedIdentity").Path);
+                }
             }
             else if (defaultValueIfNotFound)
             {
                 instance.UseManagedIdentity = instance.UseManagedIdentity;
             }
+        }
+
+        /// <summary>Tries to get the configuration value for the specified key.</summary>
+        public static bool TryGetConfigurationValue(IConfiguration configuration, string key, out string? value)
+        {
+            if (configuration is ConfigurationSection section)
+            {
+                return section.TryGetValue(key, out value);
+            }
+        
+            value = key != null ? configuration[key] : configuration is IConfigurationSection sec ? sec.Value : null;
+            return value != null;
         }
 
 
@@ -427,7 +477,7 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
             }
             catch (Exception exception)
             {
-                throw new InvalidOperationException($"Failed to convert configuration value at '{path}' to type '{typeof(T)}'.", exception);
+                throw new InvalidOperationException($"Failed to convert configuration value '{value ?? "null"}' at '{path}' to type '{typeof(T)}'.", exception);
             }
         }
 
@@ -439,7 +489,7 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
             }
             catch (Exception exception)
             {
-                throw new InvalidOperationException($"Failed to convert configuration value at '{path}' to type '{typeof(bool)}'.", exception);
+                throw new InvalidOperationException($"Failed to convert configuration value '{value ?? "null"}' at '{path}' to type '{typeof(bool)}'.", exception);
             }
         }
 
@@ -451,7 +501,7 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
             }
             catch (Exception exception)
             {
-                throw new InvalidOperationException($"Failed to convert configuration value at '{path}' to type '{typeof(int)}'.", exception);
+                throw new InvalidOperationException($"Failed to convert configuration value '{value ?? "null"}' at '{path}' to type '{typeof(int)}'.", exception);
             }
         }
 
@@ -463,7 +513,7 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
             }
             catch (Exception exception)
             {
-                throw new InvalidOperationException($"Failed to convert configuration value at '{path}' to type '{typeof(global::System.TimeSpan)}'.", exception);
+                throw new InvalidOperationException($"Failed to convert configuration value '{value ?? "null"}' at '{path}' to type '{typeof(global::System.TimeSpan)}'.", exception);
             }
         }
 
@@ -475,7 +525,7 @@ namespace Microsoft.Extensions.Configuration.Binder.SourceGeneration
             }
             catch (Exception exception)
             {
-                throw new InvalidOperationException($"Failed to convert configuration value at '{path}' to type '{typeof(global::System.Uri)}'.", exception);
+                throw new InvalidOperationException($"Failed to convert configuration value '{value ?? "null"}' at '{path}' to type '{typeof(global::System.Uri)}'.", exception);
             }
         }
         #endregion Core binding extensions.

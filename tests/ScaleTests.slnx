@@ -1,0 +1,15 @@
+<Solution>
+
+  <Folder Name="/Build/">
+    <File Path="../.dockerignore" />
+    <File Path="../.editorconfig" />
+    <File Path="../.globalconfig" />
+    <File Path="../Directory.Build.props" />
+    <File Path="../Directory.Packages.props" />
+    <File Path="../global.json" />
+  </Folder>
+
+  <Project Path="Keda.Scaler.DurableTask.AzureStorage.Test.Integration/Keda.Scaler.DurableTask.AzureStorage.Test.Integration.csproj" />
+  <Project Path="Keda.Scaler.Functions.Worker.DurableTask.Examples/Keda.Scaler.Functions.Worker.DurableTask.Examples.csproj" />
+
+</Solution>

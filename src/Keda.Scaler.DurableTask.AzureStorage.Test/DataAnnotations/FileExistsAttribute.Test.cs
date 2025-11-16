@@ -7,10 +7,11 @@ using System.IO;
 using Keda.Scaler.DurableTask.AzureStorage.DataAnnotations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.DataAnnotations;
 
+[TestClass]
 public sealed class FileExistsAttributeTests : IDisposable
 {
     private readonly string _tempPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
@@ -18,7 +19,7 @@ public sealed class FileExistsAttributeTests : IDisposable
     public FileExistsAttributeTests()
         => Directory.CreateDirectory(_tempPath);
 
-    [Fact]
+    [TestMethod]
     public void GivenIncorrectMemberType_WhenValidatingFileExists_ThenThrowOptionsValidationException()
     {
         ServiceCollection services = new();
@@ -28,10 +29,10 @@ public sealed class FileExistsAttributeTests : IDisposable
             .ValidateDataAnnotations();
 
         using ServiceProvider provider = services.BuildServiceProvider();
-        _ = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<InvalidExampleOptions>>().Value);
+        _ = Assert.ThrowsExactly<OptionsValidationException>(() => provider.GetRequiredService<IOptions<InvalidExampleOptions>>().Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenMissingFile_WhenValidatingFileExists_ThenThrowOptionsValidationException()
     {
         ServiceCollection services = new();
@@ -41,10 +42,10 @@ public sealed class FileExistsAttributeTests : IDisposable
             .ValidateDataAnnotations();
 
         using ServiceProvider provider = services.BuildServiceProvider();
-        _ = Assert.Throws<OptionsValidationException>(() => provider.GetRequiredService<IOptions<ExampleOptions>>().Value);
+        _ = Assert.ThrowsExactly<OptionsValidationException>(() => provider.GetRequiredService<IOptions<ExampleOptions>>().Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenPresentFile_WhenValidatingFileExists_ThenDoNotThrowException()
     {
         string filePath = Path.Combine(_tempPath, "file.txt");
@@ -58,7 +59,7 @@ public sealed class FileExistsAttributeTests : IDisposable
 
         using ServiceProvider provider = services.BuildServiceProvider();
         ExampleOptions actual = provider.GetRequiredService<IOptions<ExampleOptions>>().Value;
-        Assert.Equal(filePath, actual.FilePath);
+        Assert.AreEqual(filePath, actual.FilePath);
     }
 
     public void Dispose()
