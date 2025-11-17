@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -70,16 +69,4 @@ internal sealed partial class BlobPartitionManager(BlobServiceClient blobService
         Level = LogLevel.Warning,
         Message = "Cannot find Task Hub '{TaskHubName}' metadata blob '{TaskHubBlobName}' in container '{LeaseContainerName}'.")]
     private static partial void LogMissingTaskHubBlob(ILogger logger, string taskHubName, string taskHubBlobName, string leaseContainerName);
-
-    internal sealed class AzureStorageTaskHubInfo
-    {
-        [Required]
-        public DateTimeOffset CreatedAt { get; init; }
-
-        [Range(1, 15)]
-        public int PartitionCount { get; init; }
-
-        [Required]
-        public string TaskHubName { get; init; } = default!;
-    }
 }

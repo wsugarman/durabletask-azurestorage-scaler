@@ -112,6 +112,7 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         using RSA key1 = RSA.Create();
         using X509Certificate2 expected1 = key1.CreateSelfSignedCertificate();
         await File.WriteAllTextAsync(certPath, expected1.ExportCertificatePem(), _testContext.CancellationToken);
+        string thumbprint1 = expected1.Thumbprint;
 
         // Configure the options
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -133,7 +134,7 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         configure.Configure(options);
 
         X509Certificate2 actual = Assert.ContainsSingle(options.CustomTrustStore);
-        Assert.AreEqual(expected1.Thumbprint, actual.Thumbprint);
+        Assert.AreEqual(thumbprint1, actual.Thumbprint);
         Assert.AreEqual(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
         Assert.AreEqual(0, reloads);
 
@@ -141,6 +142,7 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         using RSA key2 = RSA.Create();
         using X509Certificate2 expected2 = key2.CreateSelfSignedCertificate();
         await File.WriteAllTextAsync(certPath, expected2.ExportCertificatePem(), _testContext.CancellationToken);
+        string thumbprint2 = expected2.Thumbprint;
 
         // Check for the updated certificate
         do
@@ -150,7 +152,7 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         } while (Volatile.Read(ref reloads) is 0 && !_testContext.CancellationToken.IsCancellationRequested);
 
         actual = Assert.ContainsSingle(options.CustomTrustStore);
-        Assert.AreEqual(expected2.Thumbprint, actual.Thumbprint);
+        Assert.AreEqual(thumbprint2, actual.Thumbprint);
         Assert.AreEqual(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
         Assert.AreEqual(1, Volatile.Read(ref reloads));
     }

@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Keda.Scaler.DurableTask.AzureStorage.Json;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -124,12 +125,14 @@ public sealed class BlobPartitionManagerTest
     [TestMethod]
     public async ValueTask GivenValidTaskHub_WhenGettingPartitions_ThenReturnPartitions()
     {
-        string json = JsonSerializer.Serialize(new
-        {
-            CreatedAt = DateTimeOffset.UtcNow,
-            PartitionCount = 4,
-            TaskHubName,
-        });
+        string json = JsonSerializer.Serialize(
+            new AzureStorageTaskHubInfo
+            {
+                CreatedAt = DateTimeOffset.UtcNow,
+                PartitionCount = 4,
+                TaskHubName = TaskHubName,
+            },
+            SourceGenerationContext.Default.AzureStorageTaskHubInfo);
 
         BlobDownloadResult downloadResult = BlobDownloadResultFactory(BinaryData.FromString(json));
         Response<BlobDownloadResult> response = Response.FromValue(downloadResult, Substitute.For<Response>());
