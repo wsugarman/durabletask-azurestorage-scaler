@@ -1,5 +1,11 @@
 {
+  "msbuild-sdks": {
+    "MSTest.Sdk": "4.0.2"
+  },
   "sdk": {
-    "version": "9.0.307"
+    "version": "10.0.100"
+  },
+  "test": {
+    "runner": "Microsoft.Testing.Platform"
   }
 }

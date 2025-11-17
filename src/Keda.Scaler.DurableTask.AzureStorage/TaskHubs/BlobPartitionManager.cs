@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net;
 using System.Text.Json;
@@ -18,7 +17,7 @@ using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 
-internal sealed class BlobPartitionManager(BlobServiceClient blobServiceClient, IOptionsSnapshot<TaskHubOptions> options, ILoggerFactory loggerFactory) : ITaskHubPartitionManager
+internal sealed partial class BlobPartitionManager(BlobServiceClient blobServiceClient, IOptionsSnapshot<TaskHubOptions> options, ILoggerFactory loggerFactory) : ITaskHubPartitionManager
 {
     private readonly BlobServiceClient _blobServiceClient = blobServiceClient ?? throw new ArgumentNullException(nameof(blobServiceClient));
     private readonly TaskHubOptions _options = options?.Get(default) ?? throw new ArgumentNullException(nameof(options));
@@ -48,12 +47,12 @@ internal sealed class BlobPartitionManager(BlobServiceClient blobServiceClient, 
 
         if (info is null)
         {
-            _logger.CannotFindTaskHubBlob(_options.TaskHubName, LeasesContainer.TaskHubBlobName, client.BlobContainerName);
+            LogMissingTaskHubBlob(_logger, _options.TaskHubName, LeasesContainer.TaskHubBlobName, client.BlobContainerName);
             return [];
         }
         else
         {
-            _logger.FoundTaskHubBlob(info.TaskHubName, info.PartitionCount, info.CreatedAt, LeasesContainer.TaskHubBlobName);
+            LogTaskHubBlob(_logger, info.TaskHubName, info.PartitionCount, info.CreatedAt, LeasesContainer.TaskHubBlobName);
             return Enumerable
                 .Repeat(info.TaskHubName, info.PartitionCount)
                 .Select((t, i) => ControlQueue.GetName(info.TaskHubName, i))
@@ -61,15 +60,13 @@ internal sealed class BlobPartitionManager(BlobServiceClient blobServiceClient, 
         }
     }
 
-    internal sealed class AzureStorageTaskHubInfo
-    {
-        [Required]
-        public DateTimeOffset CreatedAt { get; init; }
+    [LoggerMessage(
+        Level = LogLevel.Debug,
+        Message = "Found Task Hub '{TaskHubName}' with {Partitions} partitions created at {CreatedTime:O} in blob {TaskHubBlobName}.")]
+    private static partial void LogTaskHubBlob(ILogger logger, string taskHubName, int partitions, DateTimeOffset createdTime, string taskHubBlobName);
 
-        [Range(1, 15)]
-        public int PartitionCount { get; init; }
-
-        [Required]
-        public string TaskHubName { get; init; } = default!;
-    }
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cannot find Task Hub '{TaskHubName}' metadata blob '{TaskHubBlobName}' in container '{LeaseContainerName}'.")]
+    private static partial void LogMissingTaskHubBlob(ILogger logger, string taskHubName, string taskHubBlobName, string leaseContainerName);
 }

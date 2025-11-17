@@ -5,11 +5,12 @@ using System;
 using System.Collections.Generic;
 using Google.Protobuf.Collections;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Metadata;
 
+[TestClass]
 public class ConfigureScalerOptionsTest
 {
     private readonly IScalerMetadataAccessor _metadataAccessor = Substitute.For<IScalerMetadataAccessor>();
@@ -18,18 +19,18 @@ public class ConfigureScalerOptionsTest
     public ConfigureScalerOptionsTest()
         => _configure = new(_metadataAccessor);
 
-    [Fact]
+    [TestMethod]
     public void GivenNullScalerMetadataAccessor_WhenCreatingConfigure_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new ConfigureScalerOptions(null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new ConfigureScalerOptions(null!));
 
-    [Fact]
+    [TestMethod]
     public void GivenMissingScalerMetadata_WhenConfiguringOptions_ThenThrowInvalidOperationException()
     {
         _ = _metadataAccessor.ScalerMetadata.Returns(default(IReadOnlyDictionary<string, string?>));
-        _ = Assert.Throws<InvalidOperationException>(() => _configure.Configure(new ScalerOptions()));
+        _ = Assert.ThrowsExactly<InvalidOperationException>(() => _configure.Configure(new ScalerOptions()));
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenScalerMetadata_WhenConfiguringOptions_ThenParseFields()
     {
         MapField<string, string?> metadata = new()
@@ -52,17 +53,17 @@ public class ConfigureScalerOptionsTest
         ScalerOptions options = new();
         _configure.Configure(options);
 
-        Assert.Equal("AccountName", options.AccountName);
-        Assert.Equal("ClientId", options.ClientId);
-        Assert.Equal("Cloud", options.Cloud);
-        Assert.Equal("Connection", options.Connection);
-        Assert.Equal("ConnectionFromEnv", options.ConnectionFromEnv);
-        Assert.Equal("EndpointSuffix", options.EndpointSuffix);
-        Assert.Equal("https://unit.test.login/", options.EntraEndpoint?.AbsoluteUri);
-        Assert.Equal(1, options.MaxActivitiesPerWorker);
-        Assert.Equal(2, options.MaxOrchestrationsPerWorker);
-        Assert.Equal("TaskHubName", options.TaskHubName);
-        Assert.True(options.UseManagedIdentity);
-        Assert.False(options.UseTablePartitionManagement);
+        Assert.AreEqual("AccountName", options.AccountName);
+        Assert.AreEqual("ClientId", options.ClientId);
+        Assert.AreEqual("Cloud", options.Cloud);
+        Assert.AreEqual("Connection", options.Connection);
+        Assert.AreEqual("ConnectionFromEnv", options.ConnectionFromEnv);
+        Assert.AreEqual("EndpointSuffix", options.EndpointSuffix);
+        Assert.AreEqual("https://unit.test.login/", options.EntraEndpoint?.AbsoluteUri);
+        Assert.AreEqual(1, options.MaxActivitiesPerWorker);
+        Assert.AreEqual(2, options.MaxOrchestrationsPerWorker);
+        Assert.AreEqual("TaskHubName", options.TaskHubName);
+        Assert.IsTrue(options.UseManagedIdentity);
+        Assert.IsFalse(options.UseTablePartitionManagement);
     }
 }

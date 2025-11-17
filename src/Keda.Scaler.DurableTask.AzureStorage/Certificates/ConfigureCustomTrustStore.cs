@@ -14,7 +14,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
-internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<CertificateAuthenticationOptions>, IDisposable, IOptionsChangeTokenSource<CertificateAuthenticationOptions>
+internal sealed partial class ConfigureCustomTrustStore : IConfigureNamedOptions<CertificateAuthenticationOptions>, IDisposable, IOptionsChangeTokenSource<CertificateAuthenticationOptions>
 {
     private readonly CaCertificateFileOptions _options;
     private readonly ReaderWriterLockSlim _certificateLock;
@@ -79,7 +79,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
             ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _reloadToken, new ConfigurationReloadToken());
             previousToken.OnReload();
 
-            _logger.ReloadedCustomCertificateAuthority(_options.Path, certificate.Thumbprint);
+            LogNewCustomCertificateAuthority(_logger, _options.Path, certificate.Thumbprint);
         }
         finally
         {
@@ -89,4 +89,9 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
 
     private static X509Certificate2 LoadPemFile(string path)
         => X509CertificateLoader.LoadCertificateFromFile(path);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "The custom CA certificate at '{Path}' has been reloaded with thumbprint {Thumbprint}.")]
+    private static partial void LogNewCustomCertificateAuthority(ILogger logger, string path, string thumbprint);
 }

@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Interceptors;
 
+[TestClass]
 public class ScalerMetadataInterceptorTest
 {
     private readonly IScalerMetadataAccessor _metadataAccessor = Substitute.For<IScalerMetadataAccessor>();
@@ -20,23 +21,23 @@ public class ScalerMetadataInterceptorTest
     public ScalerMetadataInterceptorTest()
         => _interceptor = new(_metadataAccessor);
 
-    [Fact]
+    [TestMethod]
     public void GivenNullMetadataAccessor_WhenCreatingInterceptor_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new ScalerMetadataInterceptor(null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new ScalerMetadataInterceptor(null!));
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullRequest_WhenProcessingUnaryServerRequest_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(null!, new MockServerCallContext(), CreateSimpleHandler<GetMetricsRequest, GetMetricsResponse>()));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(null!, new MockServerCallContext(), CreateSimpleHandler<GetMetricsRequest, GetMetricsResponse>()));
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullContext_WhenProcessingUnaryServerRequest_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(new GetMetricsRequest(), null!, CreateSimpleHandler<GetMetricsRequest, GetMetricsResponse>()));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler(new GetMetricsRequest(), null!, CreateSimpleHandler<GetMetricsRequest, GetMetricsResponse>()));
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullHandler_WhenProcessingUnaryServerRequest_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler<GetMetricsRequest, GetMetricsResponse>(new GetMetricsRequest(), new MockServerCallContext(), null!));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _interceptor.UnaryServerHandler<GetMetricsRequest, GetMetricsResponse>(new GetMetricsRequest(), new MockServerCallContext(), null!));
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenGetMetricsRequest_WhenProcessingUnaryServerRequest_ThenCaptureMetadata()
     {
         const string TaskHubName = "UnitTest";
@@ -55,10 +56,10 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<GetMetricsRequest, GetMetricsResponse>());
 
-        Assert.Same(request.ScaledObjectRef.ScalerMetadata, _metadataAccessor.ScalerMetadata);
+        Assert.AreSame(request.ScaledObjectRef.ScalerMetadata, _metadataAccessor.ScalerMetadata);
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenScaledObjectRef_WhenProcessingUnaryServerRequest_ThenCaptureMetadata()
     {
         const string TaskHubName = "UnitTest";
@@ -74,10 +75,10 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<ScaledObjectRef, GetMetricSpecResponse>());
 
-        Assert.Same(scaledObjectRef.ScalerMetadata, _metadataAccessor.ScalerMetadata);
+        Assert.AreSame(scaledObjectRef.ScalerMetadata, _metadataAccessor.ScalerMetadata);
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenUnknownRequest_WhenProcessingUnaryServerRequest_ThenSkipCapture()
     {
         using CancellationTokenSource cts = new();
@@ -86,7 +87,7 @@ public class ScalerMetadataInterceptorTest
             new MockServerCallContext(cts.Token),
             CreateSimpleHandler<object, object>());
 
-        Assert.Null(_metadataAccessor.ScalerMetadata);
+        Assert.IsNull(_metadataAccessor.ScalerMetadata);
     }
 
     private static UnaryServerMethod<TRequest, TResponse> CreateSimpleHandler<TRequest, TResponse>()

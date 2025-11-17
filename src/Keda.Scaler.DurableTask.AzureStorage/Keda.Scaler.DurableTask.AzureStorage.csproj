@@ -4,14 +4,9 @@
   <PropertyGroup>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>$(RootDirectory)</DockerfileContext>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
-    <CompilerGeneratedFilesOutputPath>Gen</CompilerGeneratedFilesOutputPath>
-    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="$(CompilerGeneratedFilesOutputPath)/**/*.cs" />
     <Protobuf Include="Protos\externalscaler.proto" GrpcServices="Server" />
   </ItemGroup>
 
@@ -27,7 +22,6 @@
     <PackageReference Include="Grpc.Tools" PrivateAssets="All" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Certificate" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" PrivateAssets="All" />
-    <PackageReference Include="System.Linq.Async" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Debug'">
