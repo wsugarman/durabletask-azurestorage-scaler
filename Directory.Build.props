@@ -16,8 +16,11 @@
 
   <!-- Build -->
   <PropertyGroup>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     <Deterministic>true</Deterministic>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
     <LangVersion>latest</LangVersion>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     <Nullable>enable</Nullable>
