@@ -1,5 +1,10 @@
 <Project Sdk="MSTest.Sdk">
 
+  <!-- As of writing, OrchestrationServiceClientShim uses reflection -->
+  <PropertyGroup>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="KubernetesClient" />
     <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" />
