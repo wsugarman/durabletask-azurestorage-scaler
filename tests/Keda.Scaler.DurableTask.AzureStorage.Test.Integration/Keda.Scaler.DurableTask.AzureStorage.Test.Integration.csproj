@@ -1,10 +1,5 @@
 <Project Sdk="MSTest.Sdk">
 
-  <PropertyGroup>
-    <!-- The KubernetesClient package only supports reflection -->
-    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="KubernetesClient" />
     <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" />
