@@ -13,7 +13,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 /// Represents an algorthim determines the appropriate number of Durable Task worker instances
 /// based on the current orchestrations.
 /// </summary>
-public abstract class DurableTaskScaleManager
+public abstract partial class DurableTaskScaleManager
 {
     // Let R = the recommended number of workers
     //     A = the number of activity work items
@@ -68,7 +68,7 @@ public abstract class DurableTaskScaleManager
     {
         get
         {
-            _logger.ComputedScalerMetricTarget(Options.TaskHubName, Options.MaxActivitiesPerWorker);
+            LogScalerMetricTarget(_logger, Options.TaskHubName, Options.MaxActivitiesPerWorker);
             return new()
             {
                 MetricName = MetricName,
@@ -102,7 +102,7 @@ public abstract class DurableTaskScaleManager
             ? usage.WorkItemQueueMessages + (GetWorkerCount(usage) * Options.MaxActivitiesPerWorker)
             : 0;
 
-        _logger.ComputedScalerMetricValue(Options.TaskHubName, metricValue);
+        LogScalerMetricValue(_logger, Options.TaskHubName, metricValue);
         return new MetricValue
         {
             MetricName = MetricName,
@@ -127,12 +127,12 @@ public abstract class DurableTaskScaleManager
         TaskHubQueueUsage usage = await _taskHub.GetUsageAsync(cancellationToken);
         if (usage.HasActivity)
         {
-            _logger.DetectedActiveTaskHub(Options.TaskHubName);
+            LogTaskHubActivity(_logger, Options.TaskHubName);
             return true;
         }
         else
         {
-            _logger.DetectedInactiveTaskHub(Options.TaskHubName);
+            LogInactiveTaskHub(_logger, Options.TaskHubName);
             return false;
         }
     }
@@ -143,4 +143,24 @@ public abstract class DurableTaskScaleManager
     /// <param name="usage">The usage for the Task Hub that has some activity.</param>
     /// <returns>Tthe appropriate number of worker instances.</returns>
     protected abstract int GetWorkerCount(TaskHubQueueUsage usage);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Metric value for Task Hub '{TaskHubName}' is {MetricValue}.")]
+    private static partial void LogScalerMetricValue(ILogger logger, string taskHubName, long metricValue);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Metric target for Task Hub '{TaskHubName}' is {MetricTarget}.")]
+    private static partial void LogScalerMetricTarget(ILogger logger, string taskHubName, long metricTarget);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Task Hub '{TaskHubName}' is currently active.")]
+    private static partial void LogTaskHubActivity(ILogger logger, string taskHubName);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Task Hub '{TaskHubName}' is not currently active.")]
+    private static partial void LogInactiveTaskHub(ILogger logger, string taskHubName);
 }

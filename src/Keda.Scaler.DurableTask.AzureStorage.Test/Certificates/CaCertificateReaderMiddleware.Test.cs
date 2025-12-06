@@ -6,24 +6,33 @@ using System.Threading;
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Certificates;
 using Microsoft.AspNetCore.Http;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Certificates;
 
+[TestClass]
 public class CaCertificateReaderMiddlewareTests
 {
-    [Fact]
+    private readonly TestContext _testContext;
+
+    public CaCertificateReaderMiddlewareTests(TestContext testContext)
+    {
+        ArgumentNullException.ThrowIfNull(testContext);
+        _testContext = testContext;
+    }
+
+    [TestMethod]
     public void GivenNullRequestDelegate_WhenCreatingMiddleware_ThenThrowArgumentNullException()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
-        _ = Assert.Throws<ArgumentNullException>(() => new CaCertificateReaderMiddleware(null!, readerWriterLock));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new CaCertificateReaderMiddleware(null!, readerWriterLock));
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullReaderWriterLock_WhenCreatingMiddleware_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new CaCertificateReaderMiddleware(NextAsync, null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new CaCertificateReaderMiddleware(NextAsync, null!));
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenNoOtherReaders_WhenInvokingMiddleware_ThenEnterReadLock()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -32,53 +41,52 @@ public class CaCertificateReaderMiddlewareTests
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
         await middleware.InvokeAsync(context);
-        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        Assert.AreEqual(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenOtherReader_WhenInvokingMiddleware_ThenEnterReadLock()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
         using ManualResetEventSlim readEvent = new(initialState: false);
         using ManualResetEventSlim middlewareEvent = new(initialState: false);
 
-        DefaultHttpContext context = new() { RequestAborted = TestContext.Current.CancellationToken };
+        DefaultHttpContext context = new() { RequestAborted = _testContext.CancellationToken };
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
         // Start the reader
-        Task readerTask = ReadAsync(readerWriterLock, readEvent, middlewareEvent, TestContext.Current.CancellationToken);
-        readEvent.Wait(TestContext.Current.CancellationToken);
+        Task readerTask = ReadAsync(readerWriterLock, readEvent, middlewareEvent, _testContext.CancellationToken);
+        readEvent.Wait(_testContext.CancellationToken);
 
         await middleware.InvokeAsync(context);
 
         middlewareEvent.Set();
         await readerTask;
-        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        Assert.AreEqual(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenWriter_WhenInvokingMiddleware_ThenWaitForWriter()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
         using ManualResetEventSlim writeEvent = new(initialState: false);
         using ManualResetEventSlim middlewareEvent = new(initialState: false);
 
-        DefaultHttpContext context = new() { RequestAborted = TestContext.Current.CancellationToken };
+        DefaultHttpContext context = new() { RequestAborted = _testContext.CancellationToken };
         CaCertificateReaderMiddleware middleware = new(NextAsync, readerWriterLock);
 
         // Start the writer
-        Task writerTask = WriteAsync(readerWriterLock, writeEvent, middlewareEvent, TestContext.Current.CancellationToken);
-        writeEvent.Wait(TestContext.Current.CancellationToken);
+        Task writerTask = WriteAsync(readerWriterLock, writeEvent, middlewareEvent, _testContext.CancellationToken);
+        writeEvent.Wait(_testContext.CancellationToken);
 
         // Wait for the middleware to wait on its read
-        Task httpTask = Task.Run(() => middleware.InvokeAsync(context), TestContext.Current.CancellationToken);
+        Task httpTask = Task.Run(() => middleware.InvokeAsync(context), _testContext.CancellationToken);
         while (readerWriterLock.WaitingReadCount is 0)
-            await Task.Delay(100, TestContext.Current.CancellationToken);
+            await Task.Delay(100, _testContext.CancellationToken);
 
         middlewareEvent.Set();
         await Task.WhenAll(writerTask, httpTask);
-        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
-
+        Assert.AreEqual(StatusCodes.Status200OK, context.Response.StatusCode);
     }
 
     private static Task NextAsync(HttpContext context)

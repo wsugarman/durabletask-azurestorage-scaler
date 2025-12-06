@@ -7,20 +7,21 @@ using System.Reflection;
 using Azure.Core;
 using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Clients;
 
+[TestClass]
 public abstract class AzureStorageAccountClientFactoryTest<TClient>
 {
-    [Fact]
+    [TestMethod]
     public void GivenNullAccountInfo_WhenGettingServiceClient_ThenThrowArgumentNullException()
     {
         AzureStorageAccountClientFactory<TClient> factory = GetFactory();
-        _ = Assert.Throws<ArgumentNullException>(() => factory.GetServiceClient(null!));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => factory.GetServiceClient(null!));
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenConnectionString_WhenGettingServiceClient_ThenReturnValidClient()
     {
         AzureStorageAccountClientFactory<TClient> factory = GetFactory();
@@ -28,7 +29,7 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
         ValidateEmulator(actual);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenServiceUri_WhenGettingServiceClient_ThenReturnValidClient()
     {
         AzureStorageAccountClientFactory<TClient> factory = GetFactory();
@@ -64,14 +65,14 @@ public abstract class AzureStorageAccountClientFactoryTest<TClient>
             .GetProperty("ClientConfiguration", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(client);
 
-        Assert.NotNull(configuration);
+        Assert.IsNotNull(configuration);
         TokenCredential? tokenCredential = typeof(TClient).Assembly
             .DefinedTypes
             .Single(x => x.FullName == "Azure.Storage.Shared.StorageClientConfiguration")
             .GetProperty("TokenCredential", BindingFlags.Public | BindingFlags.Instance)?
             .GetValue(configuration) as TokenCredential;
 
-        Assert.NotNull(tokenCredential);
-        _ = Assert.IsType<T>(tokenCredential);
+        Assert.IsNotNull(tokenCredential);
+        _ = Assert.IsInstanceOfType<T>(tokenCredential);
     }
 }
