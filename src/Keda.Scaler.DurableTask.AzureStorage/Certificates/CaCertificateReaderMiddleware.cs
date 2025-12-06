@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +14,7 @@ internal sealed class CaCertificateReaderMiddleware(RequestDelegate next, Reader
     private readonly RequestDelegate _next = next ?? throw new ArgumentNullException(nameof(next));
     private readonly ReaderWriterLockSlim _certificateLock = certificateLock ?? throw new ArgumentNullException(nameof(certificateLock));
 
+    [ExcludeFromCodeCoverage]
     public async Task InvokeAsync(HttpContext context)
     {
         try
@@ -22,7 +24,8 @@ internal sealed class CaCertificateReaderMiddleware(RequestDelegate next, Reader
         }
         finally
         {
-            _certificateLock.ExitReadLock();
+            if (_certificateLock.IsReadLockHeld)
+                _certificateLock.ExitReadLock();
         }
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -26,7 +27,7 @@ internal sealed partial class ConfigureCustomTrustStore : IConfigureNamedOptions
 
     public string? Name => CertificateAuthenticationDefaults.AuthenticationScheme;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Certificate disposed in collection.")]
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Certificate disposed in collection.")]
     public ConfigureCustomTrustStore(IOptions<ClientCertificateValidationOptions> options, ReaderWriterLockSlim certificateLock, ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(options?.Value?.CertificateAuthority, nameof(options));
@@ -68,6 +69,7 @@ internal sealed partial class ConfigureCustomTrustStore : IConfigureNamedOptions
     public IChangeToken GetChangeToken()
         => _reloadToken;
 
+    [ExcludeFromCodeCoverage]
     private void Reload(X509Certificate2 certificate)
     {
         try
@@ -83,7 +85,8 @@ internal sealed partial class ConfigureCustomTrustStore : IConfigureNamedOptions
         }
         finally
         {
-            _certificateLock.ExitWriteLock();
+            if (_certificateLock.IsWriteLockHeld)
+                _certificateLock.ExitWriteLock();
         }
     }
 
