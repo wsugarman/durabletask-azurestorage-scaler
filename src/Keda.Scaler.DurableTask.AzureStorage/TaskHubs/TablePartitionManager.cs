@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 
-internal sealed class TablePartitionManager(TableServiceClient tableServiceClient, IOptionsSnapshot<TaskHubOptions> options, ILoggerFactory loggerFactory) : ITaskHubPartitionManager
+internal sealed partial class TablePartitionManager(TableServiceClient tableServiceClient, IOptionsSnapshot<TaskHubOptions> options, ILoggerFactory loggerFactory) : ITaskHubPartitionManager
 {
     private readonly TableServiceClient _tableServiceClient = tableServiceClient ?? throw new ArgumentNullException(nameof(tableServiceClient));
     private readonly TaskHubOptions _options = options?.Get(default) ?? throw new ArgumentNullException(nameof(options));
@@ -39,10 +39,20 @@ internal sealed class TablePartitionManager(TableServiceClient tableServiceClien
         }
 
         if (partitions.Count > 0)
-            _logger.FoundTaskHubPartitionsTable(_options.TaskHubName, partitions.Count, client.Name);
+            LogTaskHubPartitionsTable(_logger, _options.TaskHubName, partitions.Count, client.Name);
         else
-            _logger.CannotFindTaskHubPartitionsTable(_options.TaskHubName, client.Name);
+            LogMissingTaskHubPartitionsTable(_logger, _options.TaskHubName, client.Name);
 
         return partitions;
     }
+
+    [LoggerMessage(
+        Level = LogLevel.Debug,
+        Message = "Found Task Hub '{TaskHubName}' with {Partitions} partitions in table '{TaskHubTableName}'.")]
+    private static partial void LogTaskHubPartitionsTable(ILogger logger, string taskHubName, int partitions, string taskHubTableName);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Cannot find Task Hub '{TaskHubName}' partitions table blob '{TaskHubTableName}'.")]
+    private static partial void LogMissingTaskHubPartitionsTable(ILogger logger, string taskHubName, string taskHubTableName);
 }

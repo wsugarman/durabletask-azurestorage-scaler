@@ -29,6 +29,12 @@
       ]
     },
     {
+      "groupName": "DurableTask",
+      "matchPackageNames": [
+        "/.*DurableTask.*/"
+      ]
+    },
+    {
       "groupName": "gRPC",
       "matchPackageNames": [
         "Grpc.**"
@@ -38,13 +44,6 @@
       "groupName": "NSubstitute",
       "matchPackageNames": [
         "NSubstitute**"
-      ]
-    },
-    {
-      "groupName": "XUnit",
-      "matchPackageNames": [
-        "xunit**",
-        "MartinCostello.Logging.XUnit**"
       ]
     }
   ],

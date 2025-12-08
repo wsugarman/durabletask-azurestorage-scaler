@@ -7,12 +7,7 @@
     <When Condition="$(MSBuildProjectName.EndsWith('.Test'))">
 
       <PropertyGroup>
-        <IsPackable>false</IsPackable>
-        <IsTestProject>true</IsTestProject>
-        <OutputType>Exe</OutputType>
         <TargetProjectName>$(MSBuildProjectName.Substring(0, $([MSBuild]::Subtract($(MSBuildProjectName.Length), 5))))</TargetProjectName>
-        <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
-        <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
       </PropertyGroup>
 
       <ItemGroup>
@@ -20,12 +15,8 @@
       </ItemGroup>
 
       <ItemGroup>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="All" />
-        <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
         <PackageReference Include="NSubstitute" />
         <PackageReference Include="NSubstitute.Analyzers.CSharp" PrivateAssets="All" />
-        <PackageReference Include="xunit.v3" />
-        <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
       </ItemGroup>
 
     </When>

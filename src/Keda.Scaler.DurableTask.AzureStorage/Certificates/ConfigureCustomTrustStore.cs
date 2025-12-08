@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
@@ -14,7 +15,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
-internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<CertificateAuthenticationOptions>, IDisposable, IOptionsChangeTokenSource<CertificateAuthenticationOptions>
+internal sealed partial class ConfigureCustomTrustStore : IConfigureNamedOptions<CertificateAuthenticationOptions>, IDisposable, IOptionsChangeTokenSource<CertificateAuthenticationOptions>
 {
     private readonly CaCertificateFileOptions _options;
     private readonly ReaderWriterLockSlim _certificateLock;
@@ -26,7 +27,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
 
     public string? Name => CertificateAuthenticationDefaults.AuthenticationScheme;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Certificate disposed in collection.")]
+    [SuppressMessage("Reliability", "CA2000:Dispose objects before losing scope", Justification = "Certificate disposed in collection.")]
     public ConfigureCustomTrustStore(IOptions<ClientCertificateValidationOptions> options, ReaderWriterLockSlim certificateLock, ILoggerFactory loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(options?.Value?.CertificateAuthority, nameof(options));
@@ -68,6 +69,7 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
     public IChangeToken GetChangeToken()
         => _reloadToken;
 
+    [ExcludeFromCodeCoverage]
     private void Reload(X509Certificate2 certificate)
     {
         try
@@ -79,14 +81,20 @@ internal sealed class ConfigureCustomTrustStore : IConfigureNamedOptions<Certifi
             ConfigurationReloadToken previousToken = Interlocked.Exchange(ref _reloadToken, new ConfigurationReloadToken());
             previousToken.OnReload();
 
-            _logger.ReloadedCustomCertificateAuthority(_options.Path, certificate.Thumbprint);
+            LogNewCustomCertificateAuthority(_logger, _options.Path, certificate.Thumbprint);
         }
         finally
         {
-            _certificateLock.ExitWriteLock();
+            if (_certificateLock.IsWriteLockHeld)
+                _certificateLock.ExitWriteLock();
         }
     }
 
     private static X509Certificate2 LoadPemFile(string path)
         => X509CertificateLoader.LoadCertificateFromFile(path);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "The custom CA certificate at '{Path}' has been reloaded with thumbprint {Thumbprint}.")]
+    private static partial void LogNewCustomCertificateAuthority(ILogger logger, string path, string thumbprint);
 }

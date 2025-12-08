@@ -26,14 +26,15 @@ jobs:
       uses: github/codeql-action/init@v4
       with:
         languages: 'csharp'
+        tools: https://github.com/dsp-testing/codeql-cli-nightlies/releases/download/codeql-bundle-20251112/codeql-bundle.tar.zst
 
     - name: Setup
       uses: actions/setup-dotnet@v5
 
     - name: Build
       run: |
-        dotnet build ./src/Scaler.sln -c Release -p:ContinuousIntegrationBuild=true -warnaserror
-        dotnet build ./tests/ScaleTests.sln -c Release -p:ContinuousIntegrationBuild=true -warnaserror
+        dotnet build ./src/Scaler.slnx -c Release -p:ContinuousIntegrationBuild=true -warnaserror
+        dotnet build ./tests/ScaleTests.slnx -c Release -p:ContinuousIntegrationBuild=true -warnaserror
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4

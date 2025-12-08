@@ -11,49 +11,50 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Certificates;
 
+[TestClass]
 public class IServiceCollectionExtensionsTest
 {
-    [Fact]
+    [TestMethod]
     public void GivenNullServiceCollection_WhenAddingMutualTlsSupport_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => IServiceCollectionExtensions.AddMutualTlsSupport(null!, "foobar", Substitute.For<IConfiguration>()));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => IServiceCollectionExtensions.AddMutualTlsSupport(null!, "foobar", Substitute.For<IConfiguration>()));
 
-    [Fact]
+    [TestMethod]
     public void GivenNullPolicyName_WhenAddingMutualTlsSupport_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddMutualTlsSupport(null!, Substitute.For<IConfiguration>()));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new ServiceCollection().AddMutualTlsSupport(null!, Substitute.For<IConfiguration>()));
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow(" ")]
     public void GivenEmptyOrWhiteSpacePolicyName_WhenAddingMutualTlsSupport_ThenThrowArgumentException(string policyName)
-        => Assert.Throws<ArgumentException>(() => new ServiceCollection().AddMutualTlsSupport(policyName, Substitute.For<IConfiguration>()));
+        => Assert.ThrowsExactly<ArgumentException>(() => new ServiceCollection().AddMutualTlsSupport(policyName, Substitute.For<IConfiguration>()));
 
-    [Fact]
+    [TestMethod]
     public void GivenNullConfiguration_WhenAddingMutualTlsSupport_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new ServiceCollection().AddMutualTlsSupport("baz", null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new ServiceCollection().AddMutualTlsSupport("baz", null!));
 
-    [Fact]
+    [TestMethod]
     public void GivenNoCertificationValidation_WhenAddingMutualTlsSupport_ThenSkipAuthenticationAndAuthorizationServices()
     {
         IConfiguration config = new ConfigurationBuilder().Build();
         IServiceCollection services = new ServiceCollection().AddMutualTlsSupport("default", config);
 
-        ServiceDescriptor actual = Assert.Single(services, s => s.ServiceType == typeof(IValidateOptions<ClientCertificateValidationOptions>));
-        Assert.Equal(typeof(ValidateClientCertificateValidationOptions), actual.ImplementationType);
-        Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
+        ServiceDescriptor actual = Assert.ContainsSingle(s => s.ServiceType == typeof(IValidateOptions<ClientCertificateValidationOptions>), services);
+        Assert.AreEqual(typeof(ValidateClientCertificateValidationOptions), actual.ImplementationType);
+        Assert.AreEqual(ServiceLifetime.Singleton, actual.Lifetime);
 
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>));
-        Assert.DoesNotContain(services, s => s.ServiceType == typeof(IAuthenticationService));
-        Assert.DoesNotContain(services, s => s.ServiceType == typeof(IAuthorizationService));
-        Assert.DoesNotContain(services, s => s.ServiceType == typeof(ConfigureCustomTrustStore));
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>), services);
+        Assert.DoesNotContain(s => s.ServiceType == typeof(IAuthenticationService), services);
+        Assert.DoesNotContain(s => s.ServiceType == typeof(IAuthorizationService), services);
+        Assert.DoesNotContain(s => s.ServiceType == typeof(ConfigureCustomTrustStore), services);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenSystemClientCertificateAuthorities_WhenAddingMutualTlsSupport_ThenSkipCustomTrustStore()
     {
         IConfiguration config = new ConfigurationBuilder()
@@ -66,19 +67,19 @@ public class IServiceCollectionExtensionsTest
 
         IServiceCollection services = new ServiceCollection().AddMutualTlsSupport("default", config);
 
-        ServiceDescriptor actual = Assert.Single(services, s => s.ServiceType == typeof(IValidateOptions<ClientCertificateValidationOptions>));
-        Assert.Equal(typeof(ValidateClientCertificateValidationOptions), actual.ImplementationType);
-        Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
+        ServiceDescriptor actual = Assert.ContainsSingle(s => s.ServiceType == typeof(IValidateOptions<ClientCertificateValidationOptions>), services);
+        Assert.AreEqual(typeof(ValidateClientCertificateValidationOptions), actual.ImplementationType);
+        Assert.AreEqual(ServiceLifetime.Singleton, actual.Lifetime);
 
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthenticationService));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthorizationService));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(ICertificateValidationCache));
-        Assert.DoesNotContain(services, s => s.ServiceType == typeof(ConfigureCustomTrustStore));
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IAuthenticationService), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IAuthorizationService), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(ICertificateValidationCache), services);
+        Assert.DoesNotContain(s => s.ServiceType == typeof(ConfigureCustomTrustStore), services);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenCustomTrustStore_WhenAddingMutualTlsSupport_ThenSkipCustomTrustStore()
     {
         IConfiguration config = new ConfigurationBuilder()
@@ -94,23 +95,23 @@ public class IServiceCollectionExtensionsTest
 
         ServiceDescriptor actual;
 
-        actual = Assert.Single(services, s => s.ServiceType == typeof(IValidateOptions<ClientCertificateValidationOptions>));
-        Assert.Equal(typeof(ValidateClientCertificateValidationOptions), actual.ImplementationType);
-        Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
+        actual = Assert.ContainsSingle(s => s.ServiceType == typeof(IValidateOptions<ClientCertificateValidationOptions>), services);
+        Assert.AreEqual(typeof(ValidateClientCertificateValidationOptions), actual.ImplementationType);
+        Assert.AreEqual(ServiceLifetime.Singleton, actual.Lifetime);
 
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>));
-        Assert.Equal(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IOptionsChangeTokenSource<CertificateAuthenticationOptions>));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthenticationService));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(IAuthorizationService));
-        _ = Assert.Single(services, s => s.ServiceType == typeof(ICertificateValidationCache));
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IConfigureOptions<ClientCertificateValidationOptions>), services);
+        Assert.AreEqual(2, services.Count(s => s.ServiceType == typeof(IConfigureOptions<CertificateAuthenticationOptions>)));
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IOptionsChangeTokenSource<CertificateAuthenticationOptions>), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IAuthenticationService), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(IAuthorizationService), services);
+        _ = Assert.ContainsSingle(s => s.ServiceType == typeof(ICertificateValidationCache), services);
 
-        actual = Assert.Single(services, s => s.ServiceType == typeof(ConfigureCustomTrustStore));
-        Assert.Equal(typeof(ConfigureCustomTrustStore), actual.ImplementationType);
-        Assert.Equal(ServiceLifetime.Singleton, actual.Lifetime);
+        actual = Assert.ContainsSingle(s => s.ServiceType == typeof(ConfigureCustomTrustStore), services);
+        Assert.AreEqual(typeof(ConfigureCustomTrustStore), actual.ImplementationType);
+        Assert.AreEqual(ServiceLifetime.Singleton, actual.Lifetime);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenUserSpecifiedRevocationMode_WhenAddingMutualTlsSupport_ThenSetRevocationMode()
     {
         IConfiguration config = new ConfigurationBuilder()
@@ -123,6 +124,6 @@ public class IServiceCollectionExtensionsTest
             .BuildServiceProvider();
 
         IOptionsSnapshot<CertificateAuthenticationOptions> options = serviceProvider.GetRequiredService<IOptionsSnapshot<CertificateAuthenticationOptions>>();
-        Assert.Equal(X509RevocationMode.NoCheck, options.Get(CertificateAuthenticationDefaults.AuthenticationScheme).RevocationMode);
+        Assert.AreEqual(X509RevocationMode.NoCheck, options.Get(CertificateAuthenticationDefaults.AuthenticationScheme).RevocationMode);
     }
 }
