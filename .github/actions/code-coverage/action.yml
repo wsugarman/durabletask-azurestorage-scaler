@@ -17,7 +17,7 @@ runs:
         Copy-Item '${{ inputs.reportPath }}' -Destination '${{ runner.temp }}/codecoverage/'
 
     - name: Upload Code Coverage Report
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: coverage
         path: ${{ runner.temp }}/codecoverage
