@@ -11,7 +11,7 @@
     <PackageVersion Include="Grpc.AspNetCore.Server.Reflection" Version="2.76.0" />
     <PackageVersion Include="Grpc.Core.Api" Version="2.76.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.76.0" />
-    <PackageVersion Include="KubernetesClient" Version="18.0.5" />
+    <PackageVersion Include="KubernetesClient" Version="18.0.13" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.Certificate" Version="10.0.2" />
     <PackageVersion Include="Microsoft.Azure.DurableTask.AzureStorage" Version="2.7.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.51.0" />
@@ -19,8 +19,8 @@
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.7" />
     <PackageVersion Include="Microsoft.Azure.WebJobs.Core" Version="3.0.42" />
-    <PackageVersion Include="Microsoft.DurableTask.Client" Version="1.17.1" />
-    <PackageVersion Include="Microsoft.DurableTask.Client.OrchestrationServiceClientShim" Version="1.17.1" />
+    <PackageVersion Include="Microsoft.DurableTask.Client" Version="1.18.0" />
+    <PackageVersion Include="Microsoft.DurableTask.Client.OrchestrationServiceClientShim" Version="1.18.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" />

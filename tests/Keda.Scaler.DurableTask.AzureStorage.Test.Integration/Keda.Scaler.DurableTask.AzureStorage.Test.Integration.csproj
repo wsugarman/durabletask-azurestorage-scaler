@@ -1,7 +1,7 @@
 <Project Sdk="MSTest.Sdk">
 
+  <!-- As of writing, OrchestrationServiceClientShim uses reflection -->
   <PropertyGroup>
-    <!-- The KubernetesClient package only supports reflection -->
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
