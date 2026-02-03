@@ -46,6 +46,7 @@ spec:
             - --tableHost
             - "0.0.0.0"
             - --loose
+            - --skipApiVersionCheck
             - --disableProductStyleUrl
             {{- if .Values.debug.enable }}
             - --debug
