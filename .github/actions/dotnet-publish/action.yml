@@ -135,7 +135,7 @@ runs:
         trusted-signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v6
       with:
         name: app
         path: ${{ runner.temp }}/app
