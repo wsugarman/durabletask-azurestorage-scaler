@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Globalization;
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -25,21 +27,24 @@ internal static class LoggingExtensions
         private readonly TestContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
         public ILogger CreateLogger(string categoryName)
-            => new UnitTestingLogger(_context);
+            => new UnitTestingLogger(categoryName, _context);
 
         public void Dispose()
             => GC.SuppressFinalize(this);
     }
 
-    private sealed class UnitTestingLogger(TestContext context) : ILogger
+    private sealed class UnitTestingLogger(string categoryName, TestContext context) : ILogger
     {
+        private static readonly CompositeFormat MessageFormat = CompositeFormat.Parse("<{0}> {1} {2} [{3}] {4}");
+
+        private readonly string _categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
         private readonly TestContext _context = context ?? throw new ArgumentNullException(nameof(context));
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull
             => null;
 
         public bool IsEnabled(LogLevel logLevel)
-            => logLevel != LogLevel.None;
+            => logLevel is not LogLevel.None;
 
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
         {
@@ -48,16 +53,9 @@ internal static class LoggingExtensions
 
             ArgumentNullException.ThrowIfNull(formatter);
 
-            MessageLevel msgLevel = logLevel switch
-            {
-                LogLevel.Debug => MessageLevel.Informational,
-                LogLevel.Information => MessageLevel.Informational,
-                LogLevel.Warning => MessageLevel.Warning,
-                _ => MessageLevel.Error,
-            };
-
             string msg = formatter(state, exception);
-            _context.DisplayMessage(msgLevel, msg);
+            string log = string.Format(CultureInfo.InvariantCulture, MessageFormat, logLevel, DateTimeOffset.UtcNow, _categoryName, eventId, msg);
+            _context.WriteLine(log);
         }
     }
 }
