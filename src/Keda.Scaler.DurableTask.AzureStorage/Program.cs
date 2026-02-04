@@ -55,7 +55,7 @@ _ = builder.WebHost
 WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Configuration.ValidateClientCertificate())
+if (app.Configuration.ShouldValidateClientCertificate())
 {
     _ = app
         .UseMiddleware<CaCertificateReaderMiddleware>()
@@ -63,7 +63,7 @@ if (app.Configuration.ValidateClientCertificate())
 }
 
 GrpcServiceEndpointConventionBuilder grpcBuilder = app.MapGrpcService<DurableTaskAzureStorageScalerService>();
-if (app.Configuration.ValidateClientCertificate())
+if (app.Configuration.ShouldValidateClientCertificate())
     _ = grpcBuilder.RequireAuthorization(PolicyName);
 
 #if DEBUG

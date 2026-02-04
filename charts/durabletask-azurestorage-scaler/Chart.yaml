@@ -2,7 +2,7 @@
 # Version corresponds to the chart version and should be updated every time the chart is changed.
 # AppVersion on the other hand should be updated every time the web app is changed.
 apiVersion: v2
-appVersion: "3.0.0"
+appVersion: "4.0.0"
 description: A KEDA external scaler for the Durable Task Azure Storage backend
 home: https://github.com/wsugarman/durabletask-azurestorage-scaler
 icon: https://raw.githubusercontent.com/wsugarman/durabletask-azurestorage-scaler/main/img/storm-icon.png
@@ -17,22 +17,18 @@ name: durabletask-azurestorage-scaler
 sources:
   - https://github.com/wsugarman/durabletask-azurestorage-scaler
 type: application
-version: "3.0.0"
+version: "4.0.0"
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
-    - kind: added
-      description: Added support for Partition Manager v3 using the new useTablePartitionManagement field in the ScaledObject
     - kind: changed
-      description: Updated base image to mcr.microsoft.com/dotnet/aspnet:9.0.0-azurelinux3.0-distroless
-    - kind: fixed
-      description: Fixed possible race condition when reloading certificates that may be currently in use
+      description: Updated base image to mcr.microsoft.com/dotnet/aspnet:10.0.2-azurelinux3.0-distroless
     - kind: removed
-      description: Removed support for AAD Pod Identity. Microsoft Entra Workload Identity is now the recommended approach
+      description: Removed explicit Helm parameters for configuring log style. Logging may still be additionally configured via environment variables
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler
-      image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:3.0.0
+      image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:4.0.0
       platforms:
         - linux/amd64
   artifacthub.io/license: MIT
