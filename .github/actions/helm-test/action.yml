@@ -345,7 +345,10 @@ runs:
         kubectl port-forward service/azurite -n azure 10000:10000 10001:10001 10002:10002 > /dev/null &
         dotnet test \
           --configuration "${{ inputs.buildConfiguration }}" \
+          --diagnostic \
           --no-build \
+          --no-progress \
+          --results-directory "${{ runner.temp }}/integration/" \
           --solution "./tests/ScaleTests.slnx"
       env:
         DurableTask__ConnectionName: DurableTask:ConnectionString
@@ -359,6 +362,12 @@ runs:
         Scaling__LoggingInterval: ${{ inputs.testStatusLoggingInterval }}
         Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v6
+      with:
+        name: integration-test-results
+        path: ${{ runner.temp }}/integration
 
     - if: ${{ failure() }}
       name: Get Keda Logs
