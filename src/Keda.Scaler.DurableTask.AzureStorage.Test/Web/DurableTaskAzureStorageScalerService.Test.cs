@@ -2,46 +2,53 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Web;
 
+[TestClass]
 public sealed class DurableTaskAzureStorageScalerServiceTest
 {
-    private readonly ITaskHub _taskHub = Substitute.For<ITaskHub>();
-    private readonly TaskHubOptions _options = new() { TaskHubName = "UnitTest" };
+    private readonly TestContext _testContext;
+    private readonly ITaskHub _taskHub;
+    private readonly TaskHubOptions _options;
     private readonly DurableTaskScaleManager _scaleManager;
     private readonly DurableTaskAzureStorageScalerService _service;
 
-    public DurableTaskAzureStorageScalerServiceTest()
+    public DurableTaskAzureStorageScalerServiceTest(TestContext testContext)
     {
+        ArgumentNullException.ThrowIfNull(testContext);
+
+        _testContext = testContext;
+        _taskHub = Substitute.For<ITaskHub>();
+        _options = new() { TaskHubName = "UnitTest" };
+
         IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = _optionsSnapshot.Get(default).Returns(_options);
         _scaleManager = Substitute.For<DurableTaskScaleManager>(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
         _service = new(_scaleManager);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullScalerManager_WhenCreatingService_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new DurableTaskAzureStorageScalerService(null!));
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullRequest_WhenGettingMetrics_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetrics(null!, new MockServerCallContext()));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _service.GetMetrics(null!, new MockServerCallContext()));
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullContext_WhenGettingMetrics_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetrics(new GetMetricsRequest(), null!));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _service.GetMetrics(new GetMetricsRequest(), null!));
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenRequest_WhenGettingMetrics_ThenReturnMetricValues()
     {
         MetricValue expected = new()
@@ -50,24 +57,24 @@ public sealed class DurableTaskAzureStorageScalerServiceTest
             MetricValue_ = 42,
         };
 
-        _ = _scaleManager.GetKedaMetricValueAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(expected);
+        _ = _scaleManager.GetKedaMetricValueAsync(_testContext.CancellationToken).ReturnsForAnyArgs(expected);
 
         using CancellationTokenSource cts = new();
         GetMetricsResponse actual = await _service.GetMetrics(new GetMetricsRequest(), new MockServerCallContext(cts.Token));
 
         _ = await _scaleManager.Received(1).GetKedaMetricValueAsync(cts.Token);
-        Assert.Same(actual.MetricValues.Single(), expected);
+        Assert.AreSame(expected, Assert.ContainsSingle(actual.MetricValues));
     }
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullScaledObjectRef_WhenGettingMetricSpec_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetricSpec(null!, new MockServerCallContext()));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _service.GetMetricSpec(null!, new MockServerCallContext()));
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullContext_WhenGettingMetricSpec_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.GetMetricSpec(new ScaledObjectRef(), null!));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _service.GetMetricSpec(new ScaledObjectRef(), null!));
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenRequest_WhenGettingMetricSpec_ThenReturnMetricTarget()
     {
         MetricSpec expected = new()
@@ -82,26 +89,26 @@ public sealed class DurableTaskAzureStorageScalerServiceTest
         GetMetricSpecResponse actual = await _service.GetMetricSpec(new ScaledObjectRef(), new MockServerCallContext(cts.Token));
 
         _ = _scaleManager.Received(1).KedaMetricSpec;
-        Assert.Same(actual.MetricSpecs.Single(), expected);
+        Assert.AreSame(expected, Assert.ContainsSingle(actual.MetricSpecs));
     }
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullRequest_WhenCheckingIfActive_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.IsActive(null!, new MockServerCallContext()));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _service.IsActive(null!, new MockServerCallContext()));
 
-    [Fact]
+    [TestMethod]
     public Task GivenNullContext_WhenCheckingIfActive_ThenThrowArgumentNullException()
-        => Assert.ThrowsAsync<ArgumentNullException>(() => _service.IsActive(new ScaledObjectRef(), null!));
+        => Assert.ThrowsExactlyAsync<ArgumentNullException>(() => _service.IsActive(new ScaledObjectRef(), null!));
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenRequest_WhenCheckingIfActive_ThenReturnResponse()
     {
-        _ = _scaleManager.IsActiveAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs(true);
+        _ = _scaleManager.IsActiveAsync(_testContext.CancellationToken).ReturnsForAnyArgs(true);
 
         using CancellationTokenSource cts = new();
         IsActiveResponse actual = await _service.IsActive(new ScaledObjectRef(), new MockServerCallContext(cts.Token));
 
         _ = await _scaleManager.Received(1).IsActiveAsync(cts.Token);
-        Assert.True(actual.Result);
+        Assert.IsTrue(actual.Result);
     }
 }

@@ -3,26 +3,27 @@
 
 using System;
 using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
+[TestClass]
 public class LeasesContainerTest
 {
-    [Fact]
+    [TestMethod]
     public void GivenNullTaskHub_WhenGettingLeasesContainerName_ThenThrowArgumentException()
-        => Assert.Throws<ArgumentNullException>(() => LeasesContainer.GetName(null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => LeasesContainer.GetName(null!));
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("  \t  ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("  \t  ")]
     public void GivenEmptyOrWhiteSpaceTaskHub_WhenGettingLeasesContainerName_ThenThrowArgumentException(string taskHub)
-        => Assert.Throws<ArgumentException>(() => LeasesContainer.GetName(taskHub));
+        => Assert.ThrowsExactly<ArgumentException>(() => LeasesContainer.GetName(taskHub));
 
-    [Theory]
-    [InlineData("foo-leases", "foo")]
-    [InlineData("bar-leases", "bar")]
-    [InlineData("baz-leases", "BAZ")]
+    [TestMethod]
+    [DataRow("foo-leases", "foo")]
+    [DataRow("bar-leases", "bar")]
+    [DataRow("baz-leases", "BAZ")]
     public void GivenTaskHub_WhenGettingLeasesContainerName_ThenReturnExpectedValue(string expected, string taskHub)
-        => Assert.Equal(expected, LeasesContainer.GetName(taskHub));
+        => Assert.AreEqual(expected, LeasesContainer.GetName(taskHub));
 }

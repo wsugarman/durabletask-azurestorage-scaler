@@ -30,9 +30,6 @@ internal sealed class ScaleTestOptions : IValidatableObject
 
     public int PollingIntervalsPerLog => (int)LoggingInterval.TotalSeconds / (int)PollingInterval.TotalSeconds;
 
-    [Range(typeof(TimeSpan), "00:00:30", "00:10:00", ConvertValueInInvariantCulture = true, ParseLimitsInInvariantCulture = true)]
-    public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(2);
-
     IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext)
     {
         if (LoggingInterval.TotalSeconds % PollingInterval.TotalSeconds != 0)

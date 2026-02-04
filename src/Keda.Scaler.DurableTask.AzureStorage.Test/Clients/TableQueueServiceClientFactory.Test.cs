@@ -2,16 +2,17 @@
 // Licensed under the MIT License.
 
 using System;
-using Azure.Core;
+using System.Linq;
 using System.Reflection;
+using Azure.Core;
+using Azure.Core.Pipeline;
 using Azure.Data.Tables;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
-using Xunit;
-using Azure.Core.Pipeline;
-using System.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Clients;
 
+[TestClass]
 public class TableServiceClientFactoryTest : AzureStorageAccountClientFactoryTest<TableServiceClient>
 {
     protected override AzureStorageAccountClientFactory<TableServiceClient> GetFactory()
@@ -29,10 +30,10 @@ public class TableServiceClientFactoryTest : AzureStorageAccountClientFactoryTes
             .GetNestedTypes(BindingFlags.NonPublic)
             .Single(x => x.FullName == "Azure.Core.Pipeline.BearerTokenAuthenticationPolicy+AccessTokenCache");
 
-        HttpPipeline pipeline = Assert.IsType<HttpPipeline>(typeof(TableServiceClient)
+        HttpPipeline pipeline = Assert.IsInstanceOfType<HttpPipeline>(typeof(TableServiceClient)
             .GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(client));
-        ReadOnlyMemory<HttpPipelinePolicy> pipelineMemory = Assert.IsType<ReadOnlyMemory<HttpPipelinePolicy>>(typeof(HttpPipeline)
+        ReadOnlyMemory<HttpPipelinePolicy> pipelineMemory = Assert.IsInstanceOfType<ReadOnlyMemory<HttpPipelinePolicy>>(typeof(HttpPipeline)
             .GetField("_pipeline", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(pipeline));
         object? tokenCache = typeof(BearerTokenAuthenticationPolicy)
@@ -41,17 +42,17 @@ public class TableServiceClientFactoryTest : AzureStorageAccountClientFactoryTes
                 .ToArray()
                 .Single(x => x.GetType().IsAssignableTo(typeof(BearerTokenAuthenticationPolicy))));
 
-        Assert.NotNull(tokenCache);
+        Assert.IsNotNull(tokenCache);
         TokenCredential? tokenCredential = cacheType
             .GetField("_credential", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(tokenCache) as TokenCredential;
 
-        _ = Assert.IsType<T>(tokenCredential);
+        _ = Assert.IsInstanceOfType<T>(tokenCredential);
     }
 
     private static void Validate(TableServiceClient actual, string accountName, Uri serviceUrl)
     {
-        Assert.Equal(accountName, actual?.AccountName);
-        Assert.Equal(serviceUrl, actual?.Uri);
+        Assert.AreEqual(accountName, actual?.AccountName);
+        Assert.AreEqual(serviceUrl, actual?.Uri);
     }
 }

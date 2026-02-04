@@ -16,17 +16,19 @@ using Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 
+[TestClass]
 public sealed class TaskHubTest
 {
-    private readonly ITaskHubPartitionManager _partitionManager = Substitute.For<ITaskHubPartitionManager>();
-    private readonly QueueServiceClient _queueServiceClient = Substitute.For<QueueServiceClient>();
-    private readonly IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
+    private readonly TestContext _testContext;
+    private readonly ITaskHubPartitionManager _partitionManager;
+    private readonly QueueServiceClient _queueServiceClient;
+    private readonly IOptionsSnapshot<TaskHubOptions> _optionsSnapshot;
     private readonly TaskHub _taskHub;
 
     private const string TaskHubName = "UnitTest";
@@ -34,50 +36,53 @@ public sealed class TaskHubTest
 
     private static readonly Func<int, QueueProperties> QueuePropertiesFactory = CreateQueuePropertiesFactory();
 
-    public TaskHubTest()
+    public TaskHubTest(TestContext testContext)
     {
-        List<string> partitionIds = Enumerable
-            .Repeat(TaskHubName, PartitionCount)
-            .Select(ControlQueue.GetName)
-            .ToList();
+        ArgumentNullException.ThrowIfNull(testContext);
 
+        _testContext = testContext;
+        _partitionManager = Substitute.For<ITaskHubPartitionManager>();
+        _queueServiceClient = Substitute.For<QueueServiceClient>();
+        _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
+
+        List<string> partitionIds = [.. Enumerable.Repeat(TaskHubName, PartitionCount).Select(ControlQueue.GetName)];
         _ = _partitionManager.GetPartitionsAsync(default).ReturnsForAnyArgs(partitionIds);
         _ = _optionsSnapshot.Get(default).Returns(new TaskHubOptions { TaskHubName = TaskHubName });
         _taskHub = new(_partitionManager, _queueServiceClient, _optionsSnapshot, NullLoggerFactory.Instance);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullTaskHubInfo_WhenCreatingTaskHub_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TaskHub(null!, _queueServiceClient, _optionsSnapshot, NullLoggerFactory.Instance));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new TaskHub(null!, _queueServiceClient, _optionsSnapshot, NullLoggerFactory.Instance));
 
-    [Fact]
+    [TestMethod]
     public void GivenNullQueueServiceClient_WhenCreatingTaskHub_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new TaskHub(_partitionManager, null!, _optionsSnapshot, NullLoggerFactory.Instance));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new TaskHub(_partitionManager, null!, _optionsSnapshot, NullLoggerFactory.Instance));
 
-    [Fact]
+    [TestMethod]
     public void GivenNullOptionsSnapshot_WhenCreatingTablePartitionManager_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, null!, NullLoggerFactory.Instance));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, null!, NullLoggerFactory.Instance));
 
         IOptionsSnapshot<TaskHubOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(TaskHubOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, nullSnapshot, NullLoggerFactory.Instance));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, nullSnapshot, NullLoggerFactory.Instance));
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullLoggerFactory_WhenCreatingTablePartitionManager_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, _optionsSnapshot, null!));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, _optionsSnapshot, null!));
 
         ILoggerFactory nullFactory = Substitute.For<ILoggerFactory>();
         _ = nullFactory.CreateLogger(default!).ReturnsForAnyArgs(default(ILogger));
-        _ = Assert.Throws<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, _optionsSnapshot, nullFactory));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new TaskHub(_partitionManager, _queueServiceClient, _optionsSnapshot, nullFactory));
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenNoPartitions_WhenGettingUsage_ThenReturnNoUsage()
     {
-        _ = _partitionManager.GetPartitionsAsync(TestContext.Current.CancellationToken).ReturnsForAnyArgs([]);
+        _ = _partitionManager.GetPartitionsAsync(_testContext.CancellationToken).ReturnsForAnyArgs([]);
 
         using CancellationTokenSource cts = new();
         TaskHubQueueUsage actual = await _taskHub.GetUsageAsync(cts.Token);
@@ -85,10 +90,10 @@ public sealed class TaskHubTest
         _ = await _partitionManager.Received(1).GetPartitionsAsync(cts.Token);
         _ = _queueServiceClient.DidNotReceiveWithAnyArgs().GetQueueClient(default);
 
-        Assert.Same(TaskHubQueueUsage.None, actual);
+        Assert.AreSame(TaskHubQueueUsage.None, actual);
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenMissingControlQueue_WhenGettingUsage_ThenReturnNoUsage()
     {
         QueueClient controlQueue0 = Substitute.For<QueueClient>();
@@ -98,10 +103,10 @@ public sealed class TaskHubTest
             .GetQueueClient(default!)
             .ReturnsForAnyArgs(controlQueue0, controlQueue1);
         _ = controlQueue0
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(5)));
         _ = controlQueue1
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found"));
 
         using CancellationTokenSource cts = new();
@@ -114,10 +119,10 @@ public sealed class TaskHubTest
         _ = await controlQueue0.Received(1).GetPropertiesAsync(cts.Token);
         _ = await controlQueue1.Received(1).GetPropertiesAsync(cts.Token);
 
-        Assert.Same(TaskHubQueueUsage.None, actual);
+        Assert.AreSame(TaskHubQueueUsage.None, actual);
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenMissingWorkItemQueue_WhenGettingUsage_ThenReturnNoUsage()
     {
         QueueClient controlQueue0 = Substitute.For<QueueClient>();
@@ -129,16 +134,16 @@ public sealed class TaskHubTest
             .GetQueueClient(default)
             .ReturnsForAnyArgs(controlQueue0, controlQueue1, controlQueue2, workItemQueue);
         _ = controlQueue0
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(3)));
         _ = controlQueue1
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(5)));
         _ = controlQueue2
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(4)));
         _ = workItemQueue
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ThrowsAsyncForAnyArgs(new RequestFailedException((int)HttpStatusCode.NotFound, "Queue not found"));
 
         using CancellationTokenSource cts = new();
@@ -154,10 +159,10 @@ public sealed class TaskHubTest
         _ = await controlQueue2.Received(1).GetPropertiesAsync(cts.Token);
         _ = await workItemQueue.Received(1).GetPropertiesAsync(cts.Token);
 
-        Assert.Same(TaskHubQueueUsage.None, actual);
+        Assert.AreSame(TaskHubQueueUsage.None, actual);
     }
 
-    [Fact]
+    [TestMethod]
     public async ValueTask GivenAvailableQueues_WhenGettingUsage_ThenReturnMessageCountSummary()
     {
         QueueClient controlQueue0 = Substitute.For<QueueClient>();
@@ -169,16 +174,16 @@ public sealed class TaskHubTest
             .GetQueueClient(default)
             .ReturnsForAnyArgs(controlQueue0, controlQueue1, controlQueue2, workItemQueue);
         _ = controlQueue0
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(3)));
         _ = controlQueue1
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(5)));
         _ = controlQueue2
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(4)));
         _ = workItemQueue
-            .GetPropertiesAsync(TestContext.Current.CancellationToken)
+            .GetPropertiesAsync(_testContext.CancellationToken)
             .ReturnsForAnyArgs(x => Task.FromResult(GetResponse(1)));
 
         using CancellationTokenSource cts = new();
@@ -194,11 +199,11 @@ public sealed class TaskHubTest
         _ = await controlQueue2.Received(1).GetPropertiesAsync(cts.Token);
         _ = await workItemQueue.Received(1).GetPropertiesAsync(cts.Token);
 
-        Assert.Equal(PartitionCount, actual.ControlQueueMessages.Count);
-        Assert.Equal(3, actual.ControlQueueMessages[0]);
-        Assert.Equal(5, actual.ControlQueueMessages[1]);
-        Assert.Equal(4, actual.ControlQueueMessages[2]);
-        Assert.Equal(1, actual.WorkItemQueueMessages);
+        Assert.HasCount(PartitionCount, actual.ControlQueueMessages);
+        Assert.AreEqual(3, actual.ControlQueueMessages[0]);
+        Assert.AreEqual(5, actual.ControlQueueMessages[1]);
+        Assert.AreEqual(4, actual.ControlQueueMessages[2]);
+        Assert.AreEqual(1, actual.WorkItemQueueMessages);
     }
 
     private static Response<QueueProperties> GetResponse(int count)

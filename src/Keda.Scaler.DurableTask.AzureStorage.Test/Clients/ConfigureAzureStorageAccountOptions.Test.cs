@@ -10,11 +10,13 @@ using Keda.Scaler.DurableTask.AzureStorage.Clients;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.Extensions.Options;
 using Microsoft.Identity.Client;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
-using Xunit;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Clients;
 
+[TestClass]
+[DoNotParallelize]
 public class ConfigureAzureStorageAccountOptionsTest
 {
     private readonly ScalerOptions _scalerOptions = new();
@@ -27,22 +29,22 @@ public class ConfigureAzureStorageAccountOptionsTest
         _configure = new(snapshot);
     }
 
-    [Fact]
+    [TestMethod]
     public void GivenNullOptionsSnapshot_WhenCreatingConfigure_ThenThrowArgumentNullException()
     {
-        _ = Assert.Throws<ArgumentNullException>(() => new ConfigureAzureStorageAccountOptions(null!));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new ConfigureAzureStorageAccountOptions(null!));
 
         IOptionsSnapshot<ScalerOptions> nullSnapshot = Substitute.For<IOptionsSnapshot<ScalerOptions>>();
         _ = nullSnapshot.Get(default).Returns(default(ScalerOptions));
-        _ = Assert.Throws<ArgumentNullException>(() => new ConfigureAzureStorageAccountOptions(nullSnapshot));
+        _ = Assert.ThrowsExactly<ArgumentNullException>(() => new ConfigureAzureStorageAccountOptions(nullSnapshot));
     }
 
-    [Theory]
-    [InlineData("Key=1", "Key=1", null, null, null)]
-    [InlineData("Key=1", "Key=1", "ExampleConnectionString1", "Key=2", "Key=3")]
-    [InlineData("Key=1", null, "ExampleConnectionString2", "Key=1", null)]
-    [InlineData("Key=1", null, "ExampleConnectionString3", "Key=1", "Key=2")]
-    [InlineData("Key=1", null, null, null, "Key=1")]
+    [TestMethod]
+    [DataRow("Key=1", "Key=1", null, null, null)]
+    [DataRow("Key=1", "Key=1", "ExampleConnectionString1", "Key=2", "Key=3")]
+    [DataRow("Key=1", null, "ExampleConnectionString2", "Key=1", null)]
+    [DataRow("Key=1", null, "ExampleConnectionString3", "Key=1", "Key=2")]
+    [DataRow("Key=1", null, null, null, "Key=1")]
     public void GivenMetadataWithConnectionString_WhenConfiguringOptions_ThenConfigureConnectionString(string expected, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
     {
         List<IDisposable> disposables = [];
@@ -61,10 +63,10 @@ public class ConfigureAzureStorageAccountOptionsTest
         try
         {
             _configure.Configure(options);
-            Assert.Null(options.AccountName);
-            Assert.Equal(expected, options.ConnectionString);
-            Assert.Null(options.EndpointSuffix);
-            Assert.Null(options.TokenCredential);
+            Assert.IsNull(options.AccountName);
+            Assert.AreEqual(expected, options.ConnectionString);
+            Assert.IsNull(options.EndpointSuffix);
+            Assert.IsNull(options.TokenCredential);
         }
         finally
         {
@@ -73,12 +75,12 @@ public class ConfigureAzureStorageAccountOptionsTest
         }
     }
 
-    [Theory]
-    [InlineData("Key=1", "Key=2", null, null, null)]
-    [InlineData("Key=1", "Key=2", "ExampleConnectionString4", "Key=3", "Key=4")]
-    [InlineData("Key=1", null, "ExampleConnectionString5", "Key=2", null)]
-    [InlineData("Key=1", null, "ExampleConnectionString6", "Key=3", "Key=4")]
-    [InlineData("Key=1", null, null, null, "Key=2")]
+    [TestMethod]
+    [DataRow("Key=1", "Key=2", null, null, null)]
+    [DataRow("Key=1", "Key=2", "ExampleConnectionString4", "Key=3", "Key=4")]
+    [DataRow("Key=1", null, "ExampleConnectionString5", "Key=2", null)]
+    [DataRow("Key=1", null, "ExampleConnectionString6", "Key=3", "Key=4")]
+    [DataRow("Key=1", null, null, null, "Key=2")]
     public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureUriConnection(string accountName, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
     {
         List<IDisposable> disposables = [];
@@ -98,10 +100,10 @@ public class ConfigureAzureStorageAccountOptionsTest
         try
         {
             _configure.Configure(options);
-            Assert.Equal(accountName, options.AccountName);
-            Assert.Null(options.ConnectionString);
-            Assert.Equal(AzureStorageServiceUri.PublicSuffix, options.EndpointSuffix);
-            Assert.Null(options.TokenCredential);
+            Assert.AreEqual(accountName, options.AccountName);
+            Assert.IsNull(options.ConnectionString);
+            Assert.AreEqual(AzureStorageServiceUri.PublicSuffix, options.EndpointSuffix);
+            Assert.IsNull(options.TokenCredential);
         }
         finally
         {
@@ -110,11 +112,11 @@ public class ConfigureAzureStorageAccountOptionsTest
         }
     }
 
-    [Theory]
-    [InlineData(AzureStorageServiceUri.PublicSuffix, null, null)]
-    [InlineData(AzureStorageServiceUri.PublicSuffix, nameof(CloudEnvironment.AzurePublicCloud), null)]
-    [InlineData(AzureStorageServiceUri.USGovernmentSuffix, "AZUREUSGOVERNMENTCLOUD", null)]
-    [InlineData("unit.test.cloud", "priVATE", "unit.test.cloud")]
+    [TestMethod]
+    [DataRow(AzureStorageServiceUri.PublicSuffix, null, null)]
+    [DataRow(AzureStorageServiceUri.PublicSuffix, nameof(CloudEnvironment.AzurePublicCloud), null)]
+    [DataRow(AzureStorageServiceUri.USGovernmentSuffix, "AZUREUSGOVERNMENTCLOUD", null)]
+    [DataRow("unit.test.cloud", "priVATE", "unit.test.cloud")]
     public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureEndpointBasedOnCloud(string? expected, string? cloud, string? endpointSuffix)
     {
         const string AccountName = "unittest";
@@ -127,15 +129,15 @@ public class ConfigureAzureStorageAccountOptionsTest
         AzureStorageAccountOptions options = new();
         _configure.Configure(options);
 
-        Assert.Equal(AccountName, options.AccountName);
-        Assert.Null(options.ConnectionString);
-        Assert.Equal(expected, options.EndpointSuffix);
-        Assert.Null(options.TokenCredential);
+        Assert.AreEqual(AccountName, options.AccountName);
+        Assert.IsNull(options.ConnectionString);
+        Assert.AreEqual(expected, options.EndpointSuffix);
+        Assert.IsNull(options.TokenCredential);
     }
 
-    [Theory]
-    [InlineData(null, null)]
-    [InlineData("https://entra.unit.test", "12345")]
+    [TestMethod]
+    [DataRow(null, null)]
+    [DataRow("https://entra.unit.test", "12345")]
     public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureTokenCredential(string? entraEndpoint, string? clientId)
     {
         const string AccountName = "unittest";
@@ -153,10 +155,10 @@ public class ConfigureAzureStorageAccountOptionsTest
         AzureStorageAccountOptions options = new();
         _configure.Configure(options);
 
-        Assert.Equal(AccountName, options.AccountName);
-        Assert.Null(options.ConnectionString);
-        Assert.Equal(AzureStorageServiceUri.PublicSuffix, options.EndpointSuffix);
-        Assert.NotNull(options.TokenCredential);
+        Assert.AreEqual(AccountName, options.AccountName);
+        Assert.IsNull(options.ConnectionString);
+        Assert.AreEqual(AzureStorageServiceUri.PublicSuffix, options.EndpointSuffix);
+        Assert.IsNotNull(options.TokenCredential);
 
         AssertClientId(options.TokenCredential, clientId ?? defaultClientId);
     }
@@ -167,7 +169,7 @@ public class ConfigureAzureStorageAccountOptionsTest
             .GetProperty("Client", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(tokenCredential);
 
-        Assert.NotNull(client);
+        Assert.IsNotNull(client);
         string? actual = typeof(WorkloadIdentityCredential).Assembly
             .DefinedTypes
             .Single(x => x.FullName == "Azure.Identity.MsalClientBase`1")
@@ -175,6 +177,6 @@ public class ConfigureAzureStorageAccountOptionsTest
             .GetProperty("ClientId", BindingFlags.NonPublic | BindingFlags.Instance)?
             .GetValue(client) as string;
 
-        Assert.Equal(expected, actual);
+        Assert.AreEqual(expected, actual);
     }
 }

@@ -4,84 +4,85 @@
 using System;
 using Azure.Identity;
 using Keda.Scaler.DurableTask.AzureStorage.Clients;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Clients;
 
+[TestClass]
 public class AzureCloudEndpointsTest
 {
-    [Fact]
+    [TestMethod]
     public void GivenPublicCloud_WhenGettingEndpoints_ThenHaveExpectedValues()
         => AssertEndpoints(AzureAuthorityHosts.AzurePublicCloud, "core.windows.net", AzureCloudEndpoints.Public);
 
-    [Fact]
+    [TestMethod]
     public void GivenUSGovernmentCloud_WhenGettingEndpoints_ThenHaveExpectedValues()
         => AssertEndpoints(AzureAuthorityHosts.AzureGovernment, "core.usgovcloudapi.net", AzureCloudEndpoints.USGovernment);
 
-    [Fact]
+    [TestMethod]
     public void GivenChinaCloud_WhenGettingEndpoints_ThenHaveExpectedValues()
         => AssertEndpoints(AzureAuthorityHosts.AzureChina, "core.chinacloudapi.cn", AzureCloudEndpoints.China);
 
-    [Fact]
+    [TestMethod]
     public void GivenNullAuthority_WhenCreatingCloudEndpoints_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new AzureCloudEndpoints(null!, "suffix"));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new AzureCloudEndpoints(null!, "suffix"));
 
-    [Fact]
+    [TestMethod]
     public void GivenNullStorageSuffix_WhenCreatingCloudEndpoints_ThenThrowArgumentNullException()
-        => Assert.Throws<ArgumentNullException>(() => new AzureCloudEndpoints(new Uri("https://test"), null!));
+        => Assert.ThrowsExactly<ArgumentNullException>(() => new AzureCloudEndpoints(new Uri("https://test"), null!));
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("\r\n  ")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("\r\n  ")]
     public void GivenEmptyOrWhiteSpaceStorageSuffix_WhenCreatingCloudEndpoints_ThenThrowArgumentException(string suffix)
-        => Assert.Throws<ArgumentException>(() => new AzureCloudEndpoints(new Uri("https://test"), suffix));
+        => Assert.ThrowsExactly<ArgumentException>(() => new AzureCloudEndpoints(new Uri("https://test"), suffix));
 
-    [Theory]
-    [InlineData(CloudEnvironment.Unknown)]
-    [InlineData((CloudEnvironment)12)]
+    [TestMethod]
+    [DataRow(CloudEnvironment.Unknown)]
+    [DataRow((CloudEnvironment)12)]
     public void GivenUnknownCloud_WhenGettingEndpointsForEnvironment_ThenThrowArgumentOutOfRangeException(CloudEnvironment environment)
-        => Assert.Throws<ArgumentOutOfRangeException>(() => AzureCloudEndpoints.ForEnvironment(environment));
+        => Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => AzureCloudEndpoints.ForEnvironment(environment));
 
-    [Fact]
+    [TestMethod]
     public void GivenPublicCloud_WhenGettingEndpointsForEnvironment_ThenReturnExpectedInstance()
-        => Assert.Same(AzureCloudEndpoints.Public, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzurePublicCloud));
+        => Assert.AreSame(AzureCloudEndpoints.Public, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzurePublicCloud));
 
-    [Fact]
+    [TestMethod]
     public void GivenUSGovernmentCloud_WhenGettingEndpointsForEnvironment_ThenReturnExpectedInstance()
-        => Assert.Same(AzureCloudEndpoints.USGovernment, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzureUSGovernmentCloud));
+        => Assert.AreSame(AzureCloudEndpoints.USGovernment, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzureUSGovernmentCloud));
 
-    [Fact]
+    [TestMethod]
     public void GivenChinaCloud_WhenGettingEndpointsForEnvironment_ThenReturnExpectedInstance()
-        => Assert.Same(AzureCloudEndpoints.China, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzureChinaCloud));
+        => Assert.AreSame(AzureCloudEndpoints.China, AzureCloudEndpoints.ForEnvironment(CloudEnvironment.AzureChinaCloud));
 
-    [Theory]
-    [InlineData(CloudEnvironment.AzurePublicCloud, null)]
-    [InlineData(CloudEnvironment.AzurePublicCloud, nameof(CloudEnvironment.AzurePublicCloud))]
-    [InlineData(CloudEnvironment.AzurePublicCloud, "azurepubliccloud")]
-    [InlineData(CloudEnvironment.AzureUSGovernmentCloud, nameof(CloudEnvironment.AzureUSGovernmentCloud))]
-    [InlineData(CloudEnvironment.AzureUSGovernmentCloud, "AZUREUSGOVERNMENTCLOUD")]
-    [InlineData(CloudEnvironment.AzureChinaCloud, nameof(CloudEnvironment.AzureChinaCloud))]
-    [InlineData(CloudEnvironment.AzureChinaCloud, "azureCHINAcloud")]
-    [InlineData(CloudEnvironment.Private, nameof(CloudEnvironment.Private))]
-    [InlineData(CloudEnvironment.Private, "priVATE")]
+    [TestMethod]
+    [DataRow(CloudEnvironment.AzurePublicCloud, null)]
+    [DataRow(CloudEnvironment.AzurePublicCloud, nameof(CloudEnvironment.AzurePublicCloud))]
+    [DataRow(CloudEnvironment.AzurePublicCloud, "azurepubliccloud")]
+    [DataRow(CloudEnvironment.AzureUSGovernmentCloud, nameof(CloudEnvironment.AzureUSGovernmentCloud))]
+    [DataRow(CloudEnvironment.AzureUSGovernmentCloud, "AZUREUSGOVERNMENTCLOUD")]
+    [DataRow(CloudEnvironment.AzureChinaCloud, nameof(CloudEnvironment.AzureChinaCloud))]
+    [DataRow(CloudEnvironment.AzureChinaCloud, "azureCHINAcloud")]
+    [DataRow(CloudEnvironment.Private, nameof(CloudEnvironment.Private))]
+    [DataRow(CloudEnvironment.Private, "priVATE")]
     public void GivenEnvironmentName_WhenParsingEnvironment_ThenReturnTrue(CloudEnvironment expected, string? cloud)
     {
-        Assert.True(AzureCloudEndpoints.TryParseEnvironment(cloud, out CloudEnvironment actual));
-        Assert.Equal(expected, actual);
+        Assert.IsTrue(AzureCloudEndpoints.TryParseEnvironment(cloud, out CloudEnvironment actual));
+        Assert.AreEqual(expected, actual);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("AzureUnknownCloud")]
+    [TestMethod]
+    [DataRow("")]
+    [DataRow("AzureUnknownCloud")]
     public void GivenUnknownEnvironmentName_WhenParsingEnvironment_ThenReturnFalse(string cloud)
     {
-        Assert.False(AzureCloudEndpoints.TryParseEnvironment(cloud, out CloudEnvironment actual));
-        Assert.Equal(CloudEnvironment.Unknown, actual);
+        Assert.IsFalse(AzureCloudEndpoints.TryParseEnvironment(cloud, out CloudEnvironment actual));
+        Assert.AreEqual(CloudEnvironment.Unknown, actual);
     }
 
     private static void AssertEndpoints(Uri authorityHost, string storageSuffix, AzureCloudEndpoints actual)
     {
-        Assert.Equal(authorityHost, actual.AuthorityHost);
-        Assert.Equal(storageSuffix, actual.StorageSuffix);
+        Assert.AreEqual(authorityHost, actual.AuthorityHost);
+        Assert.AreEqual(storageSuffix, actual.StorageSuffix);
     }
 }

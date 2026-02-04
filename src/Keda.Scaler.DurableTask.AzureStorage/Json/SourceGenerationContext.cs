@@ -12,6 +12,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Json;
     PropertyNameCaseInsensitive = true,
     PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase,
     ReadCommentHandling = JsonCommentHandling.Skip)]
-[JsonSerializable(typeof(BlobPartitionManager.AzureStorageTaskHubInfo))]
+[JsonSerializable(typeof(AzureStorageTaskHubInfo))]
 internal partial class SourceGenerationContext : JsonSerializerContext
 { }

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 
-internal sealed class ExceptionInterceptor(ILoggerFactory loggerFactory) : Interceptor
+internal sealed partial class ExceptionInterceptor(ILoggerFactory loggerFactory) : Interceptor
 {
     private readonly ILogger _logger = loggerFactory?.CreateLogger(LogCategories.Default) ?? throw new ArgumentNullException(nameof(loggerFactory));
 
@@ -29,18 +29,33 @@ internal sealed class ExceptionInterceptor(ILoggerFactory loggerFactory) : Inter
         }
         catch (ValidationException v)
         {
-            _logger.ReceivedInvalidInput(v);
+            LogInvalidInput(_logger, v);
             throw new RpcException(new Status(StatusCode.InvalidArgument, v.Message));
         }
         catch (OperationCanceledException oce) when (context.CancellationToken.IsCancellationRequested)
         {
-            _logger.DetectedRequestCancellation(oce);
+            LogRequestCancellation(_logger, oce);
             throw new RpcException(Status.DefaultCancelled);
         }
         catch (Exception e)
         {
-            _logger.CaughtUnhandledException(e);
+            LogUnhandledException(_logger, e);
             throw new RpcException(new Status(StatusCode.Internal, SR.InternalServerError));
         }
     }
+
+    [LoggerMessage(
+        Level = LogLevel.Critical,
+        Message = "Caught unhandled exception!")]
+    private static partial void LogUnhandledException(ILogger logger, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Error,
+        Message = "Request contains invalid input.")]
+    private static partial void LogInvalidInput(ILogger logger, Exception exception);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "RPC operation canceled.")]
+    private static partial void LogRequestCancellation(ILogger logger, OperationCanceledException exception);
 }

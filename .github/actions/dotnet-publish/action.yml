@@ -66,7 +66,7 @@ runs:
     - name: Build
       shell: bash
       run: |
-        dotnet build "./src/Scaler.sln" \
+        dotnet build "./src/Scaler.slnx" \
           --configuration "${{ inputs.buildConfiguration }}" \
           "--property:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
           -warnaserror
@@ -74,16 +74,15 @@ runs:
     - name: Test
       shell: bash
       run: |
-        dotnet run \
-          --configuration "${{ inputs.buildConfiguration }}" \
+        dotnet test \
           --coverage \
           --coverage-output "${{ inputs.coverageFileName }}" \
           --coverage-output-format cobertura \
-          --coverage-settings "$GITHUB_WORKSPACE/src/CodeCoverage.runsettings" \
+          --coverage-settings "$GITHUB_WORKSPACE/src/CodeCoverage.config" \
+          --configuration "${{ inputs.buildConfiguration }}" \
           --no-build \
-          --project "./src/Keda.Scaler.DurableTask.AzureStorage.Test/Keda.Scaler.DurableTask.AzureStorage.Test.csproj" \
           --results-directory "${{ inputs.testResultsDirectory }}" \
-          --verbosity normal
+          --solution "./src/Scaler.slnx"
 
     - name: Publish
       shell: bash
@@ -111,7 +110,7 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
-      uses: azure/trusted-signing-action@v0.5.11
+      uses: azure/artifact-signing-action@v1
       with:
         azure-client-id: ${{ inputs.azureClientId }}
         azure-tenant-id: ${{ inputs.azureTenantId }}

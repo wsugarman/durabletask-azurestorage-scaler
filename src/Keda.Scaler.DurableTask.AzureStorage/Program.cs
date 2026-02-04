@@ -10,6 +10,7 @@ using Keda.Scaler.DurableTask.AzureStorage.Web;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 const string PolicyName = "default";
 
@@ -17,6 +18,13 @@ WebApplicationBuilder builder = WebApplication.CreateSlimBuilder(args);
 
 // Additional configuration is required to successfully run gRPC on macOS.
 // For instructions on how to configure Kestrel and gRPC clients on macOS, visit https://go.microsoft.com/fwlink/?linkid=2099682
+builder.Logging
+    .ClearProviders()
+    .AddSystemdConsole(o =>
+    {
+        o.IncludeScopes = true;
+        o.UseUtcTimestamp = true;
+    });
 
 // Add services to the container
 builder.Services

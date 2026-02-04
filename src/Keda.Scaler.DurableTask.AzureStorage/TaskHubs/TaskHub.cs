@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 
-internal class TaskHub(ITaskHubPartitionManager partitionManager, QueueServiceClient queueServiceClient, IOptionsSnapshot<TaskHubOptions> options, ILoggerFactory loggerFactory) : ITaskHub
+internal partial class TaskHub(ITaskHubPartitionManager partitionManager, QueueServiceClient queueServiceClient, IOptionsSnapshot<TaskHubOptions> options, ILoggerFactory loggerFactory) : ITaskHub
 {
     private readonly ITaskHubPartitionManager _partitionManager = partitionManager ?? throw new ArgumentNullException(nameof(partitionManager));
     private readonly QueueServiceClient _queueServiceClient = queueServiceClient ?? throw new ArgumentNullException(nameof(queueServiceClient));
@@ -42,7 +42,7 @@ internal class TaskHub(ITaskHubPartitionManager partitionManager, QueueServiceCl
             }
             catch (RequestFailedException rfe) when (rfe.Status is (int)HttpStatusCode.NotFound)
             {
-                _logger.CouldNotFindControlQueue(controlQueueClient.Name);
+                LogMissingControlQueue(_logger, controlQueueClient.Name);
                 return TaskHubQueueUsage.None;
             }
         }
@@ -57,11 +57,26 @@ internal class TaskHub(ITaskHubPartitionManager partitionManager, QueueServiceCl
         }
         catch (RequestFailedException rfe) when (rfe.Status is (int)HttpStatusCode.NotFound)
         {
-            _logger.CouldNotFindWorkItemQueue(workItemQueueClient.Name);
+            LogMissingWorkItemQueue(_logger, workItemQueueClient.Name);
             return TaskHubQueueUsage.None;
         }
 
-        _logger.FoundTaskHubQueues(workItemQueueMessages, string.Join(", ", controlQueueMessages));
+        LogTaskHubQueues(_logger, workItemQueueMessages, string.Join(", ", controlQueueMessages));
         return new TaskHubQueueUsage(controlQueueMessages, workItemQueueMessages);
     }
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Could not find control queue '{ControlQueueName}'.")]
+    private static partial void LogMissingControlQueue(ILogger logger, string controlQueueName);
+
+    [LoggerMessage(
+        Level = LogLevel.Warning,
+        Message = "Could not find work item queue '{WorkItemQueueName}'.")]
+    private static partial void LogMissingWorkItemQueue(ILogger logger, string workItemQueueName);
+
+    [LoggerMessage(
+        Level = LogLevel.Debug,
+        Message = "Found {WorkItemCount} work item messages and the following control queue message counts [{ControlCounts}].")]
+    private static partial void LogTaskHubQueues(ILogger logger, int workItemCount, string controlCounts);
 }

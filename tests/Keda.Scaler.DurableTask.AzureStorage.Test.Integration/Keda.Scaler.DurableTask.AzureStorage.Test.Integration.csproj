@@ -1,16 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="MSTest.Sdk">
 
+  <!-- As of writing, OrchestrationServiceClientShim uses reflection -->
   <PropertyGroup>
-    <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
-    <OutputType>Exe</OutputType>
-    <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
-    <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="KubernetesClient" />
-    <PackageReference Include="MartinCostello.Logging.XUnit.v3" />
     <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" />
     <PackageReference Include="Microsoft.DurableTask.Client" />
     <PackageReference Include="Microsoft.DurableTask.Client.OrchestrationServiceClientShim" />
@@ -23,10 +19,6 @@
     <PackageReference Include="Microsoft.Extensions.Options" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="All" />
-    <PackageReference Include="System.Text.Json" PrivateAssets="All" />
-    <PackageReference Include="xunit.v3" />
-    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>
