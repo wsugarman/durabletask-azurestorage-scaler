@@ -35,7 +35,7 @@ internal static class LoggingExtensions
 
     private sealed class UnitTestingLogger(string categoryName, TestContext context) : ILogger
     {
-        private static readonly CompositeFormat MessageFormat = CompositeFormat.Parse("<{0}> {1} {2} [{3}] {4}");
+        private static readonly CompositeFormat MessageFormat = CompositeFormat.Parse("{0:O} {1} {2} {3}");
 
         private readonly string _categoryName = categoryName ?? throw new ArgumentNullException(nameof(categoryName));
         private readonly TestContext _context = context ?? throw new ArgumentNullException(nameof(context));
@@ -54,7 +54,7 @@ internal static class LoggingExtensions
             ArgumentNullException.ThrowIfNull(formatter);
 
             string msg = formatter(state, exception);
-            string log = string.Format(CultureInfo.InvariantCulture, MessageFormat, logLevel, DateTimeOffset.UtcNow, _categoryName, eventId, msg);
+            string log = string.Format(CultureInfo.InvariantCulture, MessageFormat, DateTimeOffset.UtcNow, _categoryName, logLevel.ToString().ToUpperInvariant(), msg);
             _context.WriteLine(log);
         }
     }

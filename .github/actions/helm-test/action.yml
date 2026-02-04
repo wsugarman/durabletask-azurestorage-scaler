@@ -363,7 +363,8 @@ runs:
         Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
 
-    - name: Upload Test Results
+    - if: ${{ always() }}
+      name: Upload Test Results
       uses: actions/upload-artifact@v6
       with:
         name: integration-test-results
