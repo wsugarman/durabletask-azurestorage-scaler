@@ -85,14 +85,14 @@ public class IConfigurationExtensionsTest
     }
 
     [TestMethod]
-    public void GivenNullConfiguration_WhenCheckingWhetherClientCertificateShouldBeValidated_ThenThrowArgumentNullException()
-        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.ShouldValidateClientCertificate(null!));
+    public void GivenNullConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenThrowArgumentNullException()
+        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.IsClientCertValidationEnabled(null!));
 
     [TestMethod]
-    public void GivenDefaultConfiguration_WhenCheckingWhetherClientCertificateShouldBeValidated_ThenReturnfalse()
+    public void GivenDefaultConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenReturnfalse()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        Assert.IsFalse(configuration.ShouldValidateClientCertificate());
+        Assert.IsFalse(configuration.IsClientCertValidationEnabled());
     }
 
     [TestMethod]
@@ -100,7 +100,7 @@ public class IConfigurationExtensionsTest
     [DataRow(false, null, true)]
     [DataRow(false, "tls.crt", false)]
     [DataRow(true, "tls.crt", true)]
-    public void GivenValidConfiguration_WhenCheckingWhetherClientCertificateShouldBeValidated_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validate)
+    public void GivenValidConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validate)
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(
@@ -110,6 +110,6 @@ public class IConfigurationExtensionsTest
             ])
             .Build();
 
-        Assert.AreEqual(expected, configuration.ShouldValidateClientCertificate());
+        Assert.AreEqual(expected, configuration.IsClientCertValidationEnabled());
     }
 }

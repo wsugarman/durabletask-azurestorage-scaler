@@ -33,7 +33,7 @@ internal static class IServiceCollectionExtensions
             .AddOptions<CertificateValidationCacheOptions>()
             .BindConfiguration(ClientCertificateValidationOptions.DefaultCachingKey);
 
-        if (configuration.ShouldValidateClientCertificate())
+        if (configuration.IsClientCertValidationEnabled())
         {
             _ = services
                 .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)

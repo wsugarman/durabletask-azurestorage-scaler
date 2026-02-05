@@ -29,7 +29,7 @@ internal static class IConfigurationExtensions
         return options.Enable && options.CertificateAuthority is not null;
     }
 
-    public static bool ShouldValidateClientCertificate(this IConfiguration configuration)
+    public static bool IsClientCertValidationEnabled(this IConfiguration configuration)
         => configuration.IsTlsEnabled() && configuration.GetCertificateValidationOptions().Enable;
 
     private static ClientCertificateValidationOptions GetCertificateValidationOptions(this IConfiguration configuration)
