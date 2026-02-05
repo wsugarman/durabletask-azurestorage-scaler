@@ -18,7 +18,7 @@ public class IConfigurationExtensionsTest
         => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.IsTlsEnabled(null!));
 
     [TestMethod]
-    public void GivenDefaultConfiguration_WhenCheckingWhetherTlsIsEnabled_ThenReturnfalse()
+    public void GivenDefaultConfiguration_WhenCheckingWhetherTlsIsEnabled_ThenReturnFalse()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         Assert.IsFalse(configuration.IsTlsEnabled());
@@ -58,7 +58,7 @@ public class IConfigurationExtensionsTest
     }
 
     [TestMethod]
-    public void GivenDefaultConfiguration_WhenCheckingWhetherCustomClientCaIsConfigured_ThenReturnfalse()
+    public void GivenDefaultConfiguration_WhenCheckingWhetherCustomClientCaIsConfigured_ThenReturnFalse()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         Assert.IsFalse(configuration.IsCustomClientCaConfigured());
@@ -89,7 +89,7 @@ public class IConfigurationExtensionsTest
         => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.IsClientCertValidationEnabled(null!));
 
     [TestMethod]
-    public void GivenDefaultConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenReturnfalse()
+    public void GivenDefaultConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenReturnFalse()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
         Assert.IsFalse(configuration.IsClientCertValidationEnabled());
