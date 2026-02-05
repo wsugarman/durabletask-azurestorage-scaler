@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <!-- TODO: Use Native AOT when all dependencies support it -->
+  <!-- TODO: Use Native AOT when Azure.Data.Tables supports it -->
   <PropertyGroup>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>$(RootDirectory)</DockerfileContext>

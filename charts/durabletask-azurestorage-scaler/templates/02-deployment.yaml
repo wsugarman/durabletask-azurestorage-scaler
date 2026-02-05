@@ -86,10 +86,6 @@ spec:
             - name: Kestrel__EndpointDefaults__ClientCertificateMode
               value: RequireCertificate
             {{- end }}
-            - name: Logging__Console__FormatterName
-              value: {{ .Values.logging.format }}
-            - name: Logging__Console__FormatterOptions__TimestampFormat
-              value: {{ .Values.logging.timestampFormat }}
             - name: Logging__LogLevel__Default
               value: {{ .Values.logging.level | quote }}
             {{- if .Values.env }}

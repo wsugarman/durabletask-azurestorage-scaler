@@ -10,7 +10,7 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Certificates;
 
 internal static class IConfigurationExtensions
 {
-    public static bool IsTlsEnforced(this IConfiguration configuration)
+    public static bool IsTlsEnabled(this IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
         Debug.Assert(configuration is not IConfigurationSection);
@@ -20,26 +20,26 @@ internal static class IConfigurationExtensions
         return !string.IsNullOrWhiteSpace(configuration.GetSection("Kestrel:Certificates:Default:Path").Value);
     }
 
-    public static bool UseCustomClientCa(this IConfiguration configuration)
+    public static bool IsCustomClientCaConfigured(this IConfiguration configuration)
     {
-        if (!configuration.IsTlsEnforced())
+        if (!configuration.IsTlsEnabled())
             return false;
 
         ClientCertificateValidationOptions options = configuration.GetCertificateValidationOptions();
         return options.Enable && options.CertificateAuthority is not null;
     }
 
-    public static bool ValidateClientCertificate(this IConfiguration configuration)
-        => configuration.IsTlsEnforced() && configuration.GetCertificateValidationOptions().Enable;
+    public static bool IsClientCertValidationEnabled(this IConfiguration configuration)
+        => configuration.IsTlsEnabled() && configuration.GetCertificateValidationOptions().Enable;
 
     private static ClientCertificateValidationOptions GetCertificateValidationOptions(this IConfiguration configuration)
     {
         ClientCertificateValidationOptions options = new();
         configuration.GetSection(ClientCertificateValidationOptions.DefaultKey).Bind(options);
         ValidateOptionsResult result = ValidateClientCertificateValidationOptions.Instance.Validate(Options.DefaultName, options);
-        if (result.Failed)
-            throw new OptionsValidationException(Options.DefaultName, typeof(ClientCertificateValidationOptions), result.Failures);
 
-        return options;
+        return result.Failed
+            ? throw new OptionsValidationException(Options.DefaultName, typeof(ClientCertificateValidationOptions), result.Failures)
+            : options;
     }
 }

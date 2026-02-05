@@ -33,7 +33,7 @@ internal static class IServiceCollectionExtensions
             .AddOptions<CertificateValidationCacheOptions>()
             .BindConfiguration(ClientCertificateValidationOptions.DefaultCachingKey);
 
-        if (configuration.ValidateClientCertificate())
+        if (configuration.IsClientCertValidationEnabled())
         {
             _ = services
                 .AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme)
@@ -46,7 +46,7 @@ internal static class IServiceCollectionExtensions
                         .AddAuthenticationSchemes(CertificateAuthenticationDefaults.AuthenticationScheme)
                         .RequireAuthenticatedUser()));
 
-            if (configuration.UseCustomClientCa())
+            if (configuration.IsCustomClientCaConfigured())
             {
                 _ = services
                     .AddSingleton(sp => new ReaderWriterLockSlim(LockRecursionPolicy.SupportsRecursion))

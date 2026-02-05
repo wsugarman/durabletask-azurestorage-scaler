@@ -34,12 +34,8 @@ image:
 
 # logging contains settings related to the diagnostic output.
 logging:
-  # format is the name of the formatter for the console logger. Acceptable values are `json`, `simple`, or 'systemd'. Defaults to 'systemd'.
-  format: systemd
   # level is the minimal log level emitted by the pods. Acceptable values are `trace`, `debug`, `information`, `warning`, `error`, `critical`, or `none`. Defaults to 'information'.
   level: information
-  # timestampFormat is either a standard or customer .NET date and time format string. See https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings for more information. Defaults to 'O'.
-  timestampFormat: O
 
 # nameOverride is the optional name used for the container and Kubernetes resources. Defaults to a generated name based on the chart.
 nameOverride: ""

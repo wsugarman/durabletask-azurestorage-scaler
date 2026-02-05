@@ -14,14 +14,14 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Certificates;
 public class IConfigurationExtensionsTest
 {
     [TestMethod]
-    public void GivenNullConfiguration_WhenCheckingTlsEnforcement_ThenThrowArgumentNullException()
-        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.IsTlsEnforced(null!));
+    public void GivenNullConfiguration_WhenCheckingWhetherTlsIsEnabled_ThenThrowArgumentNullException()
+        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.IsTlsEnabled(null!));
 
     [TestMethod]
-    public void GivenDefaultConfiguration_WhenCheckingTlsEnforcement_ThenReturnfalse()
+    public void GivenDefaultConfiguration_WhenCheckingWhetherTlsIsEnabled_ThenReturnFalse()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        Assert.IsFalse(configuration.IsTlsEnforced());
+        Assert.IsFalse(configuration.IsTlsEnabled());
     }
 
     [TestMethod]
@@ -29,21 +29,21 @@ public class IConfigurationExtensionsTest
     [DataRow(false, "")]
     [DataRow(false, "  ")]
     [DataRow(true, "tls.crt")]
-    public void GivenValidConfiguration_WhenCheckingTlsEnforcement_ThenReturnExpectedValue(bool expected, string? certificatePath)
+    public void GivenValidConfiguration_WhenCheckingWhetherTlsIsEnabled_ThenReturnExpectedValue(bool expected, string? certificatePath)
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection([new("Kestrel:Certificates:Default:Path", certificatePath)])
             .Build();
 
-        Assert.AreEqual(expected, configuration.IsTlsEnforced());
+        Assert.AreEqual(expected, configuration.IsTlsEnabled());
     }
 
     [TestMethod]
-    public void GivenNullConfiguration_WhenCheckingCustomClientCa_ThenThrowArgumentNullException()
-        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.UseCustomClientCa(null!));
+    public void GivenNullConfiguration_WhenCheckingWhetherCustomClientCaIsConfigured_ThenThrowArgumentNullException()
+        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.IsCustomClientCaConfigured(null!));
 
     [TestMethod]
-    public void GivenInvalidConfiguration_WhenCheckingCustomClientCa_ThenThrowOptionsValidationException()
+    public void GivenInvalidConfiguration_WhenCheckingWhetherCustomClientCaIsConfigured_ThenThrowOptionsValidationException()
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(
@@ -54,14 +54,14 @@ public class IConfigurationExtensionsTest
             ])
             .Build();
 
-        _ = Assert.ThrowsExactly<OptionsValidationException>(() => configuration.UseCustomClientCa());
+        _ = Assert.ThrowsExactly<OptionsValidationException>(() => configuration.IsCustomClientCaConfigured());
     }
 
     [TestMethod]
-    public void GivenDefaultConfiguration_WhenCheckingCustomClientCa_ThenReturnfalse()
+    public void GivenDefaultConfiguration_WhenCheckingWhetherCustomClientCaIsConfigured_ThenReturnFalse()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        Assert.IsFalse(configuration.UseCustomClientCa());
+        Assert.IsFalse(configuration.IsCustomClientCaConfigured());
     }
 
     [TestMethod]
@@ -69,7 +69,7 @@ public class IConfigurationExtensionsTest
     [DataRow(false, "tls.crt", false, true)]
     [DataRow(false, "tls.crt", true, false)]
     [DataRow(true, "tls.crt", true, true)]
-    public void GivenValidConfiguration_WhenCheckingCustomClientCa_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validate, bool includeCa)
+    public void GivenValidConfiguration_WhenCheckingWhetherCustomClientCaIsConfigured_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validate, bool includeCa)
     {
         Dictionary<string, string?> pairs = new()
         {
@@ -81,18 +81,18 @@ public class IConfigurationExtensionsTest
             pairs.Add($"{ClientCertificateValidationOptions.DefaultKey}:{nameof(ClientCertificateValidationOptions.CertificateAuthority)}:{nameof(CaCertificateFileOptions.Path)}", "ca.crt");
 
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection(pairs).Build();
-        Assert.AreEqual(expected, configuration.UseCustomClientCa());
+        Assert.AreEqual(expected, configuration.IsCustomClientCaConfigured());
     }
 
     [TestMethod]
-    public void GivenNullConfiguration_WhenCheckingClientCertificateValidation_ThenThrowArgumentNullException()
-        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.ValidateClientCertificate(null!));
+    public void GivenNullConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenThrowArgumentNullException()
+        => Assert.ThrowsExactly<ArgumentNullException>(() => IConfigurationExtensions.IsClientCertValidationEnabled(null!));
 
     [TestMethod]
-    public void GivenDefaultConfiguration_WhenCheckingClientCertificateValidation_ThenReturnfalse()
+    public void GivenDefaultConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenReturnFalse()
     {
         IConfiguration configuration = new ConfigurationBuilder().AddInMemoryCollection().Build();
-        Assert.IsFalse(configuration.ValidateClientCertificate());
+        Assert.IsFalse(configuration.IsClientCertValidationEnabled());
     }
 
     [TestMethod]
@@ -100,7 +100,7 @@ public class IConfigurationExtensionsTest
     [DataRow(false, null, true)]
     [DataRow(false, "tls.crt", false)]
     [DataRow(true, "tls.crt", true)]
-    public void GivenValidConfiguration_WhenCheckingClientCertificateValidation_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validate)
+    public void GivenValidConfiguration_WhenCheckingWhetherClientCertValidationIsEnabled_ThenReturnExpectedValue(bool expected, string? certificatePath, bool validate)
     {
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(
@@ -110,6 +110,6 @@ public class IConfigurationExtensionsTest
             ])
             .Build();
 
-        Assert.AreEqual(expected, configuration.ValidateClientCertificate());
+        Assert.AreEqual(expected, configuration.IsClientCertValidationEnabled());
     }
 }
