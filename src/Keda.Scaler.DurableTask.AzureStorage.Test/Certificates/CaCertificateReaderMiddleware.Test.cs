@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Keda.Scaler.DurableTask.AzureStorage.Certificates;
@@ -45,6 +46,7 @@ public class CaCertificateReaderMiddlewareTests
     }
 
     [TestMethod]
+    [SuppressMessage("Reliability", "CA2025:Do not pass 'IDisposable' instances into unawaited tasks", Justification = "Task completes before disposal")]
     public async ValueTask GivenOtherReader_WhenInvokingMiddleware_ThenEnterReadLock()
     {
         using ReaderWriterLockSlim readerWriterLock = new();
@@ -66,6 +68,7 @@ public class CaCertificateReaderMiddlewareTests
     }
 
     [TestMethod]
+    [SuppressMessage("Reliability", "CA2025:Do not pass 'IDisposable' instances into unawaited tasks", Justification = "Task completes before disposal")]
     public async ValueTask GivenWriter_WhenInvokingMiddleware_ThenWaitForWriter()
     {
         using ReaderWriterLockSlim readerWriterLock = new();

@@ -61,7 +61,7 @@ internal partial class TaskHub(ITaskHubPartitionManager partitionManager, QueueS
             return TaskHubQueueUsage.None;
         }
 
-        LogTaskHubQueues(_logger, workItemQueueMessages, string.Join(", ", controlQueueMessages));
+        LogTaskHubQueues(_logger, workItemQueueMessages, controlQueueMessages);
         return new TaskHubQueueUsage(controlQueueMessages, workItemQueueMessages);
     }
 
@@ -78,5 +78,5 @@ internal partial class TaskHub(ITaskHubPartitionManager partitionManager, QueueS
     [LoggerMessage(
         Level = LogLevel.Debug,
         Message = "Found {WorkItemCount} work item messages and the following control queue message counts [{ControlCounts}].")]
-    private static partial void LogTaskHubQueues(ILogger logger, int workItemCount, string controlCounts);
+    private static partial void LogTaskHubQueues(ILogger logger, int workItemCount, int[] controlCounts);
 }
