@@ -231,7 +231,7 @@ public sealed partial class ScaleTest : IAsyncDisposable
                 _deployment.Name!,
                 _deployment.Namespace!,
                 scale.Status.Replicas,
-                scale.Spec.Replicas.GetValueOrDefault());
+                scale.Spec.Replicas);
         } while (scale.Status.Replicas != _options.MinReplicas || scale.Spec.Replicas.GetValueOrDefault() != _options.MinReplicas);
     }
 
@@ -262,7 +262,7 @@ public sealed partial class ScaleTest : IAsyncDisposable
                     _deployment.Name!,
                     _deployment.Namespace!,
                     scale.Status.Replicas,
-                    scale.Spec.Replicas.GetValueOrDefault());
+                    scale.Spec.Replicas);
             }
         } while (scale.Status.Replicas < min || scale.Spec.Replicas.GetValueOrDefault() < min);
     }
@@ -323,7 +323,7 @@ public sealed partial class ScaleTest : IAsyncDisposable
         EventId = 7,
         Level = LogLevel.Information,
         Message = "Current scale for deployment '{Deployment}' in namespace '{Namespace}' is {Status}/{Spec}...")]
-    public static partial void LogKubernetesDeploymentScale(ILogger logger, string deployment, string @namespace, int status, int spec);
+    public static partial void LogKubernetesDeploymentScale(ILogger logger, string deployment, string @namespace, int status, int? spec);
 
     [LoggerMessage(
         EventId = 8,
