@@ -365,7 +365,7 @@ runs:
 
     - if: ${{ always() }}
       name: Upload Test Results
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: integration-test-results
         path: ${{ runner.temp }}/integration
