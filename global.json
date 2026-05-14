@@ -3,7 +3,7 @@
     "MSTest.Sdk": "4.2.2"
   },
   "sdk": {
-    "version": "10.0.203"
+    "version": "10.0.300"
   },
   "test": {
     "runner": "Microsoft.Testing.Platform"
