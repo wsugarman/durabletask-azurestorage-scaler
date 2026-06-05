@@ -1,7 +1,7 @@
 ARG COPY=false
 
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:10.0.300-azurelinux3.0@sha256:f8fa6b2a393832eb381981987591124c1ffbb015fb0921af87863cecd9f5290e AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.300-azurelinux3.0@sha256:b254b994500b174ffcb1522aefb993961996f360fc8fcf53a579cb4261fe82dc AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
@@ -39,7 +39,7 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.8-azurelinux3.0-distroless@sha256:d5ac88bf57841739c2dafeebce9adeb77247d40874cff9e8922aa72004957a92 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.8-azurelinux3.0-distroless@sha256:42643ee4e0d488a4177fd834085939221ce54d3ecaafccdb429cdc9495b03494 AS runtime
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0 \
     DOTNET_USE_POLLING_FILE_WATCHER=true
