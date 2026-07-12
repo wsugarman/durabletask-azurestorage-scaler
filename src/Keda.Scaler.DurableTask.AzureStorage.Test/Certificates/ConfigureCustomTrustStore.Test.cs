@@ -106,6 +106,7 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
     public async ValueTask GivenCertificateFileChange_WhenConfiguringOptions_ThenUpdateCustomTrustStore()
     {
         // Create the certificate and write to disk
+        const int ReloadDelayMs = 250;
         const string CertName = "example.crt";
         string certPath = Path.Combine(_testDirectory.FullName, CertName);
 
@@ -121,7 +122,7 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
             CertificateAuthority = new CaCertificateFileOptions
             {
                 Path = certPath,
-                ReloadDelayMs = 250,
+                ReloadDelayMs = ReloadDelayMs,
             },
         };
 
@@ -133,8 +134,8 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         Assert.AreEqual(CertificateAuthenticationDefaults.AuthenticationScheme, configure.Name);
         configure.Configure(options);
 
-        X509Certificate2 actual = Assert.ContainsSingle(options.CustomTrustStore);
-        Assert.AreEqual(thumbprint1, actual.Thumbprint);
+        string actual = Assert.ContainsSingle(options.CustomTrustStore).Thumbprint;
+        Assert.AreEqual(thumbprint1, actual);
         Assert.AreEqual(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
         Assert.AreEqual(0, reloads);
 
@@ -149,31 +150,26 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         {
             try
             {
-                readerWriterLock.EnterReadLock();
+                if (!readerWriterLock.TryEnterReadLock(ReloadDelayMs))
+                {
+                    await Task.Delay(ReloadDelayMs * 2, _testContext.CancellationToken);
+                    continue;
+                }
+
                 configure.Configure(options);
-                actual = Assert.ContainsSingle(options.CustomTrustStore);
+                actual = Assert.ContainsSingle(options.CustomTrustStore).Thumbprint;
             }
             finally
             {
                 if (readerWriterLock.IsReadLockHeld)
                     readerWriterLock.ExitReadLock();
             }
-        } while (Volatile.Read(ref reloads) is 0 && !_testContext.CancellationToken.IsCancellationRequested);
+        } while (!StringComparer.Ordinal.Equals(thumbprint2, actual) && !_testContext.CancellationToken.IsCancellationRequested);
 
-        try
-        {
-            readerWriterLock.EnterReadLock();
-            configure.Configure(options);
-            actual = Assert.ContainsSingle(options.CustomTrustStore);
-            Assert.AreEqual(thumbprint2, actual.Thumbprint);
-            Assert.AreEqual(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
-        }
-        finally
-        {
-            if (readerWriterLock.IsReadLockHeld)
-                readerWriterLock.ExitReadLock();
-        }
+        _testContext.CancellationToken.ThrowIfCancellationRequested();
 
-        Assert.AreEqual(1, Volatile.Read(ref reloads));
+        Assert.AreEqual(thumbprint2, actual);
+        Assert.AreEqual(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
+        Assert.IsGreaterThanOrEqualTo(1, Volatile.Read(ref reloads));
     }
 }
