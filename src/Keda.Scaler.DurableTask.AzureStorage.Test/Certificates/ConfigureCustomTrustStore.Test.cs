@@ -145,25 +145,35 @@ public sealed class ConfigureCustomTrustStoreTest : IDisposable
         string thumbprint2 = expected2.Thumbprint;
 
         // Check for the updated certificate
-        string? actualThumbprint;
         do
         {
             try
             {
                 readerWriterLock.EnterReadLock();
                 configure.Configure(options);
-                actualThumbprint = Assert.ContainsSingle(options.CustomTrustStore).Thumbprint;
+                actual = Assert.ContainsSingle(options.CustomTrustStore);
             }
             finally
             {
                 if (readerWriterLock.IsReadLockHeld)
                     readerWriterLock.ExitReadLock();
             }
-        } while ((Volatile.Read(ref reloads) is 0 || !StringComparer.Ordinal.Equals(thumbprint2, actualThumbprint)) &&
-                 !_testContext.CancellationToken.IsCancellationRequested);
+        } while (Volatile.Read(ref reloads) is 0 && !_testContext.CancellationToken.IsCancellationRequested);
 
-        Assert.AreEqual(thumbprint2, actualThumbprint);
-        Assert.AreEqual(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
+        try
+        {
+            readerWriterLock.EnterReadLock();
+            configure.Configure(options);
+            actual = Assert.ContainsSingle(options.CustomTrustStore);
+            Assert.AreEqual(thumbprint2, actual.Thumbprint);
+            Assert.AreEqual(X509ChainTrustMode.CustomRootTrust, options.ChainTrustValidationMode);
+        }
+        finally
+        {
+            if (readerWriterLock.IsReadLockHeld)
+                readerWriterLock.ExitReadLock();
+        }
+
         Assert.AreEqual(1, Volatile.Read(ref reloads));
     }
 }
