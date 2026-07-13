@@ -82,7 +82,7 @@ public sealed class TablePartitionManagerTest
 
         _ = _tableClient
             .Received(1)
-            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
+            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x != null && x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
 
         Assert.IsEmpty(actual);
     }
@@ -99,7 +99,7 @@ public sealed class TablePartitionManagerTest
 
         _ = _tableClient
             .Received(1)
-            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
+            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x != null && x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
 
         Assert.IsEmpty(actual);
     }
@@ -118,7 +118,7 @@ public sealed class TablePartitionManagerTest
 
         _ = _tableClient
             .Received(1)
-            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
+            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x != null && x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
 
         Assert.AreSame(expected, actual);
     }
@@ -150,7 +150,7 @@ public sealed class TablePartitionManagerTest
 
         _ = _tableClient
             .Received(1)
-            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
+            .QueryAsync<TableEntity>(select: Arg.Is<IEnumerable<string>>(x => x != null && x.Single() == nameof(TableEntity.RowKey)), cancellationToken: cts.Token);
 
         string[] expected = [.. Enumerable.Repeat(TaskHubName, 3).Select(ControlQueue.GetName)];
         CollectionAssert.AreEqual(expected, actual as List<string>);
