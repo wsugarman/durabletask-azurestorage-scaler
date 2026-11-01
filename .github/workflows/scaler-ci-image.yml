@@ -18,14 +18,14 @@ jobs:
         run: git config --system core.longpaths true
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Read Versions
         id: chart
-        uses: ./.github/actions/parse-chart
+        uses: $/.github/actions/parse-chart
 
       - name: Build Scaler
-        uses: ./.github/actions/dotnet-publish
+        uses: $/.github/actions/dotnet-publish
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
           azureClientId: ${{ secrets.AZURE_CLIENT_ID }}
@@ -41,7 +41,7 @@ jobs:
           testResultsDirectory: ${{ runner.temp }}/TestResults
 
       - name: Upload Code Coverage
-        uses: ./.github/actions/code-coverage
+        uses: $/.github/actions/code-coverage
         with:
           codecovToken: ${{ secrets.CODECOV_TOKEN }}
           reportPath: ${{ runner.temp }}/TestResults/coverage.cobertura.xml
@@ -56,10 +56,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Build Docker Image
-        uses: ./.github/actions/docker-build
+        uses: $/.github/actions/docker-build
         with:
           copyBinaries: 'true'
           imageRepository: ghcr.io/${{ github.repository }}
@@ -67,7 +67,7 @@ jobs:
 
       - name: Push Docker Image
         id: push
-        uses: ./.github/actions/docker-push
+        uses: $/.github/actions/docker-push
         with:
           force: 'true'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
@@ -76,7 +76,7 @@ jobs:
           pushLatest: ${{ needs.build.outputs.imagePrerelease != 'true' }}
 
       - name: Create Image Release
-        uses: ./.github/actions/github-release
+        uses: $/.github/actions/github-release
         with:
           asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ needs.build.outputs.imageTag }}.tar
           name: 'Durable Task KEDA External Scaler Image'

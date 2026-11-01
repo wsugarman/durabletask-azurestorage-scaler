@@ -40,7 +40,7 @@ runs:
   using: composite
   steps:
     - name: Checkout Charts
-      uses: actions/checkout@v7
+      uses: actions/checkout@v7.0.1
       with:
         ref: refs/heads/main
         repository: ${{ inputs.chartRepository }}
@@ -112,7 +112,7 @@ runs:
       working-directory: ${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}
 
     - name: Create Pull Request
-      uses: actions/github-script@v9
+      uses: actions/github-script@v9.0.0
       if: ${{ steps.exists.outputs.result != 'true' }}
       with:
         github-token: ${{ inputs.chartRepositoryToken }}
