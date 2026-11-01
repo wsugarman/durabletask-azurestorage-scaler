@@ -30,14 +30,14 @@ runs:
   steps:
     - if: ${{ inputs.copyBinaries == 'true' }}
       name: Download Scaler Binaries
-      uses: actions/download-artifact@v8
+      uses: actions/download-artifact@v8.0.2
       with:
         name: app
         path: ./app
 
     - name: Generate OCI Labels
       id: meta
-      uses: docker/metadata-action@v6
+      uses: docker/metadata-action@v6.2.0
       with:
         images: |
           ${{ inputs.imageRepository }}
@@ -45,7 +45,7 @@ runs:
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
     - name: Build Scaler Image
-      uses: docker/build-push-action@v7
+      uses: docker/build-push-action@v7.4.0
       with:
         build-args: |
           ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
@@ -68,7 +68,7 @@ runs:
         docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
 
     - name: Upload Image
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: image
         path: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar

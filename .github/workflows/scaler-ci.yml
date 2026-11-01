@@ -22,14 +22,14 @@ jobs:
         run: git config --system core.longpaths true
 
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Read Versions
         id: chart
-        uses: ./.github/actions/parse-chart
+        uses: $/.github/actions/parse-chart
 
       - name: Build Scaler
-        uses: ./.github/actions/dotnet-publish
+        uses: $/.github/actions/dotnet-publish
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
           azureClientId: ${{ secrets.AZURE_CLIENT_ID }}
@@ -45,7 +45,7 @@ jobs:
           testResultsDirectory: ${{ runner.temp }}/TestResults
 
       - name: Upload Code Coverage
-        uses: ./.github/actions/code-coverage
+        uses: $/.github/actions/code-coverage
         with:
           codecovToken: ${{ secrets.CODECOV_TOKEN }}
           reportPath: ${{ runner.temp }}/TestResults/coverage.cobertura.xml
@@ -57,24 +57,24 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Build Docker Image
-        uses: ./.github/actions/docker-build
+        uses: $/.github/actions/docker-build
         with:
           copyBinaries: 'true'
           imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ needs.build.outputs.imageTag }}
 
       - name: Validate Helm Chart
-        uses: ./.github/actions/helm-test
+        uses: $/.github/actions/helm-test
         with:
           buildConfiguration: Release
           imageTag: ${{ needs.build.outputs.imageTag }}
           scalerImageRepository: ghcr.io/${{ github.repository }}
 
       - name: Pack Helm Chart
-        uses: ./.github/actions/helm-package
+        uses: $/.github/actions/helm-package
         with:
           chartPath: ${{ github.workspace }}/charts/durabletask-azurestorage-scaler
           chartVersion: ${{ needs.build.outputs.chartVersion }}
@@ -92,21 +92,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Download Image
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: image
           path: ${{ runner.temp }}/image
 
       - name: Read Versions
         id: chart
-        uses: ./.github/actions/parse-chart
+        uses: $/.github/actions/parse-chart
 
       - name: Push Docker Image
         id: push
-        uses: ./.github/actions/docker-push
+        uses: $/.github/actions/docker-push
         with:
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           imageArchive: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
@@ -115,7 +115,7 @@ jobs:
           pushLatest: ${{ steps.chart.outputs.imagePrerelease != 'true' }}
 
       - name: Create Image Release
-        uses: ./.github/actions/github-release
+        uses: $/.github/actions/github-release
         if: ${{ steps.push.outputs.success == 'true' }}
         with:
           asset: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ steps.chart.outputs.imageTag }}.tar
@@ -134,21 +134,21 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
 
       - name: Download Chart
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v8.0.2
         with:
           name: chart
           path: ${{ runner.temp }}/chart
 
       - name: Read Versions
         id: chart
-        uses: ./.github/actions/parse-chart
+        uses: $/.github/actions/parse-chart
 
       - name: Sync Chart
         id: sync
-        uses: ./.github/actions/chart-sync
+        uses: $/.github/actions/chart-sync
         with:
           assetPath: ${{ runner.temp }}/chart
           chartRepositoryDirectoryName: 'releases'
@@ -158,7 +158,7 @@ jobs:
           readmePath: ${{ github.workspace }}/charts/durabletask-azurestorage-scaler/README.md
 
       - name: Create Chart Release
-        uses: ./.github/actions/github-release
+        uses: $/.github/actions/github-release
         if: ${{ steps.sync.outputs.success == 'true' }}
         with:
           asset: ${{ runner.temp }}/chart

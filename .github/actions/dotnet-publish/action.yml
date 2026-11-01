@@ -61,7 +61,7 @@ runs:
   using: composite
   steps:
     - name: Setup
-      uses: actions/setup-dotnet@v6
+      uses: actions/setup-dotnet@v6.0.0
 
     - name: Build
       shell: bash
@@ -94,7 +94,7 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: az login
-      uses: azure/login@v3
+      uses: azure/login@v3.1.0
       with:
         client-id: ${{ inputs.azureClientId }}
         tenant-id: ${{ inputs.azureTenantId }}
@@ -110,7 +110,7 @@ runs:
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
-      uses: azure/artifact-signing-action@v2
+      uses: azure/artifact-signing-action@v2.0.0
       with:
         azure-client-id: ${{ inputs.azureClientId }}
         azure-tenant-id: ${{ inputs.azureTenantId }}
@@ -130,12 +130,12 @@ runs:
         exclude-workload-identity-credential: true
         file-digest: SHA256
         files-catalog: ${{ runner.temp }}\signing\catalog.txt
+        signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
         timestamp-digest: SHA256
         timestamp-rfc3161: http://timestamp.acs.microsoft.com
-        trusted-signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
 
     - name: Upload Binaries
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@v7.0.2
       with:
         name: app
         path: ${{ runner.temp }}/app

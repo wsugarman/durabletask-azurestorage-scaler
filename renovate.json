@@ -12,6 +12,8 @@
   "labels": [
     "dependencies"
   ],
+  "minimumReleaseAge": "7 days",
+  "minimumReleaseAgeBehaviour": "timestamp-required",
   "packageRules": [
     {
       "groupName": "Artifact Actions",
