@@ -8,10 +8,12 @@ root = true
 # - Posix-style newline ending every file
 # - Use 4 spaces as indentation
 [*]
-charset              = utf-8
-insert_final_newline = true
-indent_style         = space
-indent_size          = 4
+charset                  = utf-8
+insert_final_newline     = true
+indent_style             = space
+indent_size              = 4
+rulers                   = 120
+trim_trailing_whitespace = true
 
 # Xml project files
 [*.{csproj,vcxproj,vcxproj.filters,proj,nativeproj,locproj}]
@@ -43,3 +45,9 @@ end_of_line = lf
 
 [*.{cmd,bat}]
 end_of_line = crlf
+
+# Spell check
+[*.{cs,md}]
+spelling_checkable_types = identifiers,comments
+spelling_error_severity  = error
+spelling_languages  = en-us
