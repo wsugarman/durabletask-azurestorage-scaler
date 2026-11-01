@@ -9,7 +9,6 @@
     "replacements:all",
     "workarounds:all"
   ],
-  "internalChecksFilter": "strict",
   "labels": [
     "dependencies"
   ],
@@ -30,16 +29,6 @@
         "mcr.microsoft.com/dotnet/aspnet",
         "mcr.microsoft.com/dotnet/sdk"
       ]
-    },
-    {
-      "groupName": "MCR Images",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "mcr.microsoft.com/**"
-      ],
-      "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
       "groupName": "DurableTask",
