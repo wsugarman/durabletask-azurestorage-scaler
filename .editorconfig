@@ -50,4 +50,4 @@ end_of_line = crlf
 [*.{cs,md}]
 spelling_checkable_types = identifiers,comments
 spelling_error_severity  = error
-spelling_languages  = en-us
+spelling_languages       = en-us
