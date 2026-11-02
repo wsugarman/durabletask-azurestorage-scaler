@@ -30,9 +30,9 @@ public sealed class DurableTaskAzureStorageScalerServiceTest
         _taskHub = Substitute.For<ITaskHub>();
         _options = new() { TaskHubName = "UnitTest" };
 
-        IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
-        _ = _optionsSnapshot.Get(default).Returns(_options);
-        _scaleManager = Substitute.For<DurableTaskScaleManager>(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
+        IOptionsSnapshot<TaskHubOptions> optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
+        _ = optionsSnapshot.Get(default).Returns(_options);
+        _scaleManager = Substitute.For<DurableTaskScaleManager>(_taskHub, optionsSnapshot, NullLoggerFactory.Instance);
         _service = new(_scaleManager);
     }
 

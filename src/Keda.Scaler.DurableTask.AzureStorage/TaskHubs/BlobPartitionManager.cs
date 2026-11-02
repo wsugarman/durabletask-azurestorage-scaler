@@ -53,10 +53,9 @@ internal sealed partial class BlobPartitionManager(BlobServiceClient blobService
         else
         {
             LogTaskHubBlob(_logger, info.TaskHubName, info.PartitionCount, info.CreatedAt, LeasesContainer.TaskHubBlobName);
-            return Enumerable
+            return [.. Enumerable
                 .Repeat(info.TaskHubName, info.PartitionCount)
-                .Select((t, i) => ControlQueue.GetName(info.TaskHubName, i))
-                .ToList();
+                .Select((t, i) => ControlQueue.GetName(info.TaskHubName, i))];
         }
     }
 

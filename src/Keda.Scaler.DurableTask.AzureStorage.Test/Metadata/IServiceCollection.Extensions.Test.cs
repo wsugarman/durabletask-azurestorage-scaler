@@ -32,7 +32,7 @@ public class IServiceCollectionExtensionsTest
         Assert.AreEqual(ServiceLifetime.Scoped, configure.Lifetime);
         Assert.AreEqual(typeof(ConfigureScalerOptions), configure.ImplementationType);
 
-        ServiceDescriptor[] validators = services.Where(x => x.ServiceType == typeof(IValidateOptions<ScalerOptions>)).ToArray();
+        ServiceDescriptor[] validators = [.. services.Where(x => x.ServiceType == typeof(IValidateOptions<ScalerOptions>))];
         Assert.HasCount(2, validators);
         Assert.AreEqual(ServiceLifetime.Singleton, validators[0].Lifetime);
         Assert.AreEqual(typeof(ValidateTaskHubScalerOptions), validators[0].ImplementationType);

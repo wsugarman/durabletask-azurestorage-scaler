@@ -53,7 +53,7 @@ public sealed class ExceptionInterceptorTest
         Assert.AreEqual(expected, actual.Status.StatusCode);
 
         UnaryServerMethod<Request, Response> GetContinuation()
-            => (Request r, ServerCallContext c) => Task.FromException<Response>((Exception)Activator.CreateInstance(exceptionType)!);
+            => (r, c) => Task.FromException<Response>((Exception)Activator.CreateInstance(exceptionType)!);
     }
 
     [TestMethod]
@@ -66,7 +66,7 @@ public sealed class ExceptionInterceptorTest
         Assert.AreSame(response, await _interceptor.UnaryServerHandler(request, context, GetContinuation()));
 
         UnaryServerMethod<Request, Response> GetContinuation()
-            => (Request r, ServerCallContext c) => Task.FromResult(response);
+            => (r, c) => Task.FromResult(response);
     }
 
     private sealed class Request

@@ -19,9 +19,9 @@ public sealed class OptimalDurableTaskScaleManagerTest
 
     public OptimalDurableTaskScaleManagerTest()
     {
-        IOptionsSnapshot<TaskHubOptions> _optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
-        _ = _optionsSnapshot.Get(default).Returns(_options);
-        _scaleManager = new MockOptimalScaleManager(_taskHub, _optionsSnapshot, NullLoggerFactory.Instance);
+        IOptionsSnapshot<TaskHubOptions> optionsSnapshot = Substitute.For<IOptionsSnapshot<TaskHubOptions>>();
+        _ = optionsSnapshot.Get(default).Returns(_options);
+        _scaleManager = new MockOptimalScaleManager(_taskHub, optionsSnapshot, NullLoggerFactory.Instance);
     }
 
     [TestMethod]
