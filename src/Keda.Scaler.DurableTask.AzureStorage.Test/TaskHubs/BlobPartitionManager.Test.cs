@@ -143,7 +143,7 @@ public sealed class BlobPartitionManagerTest
 
         _ = await _blobClient.Received(1).DownloadContentAsync(cts.Token);
         string[] expected = [.. Enumerable.Repeat(TaskHubName, 4).Select(ControlQueue.GetName)];
-        CollectionAssert.AreEqual(expected, actual as List<string>);
+        Assert.AreSequenceEqual(expected, actual);
     }
 
     private static Func<BinaryData, BlobDownloadResult> CreateBlobDownloadResultFactory()
