@@ -24,9 +24,9 @@ public class IServiceCollectionExtensionsTest
     {
         IServiceCollection services = _servicCollection.AddScalerMetadata();
 
-        ServiceDescriptor accessor = Assert.ContainsSingle(x => x.ServiceType == typeof(IScalerMetadataAccessor), services);
-        Assert.AreEqual(ServiceLifetime.Singleton, accessor.Lifetime);
-        Assert.AreEqual(typeof(ScalerMetadataAccessor), accessor.ImplementationType);
+        ServiceDescriptor metadata = Assert.ContainsSingle(x => x.ServiceType == typeof(ScalerMetadata), services);
+        Assert.AreEqual(ServiceLifetime.Scoped, metadata.Lifetime);
+        Assert.AreEqual(typeof(ScalerMetadata), metadata.ImplementationType);
 
         ServiceDescriptor configure = Assert.ContainsSingle(x => x.ServiceType == typeof(IConfigureOptions<ScalerOptions>), services);
         Assert.AreEqual(ServiceLifetime.Scoped, configure.Lifetime);

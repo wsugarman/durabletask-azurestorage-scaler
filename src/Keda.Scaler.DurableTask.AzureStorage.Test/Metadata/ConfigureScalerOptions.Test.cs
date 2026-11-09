@@ -2,31 +2,29 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using Google.Protobuf.Collections;
 using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using NSubstitute;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Test.Metadata;
 
 [TestClass]
 public class ConfigureScalerOptionsTest
 {
-    private readonly IScalerMetadataAccessor _metadataAccessor = Substitute.For<IScalerMetadataAccessor>();
+    private readonly ScalerMetadata _metadata = new();
     private readonly ConfigureScalerOptions _configure;
 
     public ConfigureScalerOptionsTest()
-        => _configure = new(_metadataAccessor);
+        => _configure = new(_metadata);
 
     [TestMethod]
-    public void GivenNullScalerMetadataAccessor_WhenCreatingConfigure_ThenThrowArgumentNullException()
+    public void GivenNullScalerMetadata_WhenCreatingConfigure_ThenThrowArgumentNullException()
         => Assert.ThrowsExactly<ArgumentNullException>(() => new ConfigureScalerOptions(null!));
 
     [TestMethod]
     public void GivenMissingScalerMetadata_WhenConfiguringOptions_ThenThrowInvalidOperationException()
     {
-        _ = _metadataAccessor.ScalerMetadata.Returns(default(IReadOnlyDictionary<string, string?>));
+        _metadata.Values = null;
         _ = Assert.ThrowsExactly<InvalidOperationException>(() => _configure.Configure(new ScalerOptions()));
     }
 
@@ -48,7 +46,7 @@ public class ConfigureScalerOptionsTest
             { nameof(ScalerOptions.UseManagedIdentity), "true" },
             { nameof(ScalerOptions.UseTablePartitionManagement), "false" },
         };
-        _ = _metadataAccessor.ScalerMetadata.Returns(metadata);
+        _metadata.Values = metadata;
 
         ScalerOptions options = new();
         _configure.Configure(options);

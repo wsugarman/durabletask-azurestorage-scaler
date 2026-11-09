@@ -8,15 +8,15 @@ using Microsoft.Extensions.Options;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Metadata;
 
-internal class ConfigureScalerOptions(IScalerMetadataAccessor metadataAccessor) : IConfigureOptions<ScalerOptions>
+internal class ConfigureScalerOptions(ScalerMetadata metadata) : IConfigureOptions<ScalerOptions>
 {
-    private readonly IScalerMetadataAccessor _metadataAccessor = metadataAccessor ?? throw new ArgumentNullException(nameof(metadataAccessor));
+    private readonly ScalerMetadata _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
 
     public void Configure(ScalerOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        IReadOnlyDictionary<string, string?> metadata = _metadataAccessor.ScalerMetadata ?? throw new InvalidOperationException(SR.ScalerMetadataNotFound);
+        IReadOnlyDictionary<string, string?> metadata = _metadata.Values ?? throw new InvalidOperationException(SR.ScalerMetadataNotFound);
         IConfiguration config = new ConfigurationBuilder()
             .AddInMemoryCollection(metadata)
             .Build();

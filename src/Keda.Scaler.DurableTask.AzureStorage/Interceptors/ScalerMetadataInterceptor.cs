@@ -9,9 +9,9 @@ using Keda.Scaler.DurableTask.AzureStorage.Metadata;
 
 namespace Keda.Scaler.DurableTask.AzureStorage.Interceptors;
 
-internal sealed class ScalerMetadataInterceptor(IScalerMetadataAccessor accessor) : Interceptor
+internal sealed class ScalerMetadataInterceptor(ScalerMetadata metadata) : Interceptor
 {
-    private readonly IScalerMetadataAccessor _accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
+    private readonly ScalerMetadata _metadata = metadata ?? throw new ArgumentNullException(nameof(metadata));
 
     public override Task<TResponse> UnaryServerHandler<TRequest, TResponse>(
         TRequest request,
@@ -22,7 +22,7 @@ internal sealed class ScalerMetadataInterceptor(IScalerMetadataAccessor accessor
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(continuation);
 
-        _accessor.ScalerMetadata = request switch
+        _metadata.Values = request switch
         {
             GetMetricsRequest r => r.ScaledObjectRef.ScalerMetadata,
             ScaledObjectRef r => r.ScalerMetadata,
