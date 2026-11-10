@@ -59,6 +59,7 @@ jobs:
         uses: actions/checkout@v7.0.1
 
       - name: Build Docker Image
+        id: build
         uses: $/.github/actions/docker-build
         with:
           copyBinaries: 'true'
@@ -71,6 +72,7 @@ jobs:
         with:
           force: 'true'
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          imageArchive: ${{ steps.build.outputs.imageArchive }}
           imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ needs.build.outputs.imageTag }}
           pushLatest: ${{ needs.build.outputs.imagePrerelease != 'true' }}

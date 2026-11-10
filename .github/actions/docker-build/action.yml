@@ -24,6 +24,17 @@ inputs:
   imageTag:
     description: The tag to use for the images.
     required: true
+  platforms:
+    default: ''
+    description: A comma-separated list of platforms for the image. Defaults to every platform supported by the runtime base image.
+    required: false
+outputs:
+  imageArchive:
+    description: The path to the OCI archive containing the multi-platform image.
+    value: ${{ steps.archive.outputs.path }}
+  platforms:
+    description: A comma-separated list of the platforms included in the image.
+    value: ${{ steps.platforms.outputs.platforms }}
 
 runs:
   using: composite
@@ -35,6 +46,44 @@ runs:
         name: app
         path: ./app
 
+    - name: Setup Docker Buildx
+      id: buildx
+      shell: bash
+      run: |
+        # The default docker driver cannot build multi-platform images, so a docker-container builder is used instead.
+        # The builder is not selected as the default so that other plain 'docker build' commands still load their images.
+        builder=durabletask-azurestorage-scaler
+        docker buildx inspect "$builder" > /dev/null 2>&1 || docker buildx create --name "$builder" --driver docker-container --bootstrap
+        echo "name=$builder" >> "$GITHUB_OUTPUT"
+
+    - name: Resolve Image Platforms
+      id: platforms
+      shell: bash
+      run: |
+        platforms='${{ inputs.platforms }}'
+        if [ -z "$platforms" ]; then
+          # Mirror the platforms found in the manifest list of the runtime base image
+          image=$(awk 'toupper($1) == "FROM" && tolower($NF) == "runtime" { for (i = 2; i < NF - 1; i++) if ($i !~ /^--/) { print $i; exit } }' "./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile")
+          if [ -z "$image" ]; then
+            echo "::error::Could not find the runtime base image in the Dockerfile."
+            exit 1
+          fi
+
+          platforms=$(docker buildx imagetools inspect "$image" --raw \
+            | jq -r '.manifests // error("The runtime base image is not a multi-platform image.") | [.[].platform | select(.os != "unknown") | [.os, .architecture, .variant // empty] | join("/")] | unique | join(",")')
+        fi
+
+        echo "Building image for platforms: $platforms"
+        echo "platforms=$platforms" >> "$GITHUB_OUTPUT"
+
+    - name: Generate Archive Path
+      id: archive
+      shell: bash
+      run: |
+        path="${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar"
+        mkdir -p "$(dirname "$path")"
+        echo "path=$path" >> "$GITHUB_OUTPUT"
+
     - name: Generate OCI Labels
       id: meta
       uses: docker/metadata-action@v6.2.0
@@ -44,7 +93,7 @@ runs:
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
-    - name: Build Scaler Image
+    - name: Build Multi-Platform Scaler Image
       uses: docker/build-push-action@v7.4.0
       with:
         build-args: |
@@ -54,21 +103,35 @@ runs:
           COPY=${{ inputs.copyBinaries }}
           FILE_VERSION=${{ inputs.fileVersion }}
           PUBLISH_DIRECTORY=./app
+        builder: ${{ steps.buildx.outputs.name }}
         context: .
         file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
         labels: ${{ steps.meta.outputs.labels }}
-        push: false
+        outputs: type=oci,dest=${{ steps.archive.outputs.path }}
+        platforms: ${{ steps.platforms.outputs.platforms }}
         tags: ${{ steps.meta.outputs.tags }}
 
-    - name: Save Image
-      shell: bash
-      run: |
-        output="${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar"
-        mkdir -p $(dirname $output)
-        docker save -o $output ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
+    # The local image store may not support multi-platform images, so load only the runner's platform for testing.
+    # This build reuses the cache from the previous step.
+    - name: Load Scaler Image
+      uses: docker/build-push-action@v7.4.0
+      with:
+        build-args: |
+          ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
+          BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
+          CONTINUOUS_INTEGRATION_BUILD=true
+          COPY=${{ inputs.copyBinaries }}
+          FILE_VERSION=${{ inputs.fileVersion }}
+          PUBLISH_DIRECTORY=./app
+        builder: ${{ steps.buildx.outputs.name }}
+        context: .
+        file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
+        labels: ${{ steps.meta.outputs.labels }}
+        load: true
+        tags: ${{ steps.meta.outputs.tags }}
 
     - name: Upload Image
       uses: actions/upload-artifact@v7.0.2
       with:
         name: image
-        path: ${{ runner.temp }}/image/durabletask-azurestorage-scaler-${{ inputs.imageTag }}.tar
+        path: ${{ steps.archive.outputs.path }}
