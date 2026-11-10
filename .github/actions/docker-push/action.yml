@@ -1,5 +1,5 @@
 name: docker push
-description: Loads and pushes the docker image if it does not already exist in the registry
+description: Pushes the multi-platform docker image archive if it does not already exist in the registry
 inputs:
   force:
     default: 'false'
