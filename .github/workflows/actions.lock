@@ -19,6 +19,7 @@ workflows:
         - 'docker/build-push-action@v7.4.0'
         - 'docker/login-action@v4.7.0'
         - 'docker/metadata-action@v6.2.0'
+        - 'docker/setup-buildx-action@v4.4.1'
     '.github/workflows/scaler-ci.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/download-artifact@v8.0.2'
@@ -31,6 +32,7 @@ workflows:
         - 'docker/build-push-action@v7.4.0'
         - 'docker/login-action@v4.7.0'
         - 'docker/metadata-action@v6.2.0'
+        - 'docker/setup-buildx-action@v4.4.1'
     '.github/workflows/scaler-pr.yml':
         - 'actions/checkout@v7.0.1'
         - 'actions/download-artifact@v8.0.2'
@@ -41,6 +43,7 @@ workflows:
         - 'codecov/codecov-action@v7.1.1'
         - 'docker/build-push-action@v7.4.0'
         - 'docker/metadata-action@v6.2.0'
+        - 'docker/setup-buildx-action@v4.4.1'
 dependencies:
     'actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7':
         ref: 'v5.0.4'
@@ -111,6 +114,11 @@ dependencies:
         commit: 'sha1-dc802804100637a589fabce1cb79ff13a1411302'
         owner_id: 5429470
         repo_id: 306769011
+    'docker/setup-buildx-action@v4.4.1':
+        ref: 'v4.4.1'
+        commit: 'sha1-f87e5991a6d7451dcb8d9637bfbc97413f497069'
+        owner_id: 5429470
+        repo_id: 288485773
     'github/codeql-action@v4.39.1':
         ref: 'v4.39.1'
         commit: 'sha1-9b3254085494b55a0f7c4c2b3d2d52cc712ce370'

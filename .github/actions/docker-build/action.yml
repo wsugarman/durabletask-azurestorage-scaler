@@ -46,15 +46,13 @@ runs:
         name: app
         path: ./app
 
+    # The default docker driver cannot build multi-platform images, so a docker-container builder is used instead.
+    # The builder is not selected as the default so that other plain 'docker build' commands still load their images.
     - name: Setup Docker Buildx
       id: buildx
-      shell: bash
-      run: |
-        # The default docker driver cannot build multi-platform images, so a docker-container builder is used instead.
-        # The builder is not selected as the default so that other plain 'docker build' commands still load their images.
-        builder=durabletask-azurestorage-scaler
-        docker buildx inspect "$builder" > /dev/null 2>&1 || docker buildx create --name "$builder" --driver docker-container --bootstrap
-        echo "name=$builder" >> "$GITHUB_OUTPUT"
+      uses: docker/setup-buildx-action@v4.4.1
+      with:
+        use: false
 
     - name: Resolve Image Platforms
       id: platforms
