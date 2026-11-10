@@ -69,6 +69,7 @@ runs:
         dotnet build "./src/Scaler.slnx" \
           --configuration "${{ inputs.buildConfiguration }}" \
           "--property:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
+          "--property:UseAppHost=false" \
           -warnaserror
 
     - name: Test
@@ -90,7 +91,8 @@ runs:
         dotnet publish "./src/Keda.Scaler.DurableTask.AzureStorage/Keda.Scaler.DurableTask.AzureStorage.csproj" \
           --configuration "${{ inputs.buildConfiguration }}" \
           --no-build \
-          --output "${{ runner.temp }}/app"
+          --output "${{ runner.temp }}/app" \
+          "--property:UseAppHost=false"
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: az login
@@ -99,14 +101,6 @@ runs:
         client-id: ${{ inputs.azureClientId }}
         tenant-id: ${{ inputs.azureTenantId }}
         subscription-id: ${{ inputs.azureSubscriptionId }}
-
-    - if: ${{ inputs.sign == 'true' && success() }}
-      name: Create Signing Catalog
-      shell: cmd
-      run: |
-        mkdir ${{ runner.temp }}\signing
-        echo ..\app\Keda.Scaler.DurableTask.AzureStorage.dll>>  ${{ runner.temp }}\signing\catalog.txt
-        echo ..\app\Keda.Scaler.DurableTask.AzureStorage.exe>> ${{ runner.temp }}\signing\catalog.txt
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
@@ -129,6 +123,7 @@ runs:
         exclude-visual-studio-code-credential: true
         exclude-workload-identity-credential: true
         file-digest: SHA256
+        files: ${{ runner.temp }}\app\Keda.Scaler.DurableTask.AzureStorage.dll
         files-catalog: ${{ runner.temp }}\signing\catalog.txt
         signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
         timestamp-digest: SHA256

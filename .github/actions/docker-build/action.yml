@@ -24,17 +24,10 @@ inputs:
   imageTag:
     description: The tag to use for the images.
     required: true
-  platforms:
-    default: ''
-    description: A comma-separated list of platforms for the image. Defaults to every platform supported by the runtime base image.
-    required: false
 outputs:
   imageArchive:
     description: The path to the OCI archive containing the multi-platform image.
     value: ${{ steps.archive.outputs.path }}
-  platforms:
-    description: A comma-separated list of the platforms included in the image.
-    value: ${{ steps.platforms.outputs.platforms }}
 
 runs:
   using: composite
@@ -45,34 +38,6 @@ runs:
       with:
         name: app
         path: ./app
-
-    # The default docker driver cannot build multi-platform images, so a docker-container builder is used instead.
-    # The builder is not selected as the default so that other plain 'docker build' commands still load their images.
-    - name: Setup Docker Buildx
-      id: buildx
-      uses: docker/setup-buildx-action@v4.4.1
-      with:
-        use: false
-
-    - name: Resolve Image Platforms
-      id: platforms
-      shell: bash
-      run: |
-        platforms='${{ inputs.platforms }}'
-        if [ -z "$platforms" ]; then
-          # Mirror the platforms found in the manifest list of the runtime base image
-          image=$(awk 'toupper($1) == "FROM" && tolower($NF) == "runtime" { for (i = 2; i < NF - 1; i++) if ($i !~ /^--/) { print $i; exit } }' "./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile")
-          if [ -z "$image" ]; then
-            echo "::error::Could not find the runtime base image in the Dockerfile."
-            exit 1
-          fi
-
-          platforms=$(docker buildx imagetools inspect "$image" --raw \
-            | jq -r '.manifests // error("The runtime base image is not a multi-platform image.") | [.[].platform | select(.os != "unknown") | [.os, .architecture, .variant // empty] | join("/")] | unique | join(",")')
-        fi
-
-        echo "Building image for platforms: $platforms"
-        echo "platforms=$platforms" >> "$GITHUB_OUTPUT"
 
     - name: Generate Archive Path
       id: archive
@@ -91,6 +56,12 @@ runs:
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
+    - name: Setup Docker Buildx
+      id: buildx
+      uses: docker/setup-buildx-action@v4.4.1
+      with:
+        use: false
+
     - name: Build Multi-Platform Scaler Image
       uses: docker/build-push-action@v7.4.0
       with:
@@ -106,11 +77,9 @@ runs:
         file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
         labels: ${{ steps.meta.outputs.labels }}
         outputs: type=oci,dest=${{ steps.archive.outputs.path }}
-        platforms: ${{ steps.platforms.outputs.platforms }}
+        platforms: linux/amd64,linux/arm64
         tags: ${{ steps.meta.outputs.tags }}
 
-    # The local image store may not support multi-platform images, so load only the runner's platform for testing.
-    # This build reuses the cache from the previous step.
     - name: Load Scaler Image
       uses: docker/build-push-action@v7.4.0
       with:
