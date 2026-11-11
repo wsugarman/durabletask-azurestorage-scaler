@@ -38,6 +38,7 @@ jobs:
           reportPath: ${{ runner.temp }}/TestResults/coverage.cobertura.xml
 
       - name: Build Docker Image
+        id: image
         uses: $/.github/actions/docker-build
         with:
           assemblyVersion: ${{ steps.chart.outputs.assemblyVersion }}
@@ -52,6 +53,7 @@ jobs:
         with:
           buildConfiguration: Release
           imageTag: ${{ steps.chart.outputs.imageTag }}
+          scalerImageArchive: ${{ steps.image.outputs.imageArchive }}
           scalerImageRepository: durabletask-azurestorage-scaler
 
       - name: Pack Helm Chart

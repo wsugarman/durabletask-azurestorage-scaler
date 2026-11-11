@@ -80,23 +80,6 @@ runs:
         platforms: linux/amd64,linux/arm64
         tags: ${{ steps.meta.outputs.tags }}
 
-    - name: Load Scaler Image
-      uses: docker/build-push-action@v7.4.0
-      with:
-        build-args: |
-          ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
-          BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
-          CONTINUOUS_INTEGRATION_BUILD=true
-          COPY=${{ inputs.copyBinaries }}
-          FILE_VERSION=${{ inputs.fileVersion }}
-          PUBLISH_DIRECTORY=./app
-        builder: ${{ steps.buildx.outputs.name }}
-        context: .
-        file: ./src/Keda.Scaler.DurableTask.AzureStorage/Dockerfile
-        labels: ${{ steps.meta.outputs.labels }}
-        load: true
-        tags: ${{ steps.meta.outputs.tags }}
-
     - name: Upload Image
       uses: actions/upload-artifact@v7.0.2
       with:

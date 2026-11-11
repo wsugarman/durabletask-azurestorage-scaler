@@ -24,6 +24,9 @@ inputs:
     default: '1'
     description: The task hub partition count
     required: false
+  scalerImageArchive:
+    description: The path to the OCI archive containing the multi-platform scaler image
+    required: true
   scalerImageRepository:
     default: durabletask-azurestorage-scaler
     description: The repository used for the scaler image
@@ -73,7 +76,8 @@ runs:
       run: |
         go install sigs.k8s.io/kind@latest
         kind create cluster --name integration
-        kind load docker-image "${{ inputs.scalerImageRepository }}:${{ inputs.imageTag }}" "example-function-app:${{ inputs.imageTag }}" --name integration
+        kind load docker-image "example-function-app:${{ inputs.imageTag }}" --name integration
+        kind load image-archive "${{ inputs.scalerImageArchive }}" --name integration
         kubectl config use-context kind-integration
 
     - name: Create TLS Secrets
