@@ -122,7 +122,6 @@ runs:
         exclude-workload-identity-credential: true
         file-digest: SHA256
         files: ${{ runner.temp }}\app\Keda.Scaler.DurableTask.AzureStorage.dll
-        files-catalog: ${{ runner.temp }}\signing\catalog.txt
         signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
         timestamp-digest: SHA256
         timestamp-rfc3161: http://timestamp.acs.microsoft.com
