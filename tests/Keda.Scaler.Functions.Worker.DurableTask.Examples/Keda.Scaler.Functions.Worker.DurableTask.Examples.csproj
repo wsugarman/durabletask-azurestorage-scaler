@@ -1,29 +1,33 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Azure.Functions.Sdk">
 
   <PropertyGroup>
-    <AzureFunctionsVersion>v4</AzureFunctionsVersion>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerFastModeProjectMountDirectory>/home/site/wwwroot</DockerFastModeProjectMountDirectory>
     <DockerfileContext>..\..</DockerfileContext>
     <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
-    <Nullable>enable</Nullable>
-    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Azure.Functions.Worker" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.DurableTask" />
     <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" />
-    <PackageReference Include="Microsoft.Azure.Functions.Worker.Sdk" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
     <PackageReference Include="Microsoft.DurableTask.Client.Grpc" />
     <PackageReference Include="Microsoft.DurableTask.Worker.Grpc" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" PrivateAssets="All" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Using Include="System.Threading.ExecutionContext" Alias="ExecutionContext" />
-  </ItemGroup>
+  <!--
+    Azure.Functions.Sdk restores a generated extensions project that ignores this project's NuGet audit settings.
+    Microsoft.Azure.WebJobs.Extensions.DurableTask transitively references a vulnerable Microsoft.AspNetCore.WebUtilities
+    (GHSA-6527-9fp8-r4x6), but the Functions host supplies ASP.NET Core at runtime. The SDK appends this property to the
+    inner restore's global properties, so we use it to also pass NoWarn.
+  -->
+  <Target Name="_SuppressFunctionsExtensionAudit" BeforeTargets="RestoreExtensionProject" DependsOnTargets="_GetRestoreSettings">
+    <PropertyGroup>
+      <_FunctionsExtensionRestoreSources>$(_OutputSources);NoWarn=NU1902</_FunctionsExtensionRestoreSources>
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup>
     <None Update="host.json">
