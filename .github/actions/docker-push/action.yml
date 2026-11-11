@@ -1,5 +1,5 @@
 name: docker push
-description: Loads and pushes the docker image if it does not already exist in the registry
+description: Pushes the multi-platform docker image archive if it does not already exist in the registry
 inputs:
   force:
     default: 'false'
@@ -9,9 +9,8 @@ inputs:
     description: The GitHub access token from the secret context
     required: true
   imageArchive:
-    default: ''
-    description: The tarball containing the docker image
-    required: false
+    description: The OCI archive containing the multi-platform docker image
+    required: true
   imageRepository:
     description: The repository used for the scaler image
     required: true
@@ -25,7 +24,7 @@ inputs:
 outputs:
   digest:
     description: An abbreviated digest for the image
-    value: ${{ steps.metadata.outputs.digest }}
+    value: ${{ steps.push.outputs.digest }}
   success:
     description: Indicates whether the image was successfully pushed
     value: ${{ steps.exists.outputs.result != 'true' }}
@@ -33,11 +32,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Load Docker Image
-      shell: bash
-      if: ${{ inputs.imageArchive != '' }}
-      run: docker load --input ${{ inputs.imageArchive }}
-
     - name: Login to ghcr.io
       uses: docker/login-action@v4.7.0
       with:
@@ -81,26 +75,20 @@ runs:
           }
         result-encoding: string
 
+    # skopeo copies the entire image index (manifest list) so that all platforms share the same tag
     - name: Push Docker Image
+      id: push
       shell: bash
       if: ${{ (inputs.force == 'true') || (steps.exists.outputs.result != 'true') }}
-      run: docker push ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
+      run: |
+        digestFile="${{ runner.temp }}/image-digest"
+        skopeo copy --all --digestfile "$digestFile" "oci-archive:${{ inputs.imageArchive }}" "docker://${{ inputs.imageRepository }}:${{ inputs.imageTag }}"
+        digest=$(cat "$digestFile")
+        digest=${digest#*:}
+        digest=${digest:0:7}
+        echo "digest=$digest" >> $GITHUB_OUTPUT
 
     - name: Push Latest Docker Image
       shell: bash
       if: ${{ (steps.exists.outputs.result != 'true') && (inputs.pushLatest == 'true') }}
-      run: |
-        docker tag ${{ inputs.imageRepository }}:${{ inputs.imageTag }} ${{ inputs.imageRepository }}:latest
-        docker push ${{ inputs.imageRepository }}:latest
-
-    - name: Inspect Docker Image
-      id: metadata
-      shell: bash
-      if: ${{ (inputs.force == 'true') || (steps.exists.outputs.result != 'true') }}
-      run: |
-        docker pull ${{ inputs.imageRepository }}:${{ inputs.imageTag }}
-        result=$(docker image inspect ${{ inputs.imageRepository }}:${{ inputs.imageTag }} -f '{{index .RepoDigests 0}}')
-        digest=${result#*@}
-        digest=${digest#*:}
-        digest=${digest:0:7}
-        echo "digest=$digest" >> $GITHUB_OUTPUT
+      run: skopeo copy --all "oci-archive:${{ inputs.imageArchive }}" "docker://${{ inputs.imageRepository }}:latest"

@@ -1,7 +1,9 @@
 ARG COPY=false
 
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
-FROM mcr.microsoft.com/dotnet/sdk:10.0.403-azurelinux3.0@sha256:ffd76bb46785445d2d029809009d35b522619b97df88c0abaa05d549db697b43 AS build
+# The SDK stage always runs on the build machine's native platform. The framework-dependent output is
+# architecture-agnostic, so it can be shared across every target platform.
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0.403-azurelinux3.0@sha256:ffd76bb46785445d2d029809009d35b522619b97df88c0abaa05d549db697b43 AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0

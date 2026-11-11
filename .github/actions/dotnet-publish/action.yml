@@ -101,14 +101,6 @@ runs:
         subscription-id: ${{ inputs.azureSubscriptionId }}
 
     - if: ${{ inputs.sign == 'true' && success() }}
-      name: Create Signing Catalog
-      shell: cmd
-      run: |
-        mkdir ${{ runner.temp }}\signing
-        echo ..\app\Keda.Scaler.DurableTask.AzureStorage.dll>>  ${{ runner.temp }}\signing\catalog.txt
-        echo ..\app\Keda.Scaler.DurableTask.AzureStorage.exe>> ${{ runner.temp }}\signing\catalog.txt
-
-    - if: ${{ inputs.sign == 'true' && success() }}
       name: Code Sign Assembly
       uses: azure/artifact-signing-action@v2.0.0
       with:
@@ -129,7 +121,7 @@ runs:
         exclude-visual-studio-code-credential: true
         exclude-workload-identity-credential: true
         file-digest: SHA256
-        files-catalog: ${{ runner.temp }}\signing\catalog.txt
+        files: ${{ runner.temp }}\app\Keda.Scaler.DurableTask.AzureStorage.dll
         signing-account-name: ${{ inputs.azureCodeSigningAccountName }}
         timestamp-digest: SHA256
         timestamp-rfc3161: http://timestamp.acs.microsoft.com

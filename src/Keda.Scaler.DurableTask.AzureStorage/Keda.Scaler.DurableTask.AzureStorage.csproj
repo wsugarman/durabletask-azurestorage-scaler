@@ -4,6 +4,7 @@
   <PropertyGroup>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>$(RootDirectory)</DockerfileContext>
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>
