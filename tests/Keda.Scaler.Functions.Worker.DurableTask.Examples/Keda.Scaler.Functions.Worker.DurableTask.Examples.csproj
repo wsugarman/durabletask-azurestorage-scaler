@@ -1,4 +1,4 @@
-﻿<Project Sdk="Azure.Functions.Sdk">
+<Project Sdk="Azure.Functions.Sdk">
 
   <PropertyGroup>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>

@@ -19,7 +19,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
     <Deterministic>true</Deterministic>
     <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
-    <Features>runtime-async=on</Features>
+    <Features>$(Features);runtime-async=on</Features>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
     <LangVersion>latest</LangVersion>

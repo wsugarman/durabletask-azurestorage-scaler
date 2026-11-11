@@ -15,13 +15,13 @@ using Microsoft.Extensions.Logging;
 namespace Keda.Scaler.Functions.Worker.DurableTask.Examples;
 
 /// <summary>
-/// A collection of Durable Function orchstrations and activities meant to help test
+/// A collection of Durable Function orchestrations and activities meant to help test
 /// the KEDA external scaler for the Durable Task framework.
 /// </summary>
 public static partial class ScaleTestFunctions
 {
     /// <summary>
-    /// Asynchronously triggrs the specified number of activities that run for a variable amount of time.
+    /// Asynchronously triggers the specified number of activities that run for a variable amount of time.
     /// </summary>
     /// <param name="context">The orchestration context.</param>
     /// <param name="input">The input for the scale test.</param>

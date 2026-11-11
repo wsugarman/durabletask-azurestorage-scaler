@@ -8,8 +8,10 @@ are **not** cherry-picked into previous versions via a patch.
 | Version | Supported          |
 | ------- | ------------------ |
 | `1.x`   | :x:                |
-| `2.0.x` | :x:                |
-| `2.1.x` | :heavy_check_mark: |
+| `2.x`   | :x:                |
+| `3.x`   | :x:                |
+| `4.x`   | :x:                |
+| `5.0.x` | :heavy_check_mark: |
 
 ## Reporting a Vulnerability
 

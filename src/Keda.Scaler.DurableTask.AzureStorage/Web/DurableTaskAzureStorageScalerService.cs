@@ -30,7 +30,7 @@ public class DurableTaskAzureStorageScalerService : ExternalScaler.ExternalScale
     /// <summary>
     /// Asynchronously returns the metric values measured by the KEDA external scaler.
     /// </summary>
-    /// <param name="request">A metrics requet containing both the scalar metadata and the target Kubernetes resource.</param>
+    /// <param name="request">A metrics request containing both the scaler metadata and the target Kubernetes resource.</param>
     /// <param name="context">The gRPC context.</param>
     /// <returns>
     /// A task that represents the asynchronous operation. The value of its <see cref="Task{TResult}.Result"/>

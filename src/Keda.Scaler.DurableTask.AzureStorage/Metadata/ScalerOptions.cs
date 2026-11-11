@@ -79,7 +79,7 @@ public sealed class ScalerOptions
     /// <remarks>
     /// This value may only be specified when the value of <see cref="Cloud"/> is <c>"private"</c>.
     /// </remarks>
-    /// <value>The private cloud's host authority for Microsoft Entra ID (formally Azure Active Directory).</value>
+    /// <value>The private cloud's host authority for Microsoft Entra ID (formerly Azure Active Directory).</value>
     public Uri? EntraEndpoint { get; set; }
 
     /// <summary>

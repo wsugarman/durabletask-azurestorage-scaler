@@ -10,7 +10,7 @@ Expand the name of the chart.
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains the word "scaler" (or if the overrien name) it will be used as a full name.
+If the release name contains the word "scaler" (or the overridden name), it will be used as the full name.
 */}}
 {{- define "durabletask-azurestorage-scaler.fullname" -}}
 {{- if .Values.fullnameOverride }}

@@ -44,7 +44,7 @@ builder.Services
 builder.Services.AddGrpcReflection();
 #endif
 
-// Ensure that the client certificate validation defers to the athentication
+// Ensure that the client certificate validation defers to the authentication
 // provided by Microsoft.AspNetCore.Authentication.Certificate. All other settings
 // related to Kestrel will be specified via the configuration object
 _ = builder.WebHost

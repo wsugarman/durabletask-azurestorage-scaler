@@ -25,6 +25,10 @@ annotations:
       description: Added linux/arm64 support
     - kind: changed
       description: Updated base image to mcr.microsoft.com/dotnet/aspnet:11.0.0-azurelinux4.0-distroless
+    - kind: fixed
+      description: Fixed rendering of the service account when additionalAnnotations is specified
+    - kind: fixed
+      description: Fixed topologySpreadConstraints such that the list of constraints is applied directly to the scaler pods instead of being read from topologySpreadConstraints.operator
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler

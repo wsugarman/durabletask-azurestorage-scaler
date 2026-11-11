@@ -16,16 +16,16 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.TaskHubs;
 [TestClass]
 public class IServiceCollectionExtensionsTest
 {
-    private readonly ServiceCollection _servicCollection = new();
+    private readonly ServiceCollection _serviceCollection = new();
 
     [TestMethod]
     public void GivenNullServiceCollection_WhenAddingDurableTaskScaleManager_ThenThrowArgumentNullException()
         => Assert.ThrowsExactly<ArgumentNullException>(() => AzureStorage.TaskHubs.IServiceCollectionExtensions.AddDurableTaskScaleManager(null!));
 
     [TestMethod]
-    public void GivenServiceCollection_WhenAddingDurableTaskScalerManager_ThenRegisterServices()
+    public void GivenServiceCollection_WhenAddingDurableTaskScaleManager_ThenRegisterServices()
     {
-        IServiceCollection services = _servicCollection.AddDurableTaskScaleManager();
+        IServiceCollection services = _serviceCollection.AddDurableTaskScaleManager();
 
         ServiceDescriptor configure = Assert.ContainsSingle(x => x.ServiceType == typeof(IConfigureOptions<TaskHubOptions>), services);
         Assert.AreEqual(ServiceLifetime.Scoped, configure.Lifetime);
@@ -54,7 +54,7 @@ public class IServiceCollectionExtensionsTest
     [TestMethod]
     public void GivenTablePartitionManagement_WhenResolvingPartitionManager_ThenResolveTablePartitionManager()
     {
-        IServiceCollection services = _servicCollection
+        IServiceCollection services = _serviceCollection
             .Configure<ScalerOptions>(x => x.UseTablePartitionManagement = true)
             .AddScoped(sp => Substitute.For<TableServiceClient>())
             .AddLogging()
@@ -69,7 +69,7 @@ public class IServiceCollectionExtensionsTest
     [TestMethod]
     public void GivenBlobPartitionManagement_WhenResolvingPartitionManager_ThenResolveBlobPartitionManager()
     {
-        IServiceCollection services = _servicCollection
+        IServiceCollection services = _serviceCollection
             .Configure<ScalerOptions>(x => x.UseTablePartitionManagement = false)
             .AddScoped(sp => Substitute.For<BlobServiceClient>())
             .AddLogging()
