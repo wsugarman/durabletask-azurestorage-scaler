@@ -69,7 +69,6 @@ runs:
         dotnet build "./src/Scaler.slnx" \
           --configuration "${{ inputs.buildConfiguration }}" \
           "--property:ContinuousIntegrationBuild=true;AssemblyVersion=${{ inputs.assemblyVersion }};FileVersion=${{ inputs.fileVersion }};InformationalVersion=${{ inputs.fileVersion }}" \
-          "--property:UseAppHost=false" \
           -warnaserror
 
     - name: Test
@@ -91,8 +90,7 @@ runs:
         dotnet publish "./src/Keda.Scaler.DurableTask.AzureStorage/Keda.Scaler.DurableTask.AzureStorage.csproj" \
           --configuration "${{ inputs.buildConfiguration }}" \
           --no-build \
-          --output "${{ runner.temp }}/app" \
-          "--property:UseAppHost=false"
+          --output "${{ runner.temp }}/app"
 
     - if: ${{ inputs.sign == 'true' && success() }}
       name: az login
