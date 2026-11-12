@@ -21,7 +21,7 @@ inputs:
     description: The maximum number of activities per worker
     required: false
   maxOrchestrationsPerWorker:
-    default: '1'
+    default: '2'
     description: The maximum number of orchestrations per worker
     required: false
   minReplicas:
@@ -60,7 +60,7 @@ inputs:
     description: The maximum amount of time for the function app to scale down after the orchestrations complete
     required: false
   testTimerDuration:
-    default: 00:01:00
+    default: 00:02:00
     description: The duration of each durable timer
     required: false
   useTablePartitionManagement:

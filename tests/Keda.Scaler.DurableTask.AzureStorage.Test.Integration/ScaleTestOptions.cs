@@ -37,7 +37,7 @@ internal sealed class ScaleTestOptions : IValidatableObject
     public TimeSpan ScaleDownTimeout { get; set; } = TimeSpan.FromMinutes(2);
 
     [Range(typeof(TimeSpan), "00:00:01", "00:05:00", ConvertValueInInvariantCulture = true, ParseLimitsInInvariantCulture = true)]
-    public TimeSpan TimerDuration { get; set; } = TimeSpan.FromMinutes(1);
+    public TimeSpan TimerDuration { get; set; } = TimeSpan.FromMinutes(2);
 
     IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext)
     {

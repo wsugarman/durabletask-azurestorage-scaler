@@ -148,6 +148,12 @@ public sealed partial class ScaleTest : IAsyncDisposable
     {
         int partitionCount = _taskHub.PartitionCount;
 
+        // Every partition has exactly 1 pending message, so each worker can cover up to the max number of orchestrations
+        // per worker. A scaler that ignores the limit and requests 1 worker per partition would not settle on this value
+        int expectedReplicas = Math.Max(
+            _options.MinReplicas,
+            (partitionCount + _options.MaxOrchestrationsPerWorker - 1) / _options.MaxOrchestrationsPerWorker);
+
         await WaitForScaleDownAsync(_testContext.CancellationToken);
 
         // Start 1 orchestration per partition. Each pending timer is a message in its partition's control queue,
@@ -158,26 +164,35 @@ public sealed partial class ScaleTest : IAsyncDisposable
 
         await EnsureActiveControlQueuesAsync(_testContext.CancellationToken);
 
-        // Every partition has pending messages, so the scaler needs enough workers to cover each partition given
-        // the max number of orchestrations per worker, but it never needs more than 1 worker per partition
+        // While an orchestration starts, its partition may briefly contain both the ExecutionStarted message and the
+        // pending timer such that the scaler temporarily requests more workers. However, the deployment must settle on
+        // the expected number of replicas while the timers are pending, and it never needs more than 1 worker per partition
         await AssertScaleAsync(
             instanceIds,
-            (partitionCount + _options.MaxOrchestrationsPerWorker - 1) / _options.MaxOrchestrationsPerWorker,
-            GetMaxReplicas(activityCount: 0, partitionCount),
+            minTargetReplicas: expectedReplicas,
+            maxTargetReplicas: expectedReplicas,
+            maxReplicas: GetMaxReplicas(activityCount: 0, partitionCount),
             _testContext.CancellationToken);
     }
 
-    private async Task AssertScaleAsync(string[] instanceIds, int minReplicas, int maxReplicas, CancellationToken cancellationToken)
+    private Task AssertScaleAsync(string[] instanceIds, int minReplicas, int maxReplicas, CancellationToken cancellationToken)
+        => AssertScaleAsync(instanceIds, minReplicas, int.MaxValue, maxReplicas, cancellationToken);
+
+    // Waits for the deployment to reach the target scale while the orchestrations are still in progress. Afterwards,
+    // asserts that the orchestrations complete successfully, that the deployment never exceeds the max replicas, and
+    // that the deployment scales back down
+    private async Task AssertScaleAsync(string[] instanceIds, int minTargetReplicas, int maxTargetReplicas, int maxReplicas, CancellationToken cancellationToken)
     {
         int observedMaxReplicas;
         OrchestrationRuntimeStatus?[] finalStatuses;
 
         try
         {
-            // Assert scale up while the orchestrations are still in progress
-            int scaleUpMaxReplicas = await WaitForScaleUpAsync(
-                minReplicas,
-                t => Task.WhenAll(instanceIds.Select(id => EnsureRunningAsync(id, t))),
+            // Assert scale while the orchestrations are still in progress
+            int scaleUpMaxReplicas = await WaitForScaleAsync(
+                instanceIds,
+                minTargetReplicas,
+                maxTargetReplicas,
                 cancellationToken);
 
             // Continue monitoring the scale until the orchestrations complete
@@ -296,7 +311,7 @@ public sealed partial class ScaleTest : IAsyncDisposable
     private string GetControlQueueName(int partition)
         => string.Format(CultureInfo.InvariantCulture, "{0}-control-{1:D2}", _taskHub.TaskHubName.ToLowerInvariant(), partition);
 
-    private async Task EnsureRunningAsync(string instanceId, CancellationToken cancellationToken)
+    private async Task EnsureRunningAsync(string instanceId, V1Scale? scale, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -307,7 +322,7 @@ public sealed partial class ScaleTest : IAsyncDisposable
         Assert.IsNotNull(metadata);
         Assert.IsTrue(
             metadata.RuntimeStatus is OrchestrationRuntimeStatus.Pending or OrchestrationRuntimeStatus.Running,
-            $"Instance '{instanceId}' has status '{metadata?.RuntimeStatus}'.");
+            $"Instance '{instanceId}' has status '{metadata?.RuntimeStatus}' before the deployment reached its target scale. Last observed scale: {scale?.Status.Replicas}/{scale?.Spec.Replicas}.");
     }
 
     private async Task<(OrchestrationRuntimeStatus?[] Statuses, int MaxReplicas)> WaitForOrchestrationsAsync(string[] instanceIds, CancellationToken cancellationToken)
@@ -364,12 +379,15 @@ public sealed partial class ScaleTest : IAsyncDisposable
         } while (scale.Status.Replicas != _options.MinReplicas || scale.Spec.Replicas.GetValueOrDefault() != _options.MinReplicas);
     }
 
-    private async Task<int> WaitForScaleUpAsync(int min, Func<CancellationToken, Task> onPollAsync, CancellationToken cancellationToken)
+    private async Task<int> WaitForScaleAsync(string[] instanceIds, int min, int max, CancellationToken cancellationToken)
     {
-        V1Scale scale;
+        V1Scale? scale = null;
         int maxReplicas = 0;
 
-        LogWorkerScaleUp(_logger, min);
+        if (min == max)
+            LogWorkerScaleExact(_logger, min);
+        else
+            LogWorkerScaleUp(_logger, min);
 
         int pollCount = 0;
         do
@@ -377,8 +395,11 @@ public sealed partial class ScaleTest : IAsyncDisposable
             // Wait a moment before checking the first time
             await Task.Delay(_options.PollingInterval, cancellationToken).ConfigureAwait(false);
 
-            // Invoke some delegate with each iteration
-            await onPollAsync(cancellationToken).ConfigureAwait(false);
+            // The target scale must be reached while the orchestrations are still in progress
+            V1Scale? lastScale = scale;
+            await Task
+                .WhenAll(instanceIds.Select(id => EnsureRunningAsync(id, lastScale, cancellationToken)))
+                .ConfigureAwait(false);
 
             scale = await GetScaleAsync(cancellationToken).ConfigureAwait(false);
             maxReplicas = Math.Max(maxReplicas, scale.Spec.Replicas.GetValueOrDefault());
@@ -386,9 +407,11 @@ public sealed partial class ScaleTest : IAsyncDisposable
             pollCount = ++pollCount % _options.PollingIntervalsPerLog;
             if (pollCount == 0)
                 LogKubernetesDeploymentScale(_logger, _deployment.Name!, _deployment.Namespace!, scale.Status.Replicas, scale.Spec.Replicas);
-        } while (scale.Status.Replicas < min || scale.Spec.Replicas.GetValueOrDefault() < min);
+        } while (!IsWithinRange(scale.Status.Replicas) || !IsWithinRange(scale.Spec.Replicas.GetValueOrDefault()));
 
         return maxReplicas;
+
+        bool IsWithinRange(int replicas) => replicas >= min && replicas <= max;
     }
 
     private Task<V1Scale> GetScaleAsync(CancellationToken cancellationToken)
@@ -439,6 +462,11 @@ public sealed partial class ScaleTest : IAsyncDisposable
         Level = LogLevel.Information,
         Message = "Waiting for scale up to at least {Target} replicas.")]
     public static partial void LogWorkerScaleUp(ILogger logger, int target);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Waiting for scale to exactly {Target} replicas.")]
+    public static partial void LogWorkerScaleExact(ILogger logger, int target);
 
     [LoggerMessage(
         Level = LogLevel.Information,
