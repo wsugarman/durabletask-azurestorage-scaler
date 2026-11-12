@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Azure.Identity;
@@ -40,76 +39,51 @@ public class ConfigureAzureStorageAccountOptionsTest
     }
 
     [TestMethod]
-    [DataRow("Key=1", "Key=1", null, null, null)]
-    [DataRow("Key=1", "Key=1", "ExampleConnectionString1", "Key=2", "Key=3")]
-    [DataRow("Key=1", null, "ExampleConnectionString2", "Key=1", null)]
-    [DataRow("Key=1", null, "ExampleConnectionString3", "Key=1", "Key=2")]
-    [DataRow("Key=1", null, null, null, "Key=1")]
-    public void GivenMetadataWithConnectionString_WhenConfiguringOptions_ThenConfigureConnectionString(string expected, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
+    [DataRow("Key=1", "Key=1", null)]
+    [DataRow("Key=1", null, "Key=1")]
+    public void GivenMetadataWithConnectionString_WhenConfiguringOptions_ThenConfigureConnectionString(string expected, string? connection, string? connectionFromEnv)
     {
-        List<IDisposable> disposables = [];
-
-        if (envKey is not null)
-            disposables.Add(TestEnvironment.SetVariable(envKey, envValue));
-
-        if (defaultEnvValue is not null)
-            disposables.Add(TestEnvironment.SetVariable(AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable, defaultEnvValue));
-
         _scalerOptions.Connection = connection;
-        _scalerOptions.ConnectionFromEnv = envKey;
+        _scalerOptions.ConnectionFromEnv = connectionFromEnv;
 
         AzureStorageAccountOptions options = new();
+        _configure.Configure(options);
 
-        try
-        {
-            _configure.Configure(options);
-            Assert.IsNull(options.AccountName);
-            Assert.AreEqual(expected, options.ConnectionString);
-            Assert.IsNull(options.EndpointSuffix);
-            Assert.IsNull(options.TokenCredential);
-        }
-        finally
-        {
-            foreach (IDisposable disposable in disposables)
-                disposable.Dispose();
-        }
+        Assert.IsNull(options.AccountName);
+        Assert.AreEqual(expected, options.ConnectionString);
+        Assert.IsNull(options.EndpointSuffix);
+        Assert.IsNull(options.TokenCredential);
     }
 
     [TestMethod]
-    [DataRow("Key=1", "Key=2", null, null, null)]
-    [DataRow("Key=1", "Key=2", "ExampleConnectionString4", "Key=3", "Key=4")]
-    [DataRow("Key=1", null, "ExampleConnectionString5", "Key=2", null)]
-    [DataRow("Key=1", null, "ExampleConnectionString6", "Key=3", "Key=4")]
-    [DataRow("Key=1", null, null, null, "Key=2")]
-    public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureUriConnection(string accountName, string? connection, string? envKey, string? envValue, string? defaultEnvValue)
+    public void GivenNoConnectionMetadata_WhenConfiguringOptions_ThenIgnoreScalerEnvironment()
     {
-        List<IDisposable> disposables = [];
-
-        if (envKey is not null)
-            disposables.Add(TestEnvironment.SetVariable(envKey, envValue));
-
-        if (defaultEnvValue is not null)
-            disposables.Add(TestEnvironment.SetVariable(AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable, defaultEnvValue));
-
-        _scalerOptions.AccountName = accountName;
-        _scalerOptions.Connection = connection;
-        _scalerOptions.ConnectionFromEnv = envKey;
+        using IDisposable env = TestEnvironment.SetVariable("AzureWebJobsStorage", "Key=1");
 
         AzureStorageAccountOptions options = new();
+        _configure.Configure(options);
 
-        try
-        {
-            _configure.Configure(options);
-            Assert.AreEqual(accountName, options.AccountName);
-            Assert.IsNull(options.ConnectionString);
-            Assert.AreEqual(AzureStorageServiceUri.PublicSuffix, options.EndpointSuffix);
-            Assert.IsNull(options.TokenCredential);
-        }
-        finally
-        {
-            foreach (IDisposable disposable in disposables)
-                disposable.Dispose();
-        }
+        Assert.IsNull(options.AccountName);
+        Assert.IsNull(options.ConnectionString);
+    }
+
+    [TestMethod]
+    [DataRow("Key=1", "Key=2", null)]
+    [DataRow("Key=1", null, "Key=2")]
+    [DataRow("Key=1", null, null)]
+    public void GivenMetadataWithAccount_WhenConfiguringOptions_ThenConfigureUriConnection(string accountName, string? connection, string? connectionFromEnv)
+    {
+        _scalerOptions.AccountName = accountName;
+        _scalerOptions.Connection = connection;
+        _scalerOptions.ConnectionFromEnv = connectionFromEnv;
+
+        AzureStorageAccountOptions options = new();
+        _configure.Configure(options);
+
+        Assert.AreEqual(accountName, options.AccountName);
+        Assert.IsNull(options.ConnectionString);
+        Assert.AreEqual(AzureStorageServiceUri.PublicSuffix, options.EndpointSuffix);
+        Assert.IsNull(options.TokenCredential);
     }
 
     [TestMethod]

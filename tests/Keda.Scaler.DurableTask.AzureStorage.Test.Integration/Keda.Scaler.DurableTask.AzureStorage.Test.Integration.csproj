@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Storage.Queues" />
     <PackageReference Include="KubernetesClient" />
     <PackageReference Include="Microsoft.Azure.DurableTask.AzureStorage" />
     <PackageReference Include="Microsoft.DurableTask.Client" />

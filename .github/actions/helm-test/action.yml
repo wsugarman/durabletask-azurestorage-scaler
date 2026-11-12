@@ -20,8 +20,16 @@ inputs:
     default: '2'
     description: The maximum number of activities per worker
     required: false
-  partitionCount:
+  maxOrchestrationsPerWorker:
     default: '1'
+    description: The maximum number of orchestrations per worker
+    required: false
+  minReplicas:
+    default: '0'
+    description: The minimum number of function app replicas
+    required: false
+  partitionCount:
+    default: '4'
     description: The task hub partition count
     required: false
   scalerImageArchive:
@@ -47,9 +55,17 @@ inputs:
     default: 00:00:02
     description: The polling interval when checking test conditions
     required: false
-  testTimeout:
-    default: 00:10:00
-    description: The timeout for each test case
+  testScaleDownTimeout:
+    default: 00:02:00
+    description: The maximum amount of time for the function app to scale down after the orchestrations complete
+    required: false
+  testTimerDuration:
+    default: 00:01:00
+    description: The duration of each durable timer
+    required: false
+  useTablePartitionManagement:
+    default: 'true'
+    description: Indicates whether the task hub uses the table-based partition manager
     required: false
 
 runs:
@@ -263,7 +279,10 @@ runs:
           --set "taskHub.connectionString=DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;" \
           --set taskHub.name=${{ inputs.taskHubName }} \
           --set taskHub.maxActivitiesPerWorker=${{ inputs.maxActivitiesPerWorker }} \
+          --set taskHub.maxOrchestrationsPerWorker=${{ inputs.maxOrchestrationsPerWorker }} \
           --set taskHub.partitionCount=${{ inputs.partitionCount }} \
+          --set taskHub.useTablePartitionManagement=${{ inputs.useTablePartitionManagement }} \
+          --set scaledObject.minReplicaCount=${{ inputs.minReplicas }} \
           --wait \
           --timeout 30s \
           ${{ inputs.functionAppName }} \
@@ -278,28 +297,32 @@ runs:
         export PATH=$PATH:$(go env GOPATH)/bin
         go install github.com/fullstorydev/grpcurl/cmd/grpcurl@latest
 
-        # This request body doesn't need to specify a valid Task Hub. It only needs to pass some superficial validation
-        requestBody='{"name":"foo", "namespace":"bar", "scalerMetadata": {"connection":"UseDevelopmentStorage=true"}}'
+        # The 'connection' metadata points to the in-cluster Azurite instance, such that IsActive must successfully query
+        # Azure Storage. Note that the function app's ScaledObject instead relies upon 'connectionFromEnv'
+        connection='DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azurite.azure:10000/devstoreaccount1;QueueEndpoint=http://azurite.azure:10001/devstoreaccount1;TableEndpoint=http://azurite.azure:10002/devstoreaccount1;'
+        requestBody="{\"name\":\"foo\", \"namespace\":\"bar\", \"scalerMetadata\": {\"connection\":\"$connection\", \"taskHubName\":\"${{ inputs.taskHubName }}\"}}"
 
-        # Test without TLS
-        grpcurl \
-          -plaintext \
-          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
-          -proto "externalscaler.proto" \
-          -d "$requestBody" \
-          127.0.0.1:10003 \
-          externalscaler.ExternalScaler/GetMetricSpec
+        for method in GetMetricSpec IsActive; do
+          # Test without TLS
+          grpcurl \
+            -plaintext \
+            -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+            -proto "externalscaler.proto" \
+            -d "$requestBody" \
+            127.0.0.1:10003 \
+            "externalscaler.ExternalScaler/$method"
 
-        # Test with TLS
-        grpcurl \
-          -cacert "${{ runner.temp }}/certs/root.pem" \
-          -cert "${{ runner.temp }}/certs/client.pem" \
-          -key "${{ runner.temp }}/certs/client.key" \
-          -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
-          -proto "externalscaler.proto" \
-          -d "$requestBody" \
-          127.0.0.1:10004 \
-          externalscaler.ExternalScaler/GetMetricSpec
+          # Test with TLS
+          grpcurl \
+            -cacert "${{ runner.temp }}/certs/root.pem" \
+            -cert "${{ runner.temp }}/certs/client.pem" \
+            -key "${{ runner.temp }}/certs/client.key" \
+            -import-path "${{ github.workspace }}/src/Keda.Scaler.DurableTask.AzureStorage/Protos" \
+            -proto "externalscaler.proto" \
+            -d "$requestBody" \
+            127.0.0.1:10004 \
+            "externalscaler.ExternalScaler/$method"
+        done
 
         set +e
 
@@ -359,13 +382,18 @@ runs:
         DurableTask__ConnectionString: 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;'
         DurableTask__PartitionCount: ${{ inputs.partitionCount }}
         DurableTask__TaskHubName: ${{ inputs.taskHubName }}
+        DurableTask__UseTablePartitionManagement: ${{ inputs.useTablePartitionManagement }}
         Function__Name: ${{ inputs.functionAppName }}
         Function__Namespace: ${{ inputs.functionAppNamespace }}
         Kubernetes__Context: kind-integration
         Scaling__ActivityDuration: ${{ inputs.testActivityDuration }}
         Scaling__LoggingInterval: ${{ inputs.testStatusLoggingInterval }}
         Scaling__MaxActivitiesPerWorker: '${{ inputs.maxActivitiesPerWorker }}'
+        Scaling__MaxOrchestrationsPerWorker: '${{ inputs.maxOrchestrationsPerWorker }}'
+        Scaling__MinReplicas: '${{ inputs.minReplicas }}'
         Scaling__PollingInterval: ${{ inputs.testStatusPollingInterval }}
+        Scaling__ScaleDownTimeout: ${{ inputs.testScaleDownTimeout }}
+        Scaling__TimerDuration: ${{ inputs.testTimerDuration }}
 
     - if: ${{ always() }}
       name: Upload Test Results

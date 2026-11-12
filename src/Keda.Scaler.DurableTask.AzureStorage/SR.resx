@@ -129,14 +129,11 @@
   <data name="InternalServerError" xml:space="preserve">
     <value>There was an internal server error. Please check the logs for details and ensure your deployment is correct.</value>
   </data>
-  <data name="UnknownCloudValueFormat" xml:space="preserve">
-    <value>Unknown cloud '{0}'.</value>
-  </data>
-  <data name="InvalidConnectionEnvironmentVariableFormat" xml:space="preserve">
-    <value>The connection environment variable '{0}' could not be resolved.</value>
-  </data>
   <data name="InvalidMemberTypeFormat" xml:space="preserve">
     <value>Expected member of type '{0}' but instead found '{1}'.</value>
+  </data>
+  <data name="MissingManagedIdentity" xml:space="preserve">
+    <value>Managed identity must be enabled when specifying AccountName.</value>
   </data>
   <data name="MissingPrivateCloudPropertyFormat" xml:space="preserve">
     <value>{0} must be specified for private clouds.</value>
@@ -150,7 +147,10 @@
   <data name="ServiceUriOnlyPropertyFormat" xml:space="preserve">
     <value>{0} may only be specified with an Azure Storage account name.</value>
   </data>
-  <data name="MissingManagedIdentity" xml:space="preserve">
-    <value>Managed identity must be enabled when specifying AccountName.</value>
+  <data name="UnknownCloudValueFormat" xml:space="preserve">
+    <value>Unknown cloud '{0}'.</value>
+  </data>
+  <data name="UnresolvedConnectionString" xml:space="preserve">
+    <value>Unable to resolve an Azure Storage connection string.</value>
   </data>
 </root>

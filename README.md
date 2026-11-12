@@ -30,7 +30,7 @@ This specification describes the `external` trigger for applications that use th
   - `AzureChinaCloud`
   - `Private`
 - **`connection`** - Optional connection string for the Azure Storage account that may be used as an alternative to `connectionFromEnv`
-- **`connectionFromEnv`** - Optional name of the environment variable your deployment uses to get the connection string. Defaults to `'AzureWebJobsStorage'`
+- **`connectionFromEnv`** - Optional name of an environment variable in the scale target's container whose value is the connection string, like `'AzureWebJobsStorage'`. KEDA resolves the variable and passes its value to the scaler
 - **`endpointSuffix`** - Optional suffix for the Azure Storage service URLs. This value is only required when `cloud` is `'Private'`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`entraEndpoint`** - Optional host authority for Microsoft Entra. This value is only required when `cloud` is `'Private'`. Otherwise, the value is automatically derived for well-known cloud environments
 - **`maxActivitiesPerWorker`** - Optional maximum number of activity work items that a single worker may process at any time. This is equivalent to `MaxConcurrentActivityFunctions` in Azure Durable Functions and `MaxConcurrentTaskActivityWorkItems` in the Durable Task Framework (DTFx). Must be greater than 0. Defaults to `10`
@@ -41,18 +41,20 @@ This specification describes the `external` trigger for applications that use th
 - **`useTablePartitionManagement`** - Optionally indicates that the task hub uses the newer [Partition Manager V3](https://techcommunity.microsoft.com/blog/appsonazureblog/preview-of-durable-functions-extension-v3-0-0/4000452) that relies on Azure Table Storage instead of the older Blob-based Partition Manager. Defaults to `true`
 
 ## Authentication
-The scaler supports authentication using either an [Azure Storage connection string](https://learn.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) or [Microsoft Entra Workload Identity](https://azure.github.io/azure-workload-identity/docs/).
+The scaler supports authentication using either an [Azure Storage connection string](https://learn.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string) or [Microsoft Entra Workload Identity](https://azure.github.io/azure-workload-identity/docs/). Exactly one of `connection`, `connectionFromEnv`, or `accountName` must be specified.
 
 ### Connection Strings
-Connection strings may be specified using an environment variable exposed to the deployment using the parameter `connectionFromEnv`. By default, the scaler will look for an environment variable called `AzureWebJobsStorage`. For example:
+Connection strings may be specified using an environment variable in the scale target's container via the parameter `connectionFromEnv`. KEDA resolves the variable from the target (for example, the function app's `AzureWebJobsStorage` setting) and passes its value to the scaler. For example:
 
 ```yml
   triggers:
     - type: external
       metadata:
         scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
-        connectionFromEnv: <variable> # Optional. By default 'AzureWebJobsStorage'
+        connectionFromEnv: AzureWebJobsStorage # Name of an environment variable in the scale target's container
 ```
+
+Note that KEDA omits `connectionFromEnv` if the variable cannot be resolved in the scale target, in which case the scaler reports that it is unable to resolve a connection string.
 
 Connection strings may also be specified directly via the `connection` parameter:
 
@@ -61,7 +63,7 @@ Connection strings may also be specified directly via the `connection` parameter
     - type: external
       metadata:
         scalerAddress: dtfx-scaler.keda:4370 # Required. Address of the external scaler service
-        connection: DefaultEndpointsProtocol=https;AccountName=<account-name>;AccountKey=<account-key> # Optional. Defaults to connectionFromEnv
+        connection: DefaultEndpointsProtocol=https;AccountName=<account-name>;AccountKey=<account-key> # Alternative to connectionFromEnv
 ```
 
 ### Identity-Based Connection

@@ -52,6 +52,28 @@ public static partial class ScaleTestFunctions
         => Task.Delay(delay);
 
     /// <summary>
+    /// Asynchronously waits for a durable timer to expire.
+    /// </summary>
+    /// <remarks>
+    /// The pending timer is stored as a message in the orchestration's control queue,
+    /// which keeps its partition active until the timer fires.
+    /// </remarks>
+    /// <param name="context">The orchestration context.</param>
+    /// <param name="delay">The amount of time to wait.</param>
+    /// <returns>A task representing the asynchronous orchestration.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="context"/> is <see langword="null"/>.</exception>
+    [Function(nameof(WaitForTimerAsync))]
+    public static Task WaitForTimerAsync([OrchestrationTrigger] TaskOrchestrationContext context, TimeSpan delay)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        ILogger logger = context.CreateReplaySafeLogger("DurableTask.AzureStorage.Keda.Tests");
+        logger.StartingTimer(delay);
+
+        return context.CreateTimer(delay, CancellationToken.None);
+    }
+
+    /// <summary>
     /// Asynchronously checks the health of the function app.
     /// </summary>
     /// <param name="request">An HTTP GET request.</param>
@@ -102,8 +124,12 @@ public static partial class ScaleTestFunctions
     }
 
     [LoggerMessage(
-        EventId = 1,
         Level = LogLevel.Information,
         Message = "Starting {Count} activities with duration '{Timeout}'.")]
     private static partial void StartingDelayActivity(this ILogger logger, int count, TimeSpan timeout);
+
+    [LoggerMessage(
+        Level = LogLevel.Information,
+        Message = "Starting timer with duration '{Duration}'.")]
+    private static partial void StartingTimer(this ILogger logger, TimeSpan duration);
 }

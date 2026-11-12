@@ -11,8 +11,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Clients;
 /// </summary>
 public sealed class AzureStorageAccountOptions
 {
-    internal const string DefaultConnectionEnvironmentVariable = "AzureWebJobsStorage";
-
     /// <inheritdoc cref="ScalerOptions.AccountName"/>
     public string? AccountName { get; set; }
 
