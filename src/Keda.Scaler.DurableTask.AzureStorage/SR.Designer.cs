@@ -97,15 +97,6 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The connection environment variable &apos;{0}&apos; could not be resolved..
-        /// </summary>
-        internal static string InvalidConnectionEnvironmentVariableFormat {
-            get {
-                return ResourceManager.GetString("InvalidConnectionEnvironmentVariableFormat", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Expected member of type &apos;{0}&apos; but instead found &apos;{1}&apos;..
         /// </summary>
         internal static string InvalidMemberTypeFormat {
@@ -165,6 +156,15 @@ namespace Keda.Scaler.DurableTask.AzureStorage {
         internal static string UnknownCloudValueFormat {
             get {
                 return ResourceManager.GetString("UnknownCloudValueFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unable to resolve an Azure Storage connection string..
+        /// </summary>
+        internal static string UnresolvedConnectionString {
+            get {
+                return ResourceManager.GetString("UnresolvedConnectionString", resourceCulture);
             }
         }
     }

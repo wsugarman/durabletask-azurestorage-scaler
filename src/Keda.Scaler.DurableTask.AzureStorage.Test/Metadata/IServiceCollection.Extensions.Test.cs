@@ -13,16 +13,16 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Metadata;
 [TestClass]
 public class IServiceCollectionExtensionsTest
 {
-    private readonly ServiceCollection _servicCollection = new();
+    private readonly ServiceCollection _serviceCollection = new();
 
     [TestMethod]
-    public void GivenNullServiceCollection_WhenAdddingAzureStorageServiceClients_ThenThrowArgumentNullException()
+    public void GivenNullServiceCollection_WhenAddingScalerMetadata_ThenThrowArgumentNullException()
         => Assert.ThrowsExactly<ArgumentNullException>(() => IServiceCollectionExtensions.AddScalerMetadata(null!));
 
     [TestMethod]
-    public void GivenServiceCollection_WhenAddingAzureStorageServiceClients_ThenRegisterServices()
+    public void GivenServiceCollection_WhenAddingScalerMetadata_ThenRegisterServices()
     {
-        IServiceCollection services = _servicCollection.AddScalerMetadata();
+        IServiceCollection services = _serviceCollection.AddScalerMetadata();
 
         ServiceDescriptor metadata = Assert.ContainsSingle(x => x.ServiceType == typeof(ScalerMetadata), services);
         Assert.AreEqual(ServiceLifetime.Scoped, metadata.Lifetime);

@@ -2,7 +2,7 @@
 # Version corresponds to the chart version and should be updated every time the chart is changed.
 # AppVersion on the other hand should be updated every time the web app is changed.
 apiVersion: v2
-appVersion: "4.0.0"
+appVersion: "5.0.0"
 description: A KEDA external scaler for the Durable Task Azure Storage backend
 home: https://github.com/wsugarman/durabletask-azurestorage-scaler
 icon: https://raw.githubusercontent.com/wsugarman/durabletask-azurestorage-scaler/main/img/storm-icon.png
@@ -17,20 +17,31 @@ name: durabletask-azurestorage-scaler
 sources:
   - https://github.com/wsugarman/durabletask-azurestorage-scaler
 type: application
-version: "4.0.0"
+version: "5.0.0"
 annotations:
   artifacthub.io/category: monitoring-logging
   artifacthub.io/changes: |
+    - kind: added
+      description: Added linux/arm64 support
     - kind: changed
-      description: Updated base image to mcr.microsoft.com/dotnet/aspnet:10.0.2-azurelinux3.0-distroless
+      description: Updated base image to mcr.microsoft.com/dotnet/aspnet:11.0.0-azurelinux4.0-distroless
     - kind: removed
-      description: Removed explicit Helm parameters for configuring log style. Logging may still be additionally configured via environment variables
-  artifacthub.io/containsSecurityUpdates: "false"
+      description: Removed the fallback to the scaler's own AzureWebJobsStorage environment variable. Exactly one of connection, connectionFromEnv, or accountName must be specified in the trigger metadata
+    - kind: fixed
+      description: Fixed connectionFromEnv such that the scaler uses the connection string that KEDA resolves from the scale target's container instead of looking up the value as an environment variable name
+    - kind: fixed
+      description: Fixed rendering of the service account when additionalAnnotations is specified
+    - kind: fixed
+      description: Fixed topologySpreadConstraints such that the list of constraints is applied directly to the scaler pods instead of being read from topologySpreadConstraints.operator
+    - kind: security
+      description: Prevented the scaler from writing the connection string to its logs when connectionFromEnv could not be resolved
+  artifacthub.io/containsSecurityUpdates: "true"
   artifacthub.io/images: |
     - name: durabletask-azurestorage-scaler
-      image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:4.0.0
+      image: ghcr.io/wsugarman/durabletask-azurestorage-scaler:5.0.0
       platforms:
         - linux/amd64
+        - linux/arm64
   artifacthub.io/license: MIT
   artifacthub.io/recommendations: |
     - url: https://artifacthub.io/packages/helm/kedacore/keda

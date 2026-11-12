@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 namespace Keda.Scaler.DurableTask.AzureStorage.TaskHubs;
 
 /// <summary>
-/// Represents an algorthim determines the appropriate number of Durable Task worker instances
+/// Represents an algorithm that determines the appropriate number of Durable Task worker instances
 /// based on the current orchestrations.
 /// </summary>
 public abstract partial class DurableTaskScaleManager
@@ -27,7 +27,7 @@ public abstract partial class DurableTaskScaleManager
     //        = (A*1 + P*M)/(M*1)
     //        = (A + P*M)/M
     //
-    // From the HPA definition, the computation of targetAverageValue uses the following formulua:
+    // From the HPA definition, the computation of targetAverageValue uses the following formula:
     // (See https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details)
     // Let T = the target metric
     //     V = the metric value
@@ -141,7 +141,7 @@ public abstract partial class DurableTaskScaleManager
     /// Gets the number of workers necessary to process the given work items per partition.
     /// </summary>
     /// <param name="usage">The usage for the Task Hub that has some activity.</param>
-    /// <returns>Tthe appropriate number of worker instances.</returns>
+    /// <returns>The appropriate number of worker instances.</returns>
     protected abstract int GetWorkerCount(TaskHubQueueUsage usage);
 
     [LoggerMessage(

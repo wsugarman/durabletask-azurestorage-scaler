@@ -16,24 +16,24 @@ namespace Keda.Scaler.DurableTask.AzureStorage.Test.Clients;
 [TestClass]
 public class IServiceCollectionExtensionsTest
 {
-    private readonly ServiceCollection _servicCollection = new();
+    private readonly ServiceCollection _serviceCollection = new();
 
     [TestMethod]
-    public void GivenNullServiceCollection_WhenAdddingAzureStorageServiceClients_ThenThrowArgumentNullException()
+    public void GivenNullServiceCollection_WhenAddingAzureStorageServiceClients_ThenThrowArgumentNullException()
         => Assert.ThrowsExactly<ArgumentNullException>(() => AzureStorage.Clients.IServiceCollectionExtensions.AddAzureStorageServiceClients(null!));
 
     [TestMethod]
     public void GivenServiceCollection_WhenAddingAzureStorageServiceClients_ThenRegisterServices()
     {
-        IServiceCollection services = _servicCollection.AddAzureStorageServiceClients();
+        IServiceCollection services = _serviceCollection.AddAzureStorageServiceClients();
 
         ServiceDescriptor blobFactory = Assert.ContainsSingle(x => x.ServiceType == typeof(BlobServiceClientFactory), services);
         Assert.AreEqual(ServiceLifetime.Singleton, blobFactory.Lifetime);
         Assert.AreEqual(typeof(BlobServiceClientFactory), blobFactory.ImplementationType);
 
-        ServiceDescriptor queueFatory = Assert.ContainsSingle(x => x.ServiceType == typeof(QueueServiceClientFactory), services);
-        Assert.AreEqual(ServiceLifetime.Singleton, queueFatory.Lifetime);
-        Assert.AreEqual(typeof(QueueServiceClientFactory), queueFatory.ImplementationType);
+        ServiceDescriptor queueFactory = Assert.ContainsSingle(x => x.ServiceType == typeof(QueueServiceClientFactory), services);
+        Assert.AreEqual(ServiceLifetime.Singleton, queueFactory.Lifetime);
+        Assert.AreEqual(typeof(QueueServiceClientFactory), queueFactory.ImplementationType);
 
         ServiceDescriptor tableFactory = Assert.ContainsSingle(x => x.ServiceType == typeof(TableServiceClientFactory), services);
         Assert.AreEqual(ServiceLifetime.Singleton, tableFactory.Lifetime);
@@ -60,7 +60,7 @@ public class IServiceCollectionExtensionsTest
     [TestMethod]
     public void GivenAzureStorageAccountOptions_WhenBlobServiceClient_ThenUseFactoryToCreateClient()
     {
-        IServiceCollection services = _servicCollection
+        IServiceCollection services = _serviceCollection
             .Configure<ScalerOptions>(o => o.Connection = "UseDevelopmentStorage=true")
             .AddAzureStorageServiceClients();
 
@@ -73,7 +73,7 @@ public class IServiceCollectionExtensionsTest
     [TestMethod]
     public void GivenAzureStorageAccountOptions_WhenQueueServiceClient_ThenUseFactoryToCreateClient()
     {
-        IServiceCollection services = _servicCollection
+        IServiceCollection services = _serviceCollection
             .Configure<ScalerOptions>(o => o.Connection = "UseDevelopmentStorage=true")
             .AddAzureStorageServiceClients();
 
@@ -86,7 +86,7 @@ public class IServiceCollectionExtensionsTest
     [TestMethod]
     public void GivenAzureStorageAccountOptions_WhenTableServiceClient_ThenUseFactoryToCreateClient()
     {
-        IServiceCollection services = _servicCollection
+        IServiceCollection services = _serviceCollection
             .Configure<ScalerOptions>(o => o.Connection = "UseDevelopmentStorage=true")
             .AddAzureStorageServiceClients();
 

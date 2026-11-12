@@ -22,6 +22,9 @@ internal sealed class ScaleTestOptions : IValidatableObject
     [Range(1, int.MaxValue)]
     public int MaxActivitiesPerWorker { get; set; } = 10;
 
+    [Range(1, int.MaxValue)]
+    public int MaxOrchestrationsPerWorker { get; set; } = 1;
+
     [Range(0, int.MaxValue)]
     public int MinReplicas { get; set; } = 0;
 
@@ -29,6 +32,12 @@ internal sealed class ScaleTestOptions : IValidatableObject
     public TimeSpan PollingInterval { get; set; } = TimeSpan.FromSeconds(2);
 
     public int PollingIntervalsPerLog => (int)LoggingInterval.TotalSeconds / (int)PollingInterval.TotalSeconds;
+
+    [Range(typeof(TimeSpan), "00:00:01", "00:05:00", ConvertValueInInvariantCulture = true, ParseLimitsInInvariantCulture = true)]
+    public TimeSpan ScaleDownTimeout { get; set; } = TimeSpan.FromMinutes(2);
+
+    [Range(typeof(TimeSpan), "00:00:01", "00:05:00", ConvertValueInInvariantCulture = true, ParseLimitsInInvariantCulture = true)]
+    public TimeSpan TimerDuration { get; set; } = TimeSpan.FromMinutes(2);
 
     IEnumerable<ValidationResult> IValidatableObject.Validate(ValidationContext validationContext)
     {

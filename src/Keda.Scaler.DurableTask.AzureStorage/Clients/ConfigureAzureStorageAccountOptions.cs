@@ -23,7 +23,7 @@ internal sealed class ConfigureAzureStorageAccountOptions(IOptionsSnapshot<Scale
     }
 
     private void ConfigureStringBasedConnection(AzureStorageAccountOptions options)
-        => options.ConnectionString = _scalerOptions.Connection ?? Environment.GetEnvironmentVariable(_scalerOptions.ConnectionFromEnv ?? AzureStorageAccountOptions.DefaultConnectionEnvironmentVariable, EnvironmentVariableTarget.Process);
+        => options.ConnectionString = _scalerOptions.Connection ?? _scalerOptions.ConnectionFromEnv;
 
     private void ConfigureUriBasedConnection(AzureStorageAccountOptions options)
     {

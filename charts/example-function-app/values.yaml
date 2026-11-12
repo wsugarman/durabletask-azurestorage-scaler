@@ -8,6 +8,7 @@ taskHub:
   maxActivitiesPerWorker: 2
   maxOrchestrationsPerWorker: 1
   partitionCount: 4
+  useTablePartitionManagement: true
 
 # Docker image metadata
 image:
@@ -21,6 +22,7 @@ scaledObject:
   cooldownPeriod: 15
   minReplicaCount: 0
   maxReplicaCount: 100
+  scaleDownStabilizationWindowSeconds: 15
   caCertSecret: ""
   tlsClientCertSecret: ""
 

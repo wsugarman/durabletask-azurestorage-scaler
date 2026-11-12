@@ -22,13 +22,16 @@ internal sealed class AzureStorageDurableTaskClientOptions
     [Required]
     public string TaskHubName { get; set; } = "TestHubName";
 
+    public bool UseTablePartitionManagement { get; set; } = true;
+
     public AzureStorageOrchestrationServiceSettings ToOrchestrationServiceSettings()
     {
         return new()
         {
             PartitionCount = PartitionCount,
             TaskHubName = TaskHubName,
-            StorageAccountClientProvider = new StorageAccountClientProvider(ConnectionString)
+            StorageAccountClientProvider = new StorageAccountClientProvider(ConnectionString),
+            UseTablePartitionManagement = UseTablePartitionManagement,
         };
     }
 }

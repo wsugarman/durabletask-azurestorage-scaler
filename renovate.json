@@ -26,6 +26,7 @@
       "groupName": "Dotnet",
       "matchPackageNames": [
         "dotnet-sdk",
+        "mcr.microsoft.com/azure-functions/dotnet-isolated",
         "mcr.microsoft.com/dotnet/aspnet",
         "mcr.microsoft.com/dotnet/sdk"
       ]

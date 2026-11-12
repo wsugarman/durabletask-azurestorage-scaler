@@ -14,13 +14,19 @@ spec:
   pollingInterval: {{ .Values.scaledObject.pollingInterval }}
   minReplicaCount: {{ .Values.scaledObject.minReplicaCount }}
   maxReplicaCount: {{ .Values.scaledObject.maxReplicaCount }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: {{ .Values.scaledObject.scaleDownStabilizationWindowSeconds }}
   triggers:
     - type: external
       metadata:
         scalerAddress: "{{ .Values.externalScaler.serviceName }}.{{ .Values.externalScaler.namespace }}:{{ .Values.externalScaler.port }}"
-        connection: {{ .Values.taskHub.connectionString }}
+        connectionFromEnv: AzureWebJobsStorage
         maxActivitiesPerWorker: {{ .Values.taskHub.maxActivitiesPerWorker | quote }}
         maxOrchestrationsPerWorker: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
         taskHubName: {{ .Values.taskHub.name }}
+        useTablePartitionManagement: {{ .Values.taskHub.useTablePartitionManagement | quote }}
       authenticationRef:
         name: {{ template "example-function-app.fullname" . }}

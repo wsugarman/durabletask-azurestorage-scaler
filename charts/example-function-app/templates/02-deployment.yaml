@@ -50,6 +50,8 @@ spec:
             value: {{ .Values.taskHub.maxOrchestrationsPerWorker | quote }}
           - name: AzureFunctionsJobHost__Extensions__DurableTask__StorageProvider__PartitionCount
             value: {{ .Values.taskHub.partitionCount | quote }}
+          - name: AzureFunctionsJobHost__Extensions__DurableTask__StorageProvider__UseTablePartitionManagement
+            value: {{ .Values.taskHub.useTablePartitionManagement | quote }}
           {{- with .Values.resources }}
           resources:
             {{- toYaml . | nindent 12 }}

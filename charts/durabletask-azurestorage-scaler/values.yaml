@@ -140,9 +140,9 @@ tls:
   unsafe: false
 
 # topologySpreadConstraints is a collection of constraints that control how scaler pods are spread across the Kubernetes cluster.
-topologySpreadConstraints: {}
+topologySpreadConstraints: []
 
-# upgradeStrategy contains settings related to the upgrading the scaler deployment.
+# upgradeStrategy contains settings related to upgrading the scaler deployment.
 upgradeStrategy: {}
   # type: RollingUpdate
   # rollingUpdate:

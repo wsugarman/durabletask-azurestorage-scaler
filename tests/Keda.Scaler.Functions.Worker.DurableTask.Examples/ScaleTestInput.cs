@@ -13,7 +13,7 @@ public sealed class ScaleTestInput
     /// <summary>
     /// Gets or sets the number of activities to be created by the orchestration.
     /// </summary>
-    /// <value>The non-negativ number of activities.</value>
+    /// <value>The non-negative number of activities.</value>
     public int ActivityCount { get; set; }
 
     /// <summary>

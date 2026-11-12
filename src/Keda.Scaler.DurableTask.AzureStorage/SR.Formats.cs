@@ -14,9 +14,6 @@ internal static class SRF
     /// <inheritdoc cref="SR.FileNotFoundFormat"/>
     public static CompositeFormat FileNotFound { get; } = CompositeFormat.Parse(SR.FileNotFoundFormat);
 
-    /// <inheritdoc cref="SR.InvalidConnectionEnvironmentVariableFormat"/>
-    public static CompositeFormat InvalidConnectionEnvironmentVariable { get; } = CompositeFormat.Parse(SR.InvalidConnectionEnvironmentVariableFormat);
-
     /// <inheritdoc cref="SR.InvalidMemberTypeFormat"/>
     public static CompositeFormat InvalidMemberTypeFormat { get; } = CompositeFormat.Parse(SR.InvalidMemberTypeFormat);
 

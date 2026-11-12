@@ -105,7 +105,7 @@ public class ValidateScalerOptionsTest
     }
 
     [TestMethod]
-    public void GivenBothConnectionAndConectionEnv_WhenValidatingOptions_ThenReturnFailure()
+    public void GivenBothConnectionAndConnectionEnv_WhenValidatingOptions_ThenReturnFailure()
     {
         GivenInvalidCombination_WhenValidatingOptions_ThenReturnFailure(
             "Multiple Azure Storage connection values",

@@ -54,14 +54,15 @@ public sealed class ScalerOptions
     public string? Connection { get; set; }
 
     /// <summary>
-    /// Gets or sets the optional name of the environment variable whose value is the connection string
-    /// for the Azure Storage account used by the Durable Task framework.
+    /// Gets or sets the optional connection string for the Azure Storage account used by the Durable Task framework
+    /// that KEDA resolved from an environment variable in the scale target's container.
     /// </summary>
     /// <remarks>
-    /// This value is only required if <see cref="AccountName"/> and <see cref="Connection"/>
-    /// are not specified.
+    /// The <c>connectionFromEnv</c> metadata in the KEDA trigger specifies the name of the environment variable,
+    /// but KEDA replaces the name with the variable's value before invoking the external scaler. If the variable
+    /// cannot be resolved, KEDA omits the metadata.
     /// </remarks>
-    /// <value>The name of an environment variable in the deployment if specified; otherwise, <see langword="null"/>.</value>
+    /// <value>The resolved connection string if specified; otherwise, <see langword="null"/>.</value>
     public string? ConnectionFromEnv { get; set; }
 
     /// <summary>
@@ -79,7 +80,7 @@ public sealed class ScalerOptions
     /// <remarks>
     /// This value may only be specified when the value of <see cref="Cloud"/> is <c>"private"</c>.
     /// </remarks>
-    /// <value>The private cloud's host authority for Microsoft Entra ID (formally Azure Active Directory).</value>
+    /// <value>The private cloud's host authority for Microsoft Entra ID (formerly Azure Active Directory).</value>
     public Uri? EntraEndpoint { get; set; }
 
     /// <summary>
