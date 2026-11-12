@@ -53,6 +53,8 @@ runs:
       with:
         images: |
           ${{ inputs.imageRepository }}
+        flavor: |
+          latest=false
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
 
