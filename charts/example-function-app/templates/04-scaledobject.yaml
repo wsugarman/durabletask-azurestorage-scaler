@@ -14,6 +14,11 @@ spec:
   pollingInterval: {{ .Values.scaledObject.pollingInterval }}
   minReplicaCount: {{ .Values.scaledObject.minReplicaCount }}
   maxReplicaCount: {{ .Values.scaledObject.maxReplicaCount }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: {{ .Values.scaledObject.scaleDownStabilizationWindowSeconds }}
   triggers:
     - type: external
       metadata:
