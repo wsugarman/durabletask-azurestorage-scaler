@@ -45,6 +45,7 @@ jobs:
           buildConfiguration: Release
           copyBinaries: 'false'
           fileVersion: ${{ steps.chart.outputs.assemblyFileVersion }}
+          imageDescription: ${{ steps.chart.outputs.chartDescription }}
           imageRepository: durabletask-azurestorage-scaler
           imageTag: ${{ steps.chart.outputs.imageTag }}
 

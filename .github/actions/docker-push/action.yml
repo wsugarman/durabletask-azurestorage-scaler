@@ -1,5 +1,5 @@
 name: docker push
-description: Pushes the multi-platform docker image archive if it does not already exist in the registry
+description: Pushes the multi-platform docker image archive if it does not already exist in the registry and attests its build provenance
 inputs:
   force:
     default: 'false'
@@ -22,9 +22,9 @@ inputs:
     description: Indicates whether the image should also be pushed with the latest tag
     required: false
 outputs:
-  digest:
+  shortDigest:
     description: An abbreviated digest for the image
-    value: ${{ steps.push.outputs.digest }}
+    value: ${{ steps.push.outputs.shortDigest }}
   success:
     description: Indicates whether the image was successfully pushed
     value: ${{ steps.exists.outputs.result != 'true' }}
@@ -83,10 +83,21 @@ runs:
       run: |
         digestFile="${{ runner.temp }}/image-digest"
         skopeo copy --all --digestfile "$digestFile" "oci-archive:${{ inputs.imageArchive }}" "docker://${{ inputs.imageRepository }}:${{ inputs.imageTag }}"
-        digest=$(cat "$digestFile")
-        digest=${digest#*:}
-        digest=${digest:0:7}
-        echo "digest=$digest" >> $GITHUB_OUTPUT
+        imageDigest=$(cat "$digestFile")
+        shortDigest=${imageDigest#*:}
+        shortDigest=${shortDigest:0:7}
+        echo "imageDigest=$imageDigest" >> $GITHUB_OUTPUT
+        echo "shortDigest=$shortDigest" >> $GITHUB_OUTPUT
+
+    - name: Attest Build Provenance
+      uses: actions/attest@v4.2.2
+      if: ${{ steps.push.outcome == 'success' }}
+      with:
+        create-storage-record: false # Only supported for organization-owned repositories
+        github-token: ${{ inputs.gitHubToken }}
+        push-to-registry: true
+        subject-digest: ${{ steps.push.outputs.imageDigest }}
+        subject-name: ${{ inputs.imageRepository }}
 
     - name: Push Latest Docker Image
       shell: bash

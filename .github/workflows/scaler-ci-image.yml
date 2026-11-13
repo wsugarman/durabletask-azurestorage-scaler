@@ -7,6 +7,7 @@ jobs:
     name: Build
     runs-on: windows-latest
     outputs:
+      chartDescription: ${{ steps.chart.outputs.chartDescription }}
       imagePrerelease: ${{ steps.chart.outputs.imagePrerelease }}
       imageTag: ${{ steps.chart.outputs.imageTag }}
 
@@ -51,7 +52,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     permissions:
+      attestations: write
       contents: write
+      id-token: write
       packages: write
 
     steps:
@@ -63,6 +66,7 @@ jobs:
         uses: $/.github/actions/docker-build
         with:
           copyBinaries: 'true'
+          imageDescription: ${{ needs.build.outputs.chartDescription }}
           imageRepository: ghcr.io/${{ github.repository }}
           imageTag: ${{ needs.build.outputs.imageTag }}
 
@@ -83,5 +87,5 @@ jobs:
           asset: ${{ steps.build.outputs.imageArchive }}
           name: 'Durable Task KEDA External Scaler Image'
           prerelease: ${{ needs.build.outputs.imagePrerelease }}
-          tag: 'Image_${{ needs.build.outputs.imageTag }}.${{ steps.push.outputs.digest }}'
-          version: '${{ needs.build.outputs.imageTag }}.${{ steps.push.outputs.digest }}'
+          tag: 'Image_${{ needs.build.outputs.imageTag }}.${{ steps.push.outputs.shortDigest }}'
+          version: '${{ needs.build.outputs.imageTag }}.${{ steps.push.outputs.shortDigest }}'

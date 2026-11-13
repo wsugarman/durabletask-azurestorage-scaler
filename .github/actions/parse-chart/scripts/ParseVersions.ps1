@@ -32,6 +32,15 @@ if (-Not $version) {
     throw [InvalidOperationException]::new("Could not find field 'version' in chart '$ChartPath'.")
 }
 
+$description = $chart['description']
+if (-Not $description) {
+    throw [InvalidOperationException]::new("Could not find field 'description' in chart '$ChartPath'.")
+}
+
+if ($description -match '[\r\n]') {
+    throw [FormatException]::new("Field 'description' in chart '$ChartPath' must be a single line.")
+}
+
 # Ensure the versions are valid semantic versions
 $isValid = $appVersion -match '^(?<Major>\d+)\.(?<Minor>\d+)\.(?<Patch>\d+)(?<Suffix>-[a-zA-Z]+\.\d+)?$'
 if (-Not $isValid) {
@@ -80,6 +89,7 @@ else {
 # Create output variables
 "assemblyFileVersion=$assemblyFileVersion" >> $env:GITHUB_OUTPUT
 "assemblyVersion=$assemblyVersion" >> $env:GITHUB_OUTPUT
+"chartDescription=$description" >> $env:GITHUB_OUTPUT
 "chartPrerelease=$chartPrerelease" >> $env:GITHUB_OUTPUT
 "chartVersion=$chartVersion" >> $env:GITHUB_OUTPUT
 "imageTag=$imageTag" >> $env:GITHUB_OUTPUT
