@@ -93,9 +93,7 @@ runs:
       uses: actions/attest@v4.2.2
       if: ${{ steps.push.outcome == 'success' }}
       with:
-        create-storage-record: false # Only supported for organization-owned repositories
         github-token: ${{ inputs.gitHubToken }}
-        push-to-registry: true
         subject-digest: ${{ steps.push.outputs.imageDigest }}
         subject-name: ${{ inputs.imageRepository }}
 
