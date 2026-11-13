@@ -90,7 +90,7 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         outputs: type=oci,dest=${{ steps.archive.outputs.path }}
         platforms: linux/amd64,linux/arm64
-        provenance: false
+        provenance: mode=max
         tags: ${{ steps.meta.outputs.tags }}
 
     - name: Upload Image
