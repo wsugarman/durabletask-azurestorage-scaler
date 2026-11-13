@@ -17,6 +17,9 @@ inputs:
     default: '1.0.0'
     description: The scaler assembly's file version.
     required: false
+  imageDescription:
+    description: The description for the image index and each platform-specific image.
+    required: true
   imageRepository:
     default: durabletask-azurestorage-scaler
     description: The repository used for the scaler image.
@@ -47,9 +50,11 @@ runs:
         mkdir -p "$(dirname "$path")"
         echo "path=$path" >> "$GITHUB_OUTPUT"
 
-    - name: Generate OCI Labels
+    - name: Generate OCI Labels and Annotations
       id: meta
       uses: docker/metadata-action@v6.2.0
+      env:
+        DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
       with:
         images: |
           ${{ inputs.imageRepository }}
@@ -57,6 +62,10 @@ runs:
           latest=false
         tags: |
           type=semver,pattern={{version}},value=v${{ inputs.imageTag }}
+        labels: |
+          org.opencontainers.image.description=${{ inputs.imageDescription }}
+        annotations: |
+          org.opencontainers.image.description=${{ inputs.imageDescription }}
 
     - name: Setup Docker Buildx
       id: buildx
@@ -67,6 +76,7 @@ runs:
     - name: Build Multi-Platform Scaler Image
       uses: docker/build-push-action@v7.4.0
       with:
+        annotations: ${{ steps.meta.outputs.annotations }}
         build-args: |
           ASSEMBLY_VERSION=${{ inputs.assemblyVersion }}
           BUILD_CONFIGURATION=${{ inputs.buildConfiguration }}
@@ -80,6 +90,7 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         outputs: type=oci,dest=${{ steps.archive.outputs.path }}
         platforms: linux/amd64,linux/arm64
+        provenance: false
         tags: ${{ steps.meta.outputs.tags }}
 
     - name: Upload Image
