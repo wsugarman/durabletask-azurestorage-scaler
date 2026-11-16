@@ -4,6 +4,9 @@ inputs:
   asset:
     description: The path to the file or folder containing the release assets
     required: true
+  commitSha:
+    description: The SHA of the commit from which the release assets were built
+    required: true
   name:
     description: The name of the component
     required: true
@@ -30,6 +33,7 @@ runs:
               context: context,
               release: {
                 asset: '${{ inputs.asset }}',
+                commitSha: '${{ inputs.commitSha }}',
                 name: '${{ inputs.name }}',
                 prerelease: '${{ inputs.prerelease }}'.toLowerCase() === 'true',
                 tag: '${{ inputs.tag }}',

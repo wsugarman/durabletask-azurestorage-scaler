@@ -27,7 +27,7 @@ export default async function createRelease({ github, context, release }) {
   const commit = await github.rest.git.getCommit({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    commit_sha: context.sha
+    commit_sha: release.commitSha
   });
 
   await github.rest.git.createTag({
@@ -35,7 +35,7 @@ export default async function createRelease({ github, context, release }) {
     repo: context.repo.repo,
     tag: release.tag,
     message: `${release.name} Version ${release.version}`,
-    object: context.sha,
+    object: release.commitSha,
     type: 'commit',
     tagger: commit.author
   });
@@ -46,7 +46,7 @@ export default async function createRelease({ github, context, release }) {
     owner: context.repo.owner,
     repo: context.repo.repo,
     ref: `refs/tags/${release.tag}`,
-    sha: context.sha
+    sha: release.commitSha
   });
 
   // Compress the release asset(s) depending on whether the path is a folder and single file
