@@ -1,5 +1,5 @@
 name: docker push
-description: Pushes the multi-platform docker image archive if it does not already exist in the registry and attests its build provenance
+description: Pushes the multi-platform docker image archive, without altering its digest, if it does not already exist in the registry
 inputs:
   force:
     default: 'false'
@@ -75,29 +75,21 @@ runs:
           }
         result-encoding: string
 
-    # skopeo copies the entire image index (manifest list) so that all platforms share the same tag
+    # skopeo copies the entire image index (manifest list) so that all platforms share the same tag.
+    # Digests are preserved so that the build provenance attested by CI still applies to the pushed image.
     - name: Push Docker Image
       id: push
       shell: bash
       if: ${{ (inputs.force == 'true') || (steps.exists.outputs.result != 'true') }}
       run: |
         digestFile="${{ runner.temp }}/image-digest"
-        skopeo copy --all --digestfile "$digestFile" "oci-archive:${{ inputs.imageArchive }}" "docker://${{ inputs.imageRepository }}:${{ inputs.imageTag }}"
+        skopeo copy --all --preserve-digests --digestfile "$digestFile" "oci-archive:${{ inputs.imageArchive }}" "docker://${{ inputs.imageRepository }}:${{ inputs.imageTag }}"
         imageDigest=$(cat "$digestFile")
         shortDigest=${imageDigest#*:}
         shortDigest=${shortDigest:0:7}
-        echo "imageDigest=$imageDigest" >> $GITHUB_OUTPUT
         echo "shortDigest=$shortDigest" >> $GITHUB_OUTPUT
-
-    - name: Attest Build Provenance
-      uses: actions/attest@v4.2.2
-      if: ${{ steps.push.outcome == 'success' }}
-      with:
-        github-token: ${{ inputs.gitHubToken }}
-        subject-digest: ${{ steps.push.outputs.imageDigest }}
-        subject-name: ${{ inputs.imageRepository }}
 
     - name: Push Latest Docker Image
       shell: bash
       if: ${{ (steps.exists.outputs.result != 'true') && (inputs.pushLatest == 'true') }}
-      run: skopeo copy --all "oci-archive:${{ inputs.imageArchive }}" "docker://${{ inputs.imageRepository }}:latest"
+      run: skopeo copy --all --preserve-digests "oci-archive:${{ inputs.imageArchive }}" "docker://${{ inputs.imageRepository }}:latest"

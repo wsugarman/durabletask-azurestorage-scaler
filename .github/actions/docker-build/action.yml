@@ -31,6 +31,9 @@ outputs:
   imageArchive:
     description: The path to the OCI archive containing the multi-platform image.
     value: ${{ steps.archive.outputs.path }}
+  imageDigest:
+    description: The digest of the multi-platform image index, which is preserved when the archive is pushed.
+    value: ${{ steps.build.outputs.digest }}
 
 runs:
   using: composite
@@ -74,6 +77,7 @@ runs:
         use: false
 
     - name: Build Multi-Platform Scaler Image
+      id: build
       uses: docker/build-push-action@v7.4.0
       with:
         annotations: ${{ steps.meta.outputs.annotations }}

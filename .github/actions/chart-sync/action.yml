@@ -96,7 +96,7 @@ runs:
     - name: Generate artifacthub-pkg.yml
       shell: pwsh
       if: ${{ steps.exists.outputs.result != 'true' }}
-      run: ./.github/actions/chart-sync/scripts/CreateArtifactHubPkg.ps1 `
+      run: ${{ github.action_path }}/scripts/CreateArtifactHubPkg.ps1 `
         -ChartVersion '${{ inputs.chartVersion }}' `
         -Destination '${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}/${{ inputs.artifactHubDirectoryName }}/${{ inputs.chartName }}/${{ inputs.chartVersion }}' `
         -IndexPath '${{ github.workspace }}/${{ inputs.chartRepositoryDirectoryName }}/index.yaml' `
