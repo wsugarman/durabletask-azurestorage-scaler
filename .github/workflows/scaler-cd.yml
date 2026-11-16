@@ -78,6 +78,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ needs.resolve.outputs.sha }}
 
       - name: Download Image
@@ -126,6 +127,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7.0.1
         with:
+          persist-credentials: false
           ref: ${{ needs.resolve.outputs.sha }}
 
       - name: Download Chart
