@@ -121,7 +121,6 @@ jobs:
     permissions:
       actions: read
       contents: write
-      packages: write
 
     steps:
       - name: Checkout
