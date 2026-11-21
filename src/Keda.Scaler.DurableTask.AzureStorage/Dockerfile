@@ -3,7 +3,7 @@ ARG COPY=false
 # See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 # The SDK stage always runs on the build machine's native platform. The framework-dependent output is
 # architecture-agnostic, so it can be shared across every target platform.
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0.100-azurelinux4.0@sha256:1e2bdc7d7e441899fd6a87183d68b2f03dad44f15a7bcc06234f77a7dc9f593f AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:11.0.100-azurelinux4.0@sha256:a5ebc34dd29d9a35535e0219360cbb981d7987cb974fa816b74e16ea6ff29022 AS build
 ARG BUILD_CONFIGURATION=Release
 ARG CONTINUOUS_INTEGRATION_BUILD=false
 ARG ASSEMBLY_VERSION=1.0.0
@@ -41,7 +41,7 @@ COPY ${PUBLISH_DIRECTORY} /app
 
 FROM publish-copy-${COPY} AS publish-app
 
-FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-azurelinux4.0-distroless@sha256:a787611f2721fcbfa05c19a26d9a71ec76927f99154bab73028e3cc8d7e5b54e AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:11.0.0-azurelinux4.0-distroless@sha256:a66b8a224b8a99caaa3569a53b0b923f35595b924267a0e211a01feea51078ab AS runtime
 ENV ASPNETCORE_URLS=http://+:8080 \
     DOTNET_EnableDiagnostics=0 \
     DOTNET_USE_POLLING_FILE_WATCHER=true
